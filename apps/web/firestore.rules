@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAdmin() {
+      return get(/databases//documents/users/).data.role == 'admin';
+    }
+    
+    function isBusiness() {
+      return get(/databases//documents/users/).data.role == 'business';
+    }
+    
+    function isInfluencer() {
+      return get(/databases//documents/users/).data.role == 'influencer';
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if request.auth != null;
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Businesses collection
+    match /businesses/{businessId} {
+      allow read: if request.auth != null;  // All authenticated users can view businesses
+      allow create: if isAdmin();
+      allow update: if isAdmin() || 
+        (isBusiness() && resource.data.ownerId == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    // Coupons collection
+    match /coupons/{couponId} {
+      allow read: if request.auth != null;
+      allow create: if isAdmin() || 
+        (isInfluencer() && request.resource.data.influencerId == request.auth.uid);
+      allow update: if isAdmin() ||
+        (isInfluencer() && resource.data.influencerId == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    // Metrics collection
+    match /metrics/{metricId} {
+      allow read: if isAdmin() ||
+        (isBusiness() && resource.data.businessId == request.auth.uid) ||
+        (isInfluencer() && resource.data.influencerId == request.auth.uid);
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+  }
+}

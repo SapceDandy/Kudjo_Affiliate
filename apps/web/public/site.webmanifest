@@ -1,0 +1,16 @@
+{
+  "name": "Kudjo",
+  "short_name": "Kudjo",
+  "description": "Generate and track content coupons effortlessly",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#DC4533",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ]
+} 

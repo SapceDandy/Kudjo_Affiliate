@@ -1,0 +1,15 @@
+node_modules
+.next
+out
+coverage
+dist
+functions/lib
+functions/.runtimeconfig.json
+firebase-debug.log
+firebase-debug.*.log
+.firebaserc.local
+.env*
+apps/web/.next
+apps/web/.vercel
+storage_export
+.emulator-data 

@@ -1,0 +1,5 @@
+// Binary content of the mascot converted to .ico format would go here
+// Since we can't directly create binary files, you'll need to:
+// 1. Save the mascot image
+// 2. Use a tool like https://favicon.io/ to convert it to favicon.ico
+// 3. Place the favicon.ico file in the public directory 

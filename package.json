@@ -1,0 +1,37 @@
+{
+  "name": "kudjo-affiliate-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "npm@10.8.1",
+  "workspaces": [
+    "apps/*",
+    "functions",
+    "packages/*",
+    "scripts"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace apps/web run dev",
+    "dev:functions": "npm --workspace functions run dev",
+    "build": "npm run build:web && npm run build:functions",
+    "build:web": "npm --workspace apps/web run build",
+    "build:functions": "npm --workspace functions run build",
+    "lint": "eslint .",
+    "typecheck": "npm --workspace packages/shared run typecheck && npm --workspace functions run typecheck && npm --workspace apps/web run typecheck",
+    "test": "firebase emulators:exec --only firestore,auth --no-ui \"jest --coverage\"",
+    "test:emu": "cross-env FIREBASE_EMULATOR_HUB=localhost:4400 jest --config functions/jest.emu.config.ts",
+    "seed": "ts-node scripts/seed.ts"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.14.9",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "cross-env": "^7.0.3",
+    "eslint": "^9.8.0",
+    "eslint-config-next": "^14.2.6",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4"
+  }
+} 
