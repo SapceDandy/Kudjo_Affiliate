@@ -19,7 +19,9 @@
     "typecheck": "npm --workspace packages/shared run typecheck && npm --workspace functions run typecheck && npm --workspace apps/web run typecheck",
     "test": "firebase emulators:exec --only firestore,auth --no-ui \"jest --coverage\"",
     "test:emu": "cross-env FIREBASE_EMULATOR_HUB=localhost:4400 jest --config functions/jest.emu.config.ts",
-    "seed": "ts-node scripts/seed.ts"
+    "seed": "ts-node scripts/seed.ts",
+    "seed:production": "./scripts/run-seed.sh",
+    "seed:simple": "ts-node scripts/seed-production.ts"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
@@ -33,5 +35,10 @@
     "ts-jest": "^29.2.4",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "firebase": "^12.1.0",
+    "firebase-admin": "^13.4.0",
+    "uuid": "^11.1.0"
   }
-} 
+}

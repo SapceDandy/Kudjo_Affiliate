@@ -2,13 +2,20 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
+interface OnboardingData {
+  name: string;
+  address: string;
+  defaultSplitPct: number;
+  posProvider: 'square' | 'manual' | 'clover';
+}
+
 interface PosSelectionFormProps {
-  onNext: (data: { posProvider: string }) => void;
-  initialData: { posProvider: string };
+  onNext: (data: Partial<OnboardingData>) => void;
+  initialData: OnboardingData;
 }
 
 export function PosSelectionForm({ onNext, initialData }: PosSelectionFormProps) {
-  const handleSelect = (provider: string) => {
+  const handleSelect = (provider: 'square' | 'manual' | 'clover') => {
     onNext({ posProvider: provider });
   };
 

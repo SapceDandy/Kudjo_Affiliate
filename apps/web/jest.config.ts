@@ -1,19 +1,17 @@
-import type { Config } from 'jest';
 import nextJest from 'next/jest';
 
 const createJestConfig = nextJest({
   dir: './',
 });
 
-const config: Config = {
+const config = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   testEnvironment: 'jest-environment-jsdom',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
   },
-  // Improve test performance
-  maxWorkers: '50%', // Use half of available CPU cores
-  bail: 1, // Stop after first test failure
+  maxWorkers: '50%',
+  bail: 1,
   verbose: true,
   collectCoverage: true,
   coverageReporters: ['text', 'lcov'],
@@ -26,7 +24,6 @@ const config: Config = {
       statements: 80,
     },
   },
-  // Only run tests related to changed files when using --watch
   watchPlugins: [
     'jest-watch-typeahead/filename',
     'jest-watch-typeahead/testname',

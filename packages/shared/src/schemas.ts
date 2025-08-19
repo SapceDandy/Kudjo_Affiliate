@@ -34,19 +34,37 @@ export const OfferSchema = z.object({
   status: z.enum(['active', 'paused', 'ended']).default('active'),
 });
 
+// NEW: Unified coupon schema
+export const CouponType = z.enum(['AFFILIATE', 'CONTENT_MEAL']);
+export const CouponStatus = z.enum(['issued', 'active', 'redeemed', 'expired']);
+
 export const CouponSchema = z.object({
+  type: CouponType,
   bizId: z.string(),
   infId: z.string(),
   offerId: z.string(),
+  linkId: z.string().optional(), // for affiliate coupons
   code: z.string(),
-  qrUrl: z.string().url(),
-  singleUse: z.literal(true),
-  status: z.enum(['issued', 'redeemed', 'expired']).default('issued'),
-  expiresAt: z.string().optional(),
-  rules: z.record(z.any()).optional(),
-  redeemedAt: z.string().optional(),
-  redemptionCardHash: z.string().optional(),
-  redeemedOrderId: z.string().optional(),
+  status: CouponStatus.default('issued'),
+  cap_cents: z.number().int().nonnegative().optional(),
+  deadlineAt: z.string().optional(),
+  createdAt: z.string(),
+  admin: z.object({
+    posAdded: z.boolean().default(false),
+    posAddedAt: z.string().optional(),
+    notes: z.string().optional(),
+  }),
+});
+
+// NEW: Daily stats aggregation schema
+export const CouponStatsDailySchema = z.object({
+  couponId: z.string(),
+  bizId: z.string(),
+  infId: z.string(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // YYYY-MM-DD
+  uses: z.number().int().nonnegative().default(0),
+  revenue_cents: z.number().int().nonnegative().default(0),
+  payouts_cents: z.number().int().nonnegative().default(0),
 });
 
 export const AffiliateLinkSchema = z.object({
@@ -60,21 +78,35 @@ export const AffiliateLinkSchema = z.object({
   createdAt: z.string(),
 });
 
+// UPDATED: Enhanced redemption schema
+export const RedemptionSource = z.enum(['affiliate', 'content_meal']);
+export const RedemptionStatus = z.enum(['pending', 'payable', 'paid']);
+
 export const RedemptionSchema = z.object({
+  couponId: z.string(),
+  linkId: z.string().optional(),
   bizId: z.string(),
-  infId: z.string().optional(),
+  infId: z.string(),
   offerId: z.string(),
-  couponId: z.string().optional(),
-  orderId: z.string(),
-  orderTotal: z.number().nonnegative(),
-  discountAmt: z.number().nonnegative(),
-  netRevenue: z.number().nonnegative(),
-  cardHash: z.string().optional(),
-  deviceHash: z.string().optional(),
-  ip: z.string().optional(),
-  posRef: z.string().optional(),
-  source: z.enum(['content', 'affiliate']),
+  source: RedemptionSource,
+  amount_cents: z.number().int().nonnegative(),
+  discount_cents: z.number().int().nonnegative(),
+  currency: z.string().default('USD'),
+  eventId: z.string().optional(),
   createdAt: z.string(),
+  status: RedemptionStatus.default('pending'),
+  holdUntil: z.string().optional(),
+});
+
+// NEW: Payout schema
+export const PayoutSchema = z.object({
+  infId: z.string(),
+  period_start: z.string(),
+  period_end: z.string(),
+  total_payable_cents: z.number().int().nonnegative(),
+  status: z.enum(['pending', 'processing', 'paid', 'failed']).default('pending'),
+  createdAt: z.string(),
+  paidAt: z.string().optional(),
 });
 
 export const FraudFlagSchema = z.object({
@@ -119,6 +151,52 @@ export const ApiBusinessPosConnect = z.object({
 });
 
 export const ApiOfferCreate = OfferSchema.pick({ bizId: true, title: true, description: true, splitPct: true, minSpend: true, blackout: true, startAt: true, endAt: true });
+
+// NEW: Coupon API schemas
+export const ApiCouponCreate = z.object({
+  type: CouponType,
+  bizId: z.string(),
+  infId: z.string(),
+  offerId: z.string(),
+});
+
+export const ApiCouponPosFlag = z.object({
+  couponId: z.string(),
+  posAdded: z.boolean(),
+});
+
+export const ApiCouponUsageRecord = z.object({
+  couponId: z.string(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // YYYY-MM-DD
+  uses: z.number().int().nonnegative(),
+  revenue_cents: z.number().int().nonnegative().optional(),
+});
+
+export const ApiAdminCouponsListQuery = z.object({
+  status: CouponStatus.optional(),
+  bizId: z.string().optional(),
+  infId: z.string().optional(),
+  type: CouponType.optional(),
+  q: z.string().optional(), // search query
+  limit: z.number().int().min(1).max(100).default(20),
+  cursor: z.string().optional(),
+});
+
+// DEPRECATED: Keep for migration compatibility
+export const CouponSchema_Legacy = z.object({
+  bizId: z.string(),
+  infId: z.string(),
+  offerId: z.string(),
+  code: z.string(),
+  qrUrl: z.string().url(),
+  singleUse: z.literal(true),
+  status: z.enum(['issued', 'redeemed', 'expired']).default('issued'),
+  expiresAt: z.string().optional(),
+  rules: z.record(z.any()).optional(),
+  redeemedAt: z.string().optional(),
+  redemptionCardHash: z.string().optional(),
+  redeemedOrderId: z.string().optional(),
+});
 
 export const ApiCouponClaim = z.object({ offerId: z.string(), infId: z.string() });
 

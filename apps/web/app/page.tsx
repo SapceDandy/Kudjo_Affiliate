@@ -6,7 +6,7 @@ import { FloatingMascot } from '@/components/ui/floating-mascot';
 
 export default function Home() {
   return (
-    <div className="h-[calc(100vh-4rem)] overflow-hidden bg-white relative">
+    <div className="h-[calc(100vh-7rem)] overflow-hidden bg-white relative">
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="container px-6 max-w-4xl">
           <div className="flex flex-col items-center justify-center gap-10">            

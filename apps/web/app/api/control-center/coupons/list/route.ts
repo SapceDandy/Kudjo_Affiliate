@@ -1,0 +1,1 @@
+export { GET, runtime, dynamic } from "@/app/api/admin/coupons/list/route"; 

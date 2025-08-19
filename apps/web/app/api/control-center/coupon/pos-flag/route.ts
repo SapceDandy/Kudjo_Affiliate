@@ -1,0 +1,1 @@
+export { PATCH, runtime, dynamic } from "@/app/api/admin/coupon/pos-flag/route"; 

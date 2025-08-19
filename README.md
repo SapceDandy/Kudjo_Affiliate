@@ -8,6 +8,7 @@ Monorepo for the MVP: creators claim single-use content coupons, generate affili
 - POS: Square (OAuth, discounts, payments webhooks); Clover stub; Manual Mode fallback
 - Outreach: Microsoft Graph OAuth
 - Types/Validation: TypeScript, Zod
+- Authentication: Firebase Auth (Google OAuth + Email/Password) + Admin Session
 
 ## Monorepo Layout
 - `apps/web` — Next.js app (dashboards and flows)
@@ -18,11 +19,26 @@ Monorepo for the MVP: creators claim single-use content coupons, generate affili
 ## Environment
 Create `apps/web/.env.local` from this sample:
 ```
+# Firebase Configuration
 NEXT_PUBLIC_FIREBASE_API_KEY=...
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=...
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=...
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
+NEXT_PUBLIC_FIREBASE_APP_ID=...
+
+# Google OAuth (for Firebase)
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=...
+
+# Admin Authentication
+ADMIN_EMAIL=your_admin_email@example.com
+ADMIN_PASSCODE=your_secure_passcode
+
+# App Configuration
 NEXT_PUBLIC_MAPS_API_KEY=...
+NEXT_PUBLIC_GA_ID=...
 ```
+
 Functions use Secret Manager where possible. For local dev, export env vars as needed:
 ```
 SQUARE_APP_ID=...
@@ -32,6 +48,19 @@ MS_GRAPH_CLIENT_SECRET=...
 JWT_SIGNING_KEY=dev_only
 PUBLIC_URL=http://localhost:3000
 ```
+
+## Authentication
+
+### User Authentication
+- **Google OAuth**: Users can sign in with Google accounts
+- **Email/Password**: Traditional email and password authentication
+- **Firebase Auth**: All user authentication handled by Firebase
+
+### Admin Authentication
+- **Separate System**: Admin access is completely separate from user authentication
+- **Environment Variables**: Admin credentials stored in environment variables
+- **Session Cookies**: Secure HTTP-only cookies with JWT tokens
+- **Route Protection**: All `/admin/*` routes protected by middleware
 
 ## Setup
 1. Install deps
@@ -92,4 +121,7 @@ npx firebase deploy --only functions,hosting
 ## Security Notes
 - Never store raw PAN; card hashing uses SHA-256 over a salt
 - Manual Mode requires cashier consent; include in ToS
-- Enforce single-use coupons via CF; second redemption must block (to be strengthened) 
+- Enforce single-use coupons via CF; second redemption must block (to be strengthened)
+- Admin credentials stored in environment variables only
+- Admin sessions use secure HTTP-only cookies with JWT tokens
+- All admin routes protected by middleware validation 

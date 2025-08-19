@@ -2,9 +2,16 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
+interface OnboardingData {
+  name: string;
+  address: string;
+  defaultSplitPct: number;
+  posProvider: 'square' | 'manual' | 'clover';
+}
+
 interface PosSetupFormProps {
-  onNext: () => void;
-  initialData: { posProvider: string };
+  onNext: (data?: Partial<OnboardingData>) => void;
+  initialData: OnboardingData;
 }
 
 export function PosSetupForm({ onNext, initialData }: PosSetupFormProps) {
@@ -27,7 +34,7 @@ export function PosSetupForm({ onNext, initialData }: PosSetupFormProps) {
         body: JSON.stringify({ provider: 'manual' }),
       });
       if (!res.ok) throw new Error('Failed to enable manual mode');
-      onNext();
+      onNext(); // No data needed for final step
     } catch (err) {
       setError('Failed to set up manual mode. Please try again.');
     } finally {

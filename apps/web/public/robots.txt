@@ -1,0 +1,11 @@
+# *
+User-agent: *
+Allow: /
+Disallow: /api
+Disallow: /admin
+
+# Host
+Host: https://kudjo.app
+
+# Sitemaps
+Sitemap: https://kudjo.app/sitemap.xml
