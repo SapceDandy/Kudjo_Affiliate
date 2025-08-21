@@ -24,7 +24,7 @@ export function CreateOfferDialog({ open, onClose }: CreateOfferDialogProps) {
     e.preventDefault();
     try {
       setLoading(true);
-      const res = await fetch('/api/offer.create', {
+      const res = await fetch('/api/offer/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

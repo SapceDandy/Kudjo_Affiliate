@@ -28,9 +28,9 @@ export default function TestAuthPage() {
           ) : (
             <div>
               <p><strong>Signed In:</strong> No</p>
-              <Link href="/auth/signin">
-                <Button className="mt-4">Go to Sign In</Button>
-              </Link>
+              <Button asChild className="mt-4">
+                <Link href="/auth/signin">Go to Sign In</Link>
+              </Button>
             </div>
           )}
         </div>
@@ -38,15 +38,15 @@ export default function TestAuthPage() {
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4">Test Links</h2>
           <div className="space-y-2">
-            <Link href="/auth/signin">
-              <Button variant="outline" className="w-full">Test User Sign In</Button>
-            </Link>
-            <Link href="/admin/login">
-              <Button variant="outline" className="w-full">Test Admin Login</Button>
-            </Link>
-            <Link href="/admin">
-              <Button variant="outline" className="w-full">Test Admin Dashboard (Protected)</Button>
-            </Link>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/auth/signin">Test User Sign In</Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/control-center/login">Test Admin Login</Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/control-center">Test Admin Dashboard (Protected)</Link>
+            </Button>
           </div>
         </div>
       </div>

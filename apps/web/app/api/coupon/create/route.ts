@@ -48,25 +48,39 @@ export async function POST(request: NextRequest) {
     // Parse and validate request body
     const body = await request.json();
     const validatedData = ApiCouponCreate.parse(body);
-    const { type, bizId, infId, offerId } = validatedData;
+    let { type, bizId, infId, offerId } = validatedData;
+
+    // First fetch the offer to get the bizId if needed
+    const offerDoc = await getDoc(doc(db, 'offers', offerId));
+    if (!offerDoc.exists()) {
+      return NextResponse.json(
+        { error: 'Offer not found' },
+        { status: 404 }
+      );
+    }
+
+    const offer = offerDoc.data();
+    
+    // If bizId is a placeholder or invalid, get it from the offer
+    if (bizId === 'lookup-from-offer' || bizId === 'temp') {
+      bizId = offer.bizId;
+    }
 
     // Fetch business and influencer data for ID generation
-    const [bizDoc, infDoc, offerDoc] = await Promise.all([
+    const [bizDoc, infDoc] = await Promise.all([
       getDoc(doc(db, 'businesses', bizId)),
       getDoc(doc(db, 'influencers', infId)),
-      getDoc(doc(db, 'offers', offerId))
     ]);
 
-    if (!bizDoc.exists() || !infDoc.exists() || !offerDoc.exists()) {
+    if (!bizDoc.exists() || !infDoc.exists()) {
       return NextResponse.json(
-        { error: 'Business, influencer, or offer not found' },
+        { error: 'Business or influencer not found' },
         { status: 404 }
       );
     }
 
     const business = bizDoc.data();
     const influencer = infDoc.data();
-    const offer = offerDoc.data();
 
     // Generate coupon ID and code
     const couponId = makeDocumentId();

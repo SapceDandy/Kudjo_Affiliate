@@ -233,7 +233,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
 
   // Go back to users list
   const goBack = () => {
-    router.push('/admin/users');
+    router.push('/control-center/users');
   };
 
   if (loading) {

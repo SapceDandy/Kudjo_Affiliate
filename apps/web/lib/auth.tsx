@@ -11,7 +11,7 @@ import {
   signInWithPopup,
   User as FirebaseUser
 } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { app, auth as firebaseAuth, db as firebaseDb } from './firebase';
 
 // No need to initialize Firebase here as it's already initialized in firebase.ts
@@ -28,9 +28,9 @@ interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
   error: Error | null;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, role: 'business' | 'influencer') => Promise<void>;
-  signInWithGoogle: (role: 'business' | 'influencer') => Promise<void>;
+  signIn: (email: string, password: string) => Promise<'business' | 'influencer' | null>;
+  signUp: (email: string, password: string, role: 'business' | 'influencer') => Promise<'business' | 'influencer'>;
+  signInWithGoogle: (role: 'business' | 'influencer', options?: { debug?: boolean }) => Promise<'business' | 'influencer'>;
   signOut: () => Promise<void>;
 }
 
@@ -49,14 +49,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         credentials: 'include',
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.isAdmin && data.email) {
-          return {
-            role: 'admin',
-            email: data.email,
-          };
-        }
+      if (!response.ok) return null;
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) return null;
+
+      const data = await response.json();
+      if (data.isAdmin && data.email) {
+        return {
+          role: 'admin',
+          email: data.email,
+        } as const;
       }
       return null;
     } catch (error) {
@@ -67,88 +69,77 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Fetch user role from Firestore
   const fetchUserRole = async (firebaseUser: FirebaseUser) => {
-    // Use the imported firebaseDb instead of creating a new instance
     const db = firebaseDb;
-    
-    // Check business collection first
     const businessDoc = await getDoc(doc(db, 'businesses', firebaseUser.uid));
-    if (businessDoc.exists()) {
-      return 'business';
-    }
-    
-    // Then check influencer collection
+    if (businessDoc.exists()) return 'business' as const;
     const influencerDoc = await getDoc(doc(db, 'influencers', firebaseUser.uid));
-    if (influencerDoc.exists()) {
-      return 'influencer';
-    }
-    
+    if (influencerDoc.exists()) return 'influencer' as const;
     return null;
   };
 
   useEffect(() => {
-    // Use the imported firebaseAuth instead of creating a new instance
-    const auth = firebaseAuth;
-    
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    let isMounted = true;
+    (async () => {
       try {
-        setLoading(true);
-        
-        // Check for admin session first
+        console.log('Initializing auth state');
+        // First, try to resolve admin session once
         const adminSession = await checkAdminSession();
-        
+        if (!isMounted) return;
         if (adminSession) {
-          // User is an admin
-          setUser({
-            uid: 'admin',
-            email: adminSession.email,
-            displayName: 'Administrator',
-            photoURL: null,
-            role: 'admin',
-          });
-        } else if (firebaseUser) {
-          // Regular Firebase user, fetch role
-          const role = await fetchUserRole(firebaseUser);
-          
-          setUser({
-            uid: firebaseUser.uid,
-            email: firebaseUser.email,
-            displayName: firebaseUser.displayName,
-            photoURL: firebaseUser.photoURL,
-            role,
-          });
-        } else {
-          // No user
-          setUser(null);
+          console.log('Admin session detected');
+          setUser({ uid: 'admin', email: adminSession.email, displayName: 'Administrator', photoURL: null, role: 'admin' });
+          setLoading(false);
+          return; // Do not attach Firebase listener for admin session
         }
+
+        // Otherwise attach Firebase listener
+        const auth = firebaseAuth;
+        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+          try {
+            if (!isMounted) return;
+            setLoading(true);
+            if (firebaseUser) {
+              console.log('Firebase user detected:', firebaseUser.uid);
+              const role = await fetchUserRole(firebaseUser);
+              console.log('User role from Firestore:', role);
+              setUser({ uid: firebaseUser.uid, email: firebaseUser.email, displayName: firebaseUser.displayName, photoURL: firebaseUser.photoURL, role });
+            } else {
+              console.log('No user detected, setting user to null');
+              setUser(null);
+            }
+          } catch (err) {
+            console.error('Auth state change error:', err);
+            setError(err instanceof Error ? err : new Error('Authentication error'));
+          } finally {
+            setLoading(false);
+          }
+        });
+
+        return () => {
+          console.log('Cleaning up Firebase auth state listener');
+          unsubscribe();
+        };
       } catch (err) {
-        console.error('Auth state change error:', err);
+        console.error('Auth init error:', err);
         setError(err instanceof Error ? err : new Error('Authentication error'));
-      } finally {
         setLoading(false);
       }
-    });
+    })();
 
-    return () => unsubscribe();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
     setLoading(true);
     setError(null);
-    
     try {
-      // Use the imported firebaseAuth instead of creating a new instance
       const auth = firebaseAuth;
       const result = await signInWithEmailAndPassword(auth, email, password);
       const role = await fetchUserRole(result.user);
-      
-      // Update user with role
-      setUser({
-        uid: result.user.uid,
-        email: result.user.email,
-        displayName: result.user.displayName,
-        photoURL: result.user.photoURL,
-        role,
-      });
+      setUser({ uid: result.user.uid, email: result.user.email, displayName: result.user.displayName, photoURL: result.user.photoURL, role });
+      return role;
     } catch (err) {
       console.error('Sign in error:', err);
       setError(err instanceof Error ? err : new Error('Sign in failed'));
@@ -161,31 +152,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (email: string, password: string, role: 'business' | 'influencer') => {
     setLoading(true);
     setError(null);
-    
     try {
-      // Use the imported firebaseAuth and firebaseDb instead of creating new instances
       const auth = firebaseAuth;
       const db = firebaseDb;
-      
-      // Create user in Firebase Auth
       const result = await createUserWithEmailAndPassword(auth, email, password);
-      
-      // Create user document in appropriate collection
       const collectionName = role === 'business' ? 'businesses' : 'influencers';
       await setDoc(doc(db, collectionName, result.user.uid), {
+        ownerId: result.user.uid,
         email,
-        createdAt: new Date().toISOString(),
+        createdAt: serverTimestamp(),
         status: 'active',
-      });
-      
-      // Update user with role
-      setUser({
-        uid: result.user.uid,
-        email: result.user.email,
-        displayName: result.user.displayName,
-        photoURL: result.user.photoURL,
-        role,
-      });
+      }, { merge: true });
+      setUser({ uid: result.user.uid, email: result.user.email, displayName: result.user.displayName, photoURL: result.user.photoURL, role });
+      return role;
     } catch (err) {
       console.error('Sign up error:', err);
       setError(err instanceof Error ? err : new Error('Sign up failed'));
@@ -195,27 +174,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signInWithGoogle = async (role: 'business' | 'influencer') => {
+  const signInWithGoogle = async (role: 'business' | 'influencer', options?: { debug?: boolean }) => {
     setLoading(true);
     setError(null);
-    
     try {
-      // Use the imported firebaseAuth and firebaseDb instead of creating new instances
       const auth = firebaseAuth;
-      const provider = new GoogleAuthProvider();
       const db = firebaseDb;
+      const { googleProvider } = require('./firebase');
+      console.log('Starting Google sign-in process for role:', role);
       
-      // Sign in with Google
-      const result = await signInWithPopup(auth, provider);
+      // If in debug mode, simulate a successful sign-in
+      if (options?.debug) {
+        console.log('DEBUG MODE: Simulating Google sign-in');
+        // Wait a moment to simulate network request
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Return the requested role without actually signing in or updating user state
+        console.log('DEBUG MODE: Returning role:', role);
+        return role;
+      }
       
-      // Check if user exists in either collection to determine if they already have a role
+      const result = await signInWithPopup(auth, googleProvider);
+      console.log('Google sign-in successful, user:', result.user.uid);
+
       const businessDoc = await getDoc(doc(db, 'businesses', result.user.uid));
       const influencerDoc = await getDoc(doc(db, 'influencers', result.user.uid));
-      
-      let userRole = role;
+
+      let userRole: 'business' | 'influencer' = role;
       let needsRoleCreation = false;
-      
-      // If user exists in a collection that doesn't match the selected role, we need to handle this case
       if (businessDoc.exists() && role === 'influencer') {
         console.log('User already exists as a business but trying to sign in as influencer');
         userRole = 'business';
@@ -223,34 +208,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('User already exists as an influencer but trying to sign in as business');
         userRole = 'influencer';
       } else if (!businessDoc.exists() && !influencerDoc.exists()) {
-        // New user, create in the selected role collection
         needsRoleCreation = true;
+        console.log('New user, creating in collection:', role);
       }
-      
-      // Create user document if needed
+
       if (needsRoleCreation) {
         const collectionName = userRole === 'business' ? 'businesses' : 'influencers';
-        await setDoc(doc(db, collectionName, result.user.uid), {
-          email: result.user.email,
-          displayName: result.user.displayName,
-          photoURL: result.user.photoURL,
-          createdAt: new Date().toISOString(),
-          status: 'active',
-        });
+        console.log('Creating user document in collection:', collectionName);
+        try {
+          await setDoc(doc(db, collectionName, result.user.uid), {
+            ownerId: result.user.uid,
+            email: result.user.email,
+            displayName: result.user.displayName,
+            photoURL: result.user.photoURL,
+            createdAt: serverTimestamp(),
+            status: 'active',
+          }, { merge: true });
+          console.log('User document created successfully');
+        } catch (docError) {
+          console.error('Error creating user document:', docError);
+          throw new Error('Failed to create user profile: ' + (docError instanceof Error ? docError.message : 'Unknown error'));
+        }
       }
-      
-      // Update user with role
-      setUser({
-        uid: result.user.uid,
-        email: result.user.email,
-        displayName: result.user.displayName,
-        photoURL: result.user.photoURL,
-        role: userRole,
-      });
+
+      setUser({ uid: result.user.uid, email: result.user.email, displayName: result.user.displayName, photoURL: result.user.photoURL, role: userRole });
+      console.log('User authenticated successfully with role:', userRole);
+      return userRole;
     } catch (err) {
       console.error('Google sign in error:', err);
-      setError(err instanceof Error ? err : new Error('Google sign in failed'));
-      throw err;
+      let errorMessage = 'Google sign in failed';
+      if (err instanceof Error) {
+        const msg = err.message.toLowerCase();
+        if (msg.includes('permission') || msg.includes('insufficient')) {
+          errorMessage = 'Google sign-in failed: Missing or insufficient permissions. If this is your first sign-in, publish updated Firestore rules so owners can create their own business/influencer docs.';
+        } else if (msg.includes('popup')) {
+          errorMessage = 'Google sign-in popup was closed or blocked. Please try again and allow popups for this site.';
+        } else if (msg.includes('network')) {
+          errorMessage = 'Network error during Google sign-in. Please check your internet connection.';
+        } else {
+          errorMessage = `Google sign-in failed: ${err.message}`;
+        }
+      }
+      setError(new Error(errorMessage));
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -259,21 +259,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     setLoading(true);
     setError(null);
-    
     try {
-      // Check if user is admin
       if (user?.role === 'admin') {
-        // Sign out from admin session
-        await fetch('/api/control-center/logout', {
-          method: 'POST',
-          credentials: 'include',
-        });
+        await fetch('/api/control-center/logout', { method: 'POST', credentials: 'include' });
       } else {
-        // Sign out from Firebase
         const auth = firebaseAuth;
         await firebaseSignOut(auth);
       }
-      
       setUser(null);
     } catch (err) {
       console.error('Sign out error:', err);
@@ -293,10 +285,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 } 

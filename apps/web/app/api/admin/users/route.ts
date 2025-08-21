@@ -149,7 +149,7 @@ export async function GET(request: NextRequest) {
 
       // Execute queries for each collection
       const results = await Promise.all(collections.map(async (collection) => {
-        let query = db.collection(collection);
+        let query: any = db.collection(collection);
 
         // Apply status filter if provided
         if (validatedQuery.status) {

@@ -1,43 +1,53 @@
-import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { verify } from 'jsonwebtoken';
 
-// Specify Node.js runtime for this API route
+// Use Node.js runtime for this API route
 export const runtime = 'nodejs';
 
-export async function GET() {
-  const cookieStore = cookies();
-  const adminSessionCookie = cookieStore.get('admin_session');
-  
-  if (!adminSessionCookie) {
-    return NextResponse.json({ isAdmin: false }, { status: 401 });
-  }
+// Disable static optimization to ensure this route is always dynamic
+export const dynamic = 'force-dynamic';
+
+export async function GET(request: NextRequest) {
+  console.log('Admin session check API called');
   
   try {
-    // Get the secret key from environment variables
-    const jwtSecret = process.env.ADMIN_PASSCODE;
+    // Get token from cookie
+    const token = request.cookies.get('admin_token')?.value;
     
-    if (!jwtSecret) {
-      console.error('Admin JWT secret not configured');
-      return NextResponse.json({ isAdmin: false }, { status: 500 });
-    }
-    
-    // Verify the token
-    const payload = verify(adminSessionCookie.value, jwtSecret) as {
-      role: string;
-      email: string;
-    };
-    
-    if (payload.role !== 'admin') {
+    if (!token) {
+      console.log('No admin token found');
       return NextResponse.json({ isAdmin: false }, { status: 401 });
     }
     
+    // Verify JWT token
+    const secret = process.env.JWT_SECRET || 'kudjo_admin_jwt_secret';
+    const decoded = verify(token, secret) as any;
+    
+    // Check if token contains admin claim
+    if (!decoded.isAdmin) {
+      console.log('Token does not have admin claim');
+      return NextResponse.json({ isAdmin: false }, { status: 401 });
+    }
+    
+    // Generate fingerprint from current request for comparison
+    const userAgent = request.headers.get('user-agent') || '';
+    const ip = request.headers.get('x-forwarded-for') || request.ip || '';
+    const currentFingerprint = Buffer.from(`${userAgent}:${ip}`).toString('base64');
+    
+    // Compare fingerprints to prevent session hijacking
+    if (decoded.fingerprint !== currentFingerprint) {
+      console.log('Fingerprint mismatch, possible session hijacking attempt');
+      return NextResponse.json({ isAdmin: false }, { status: 401 });
+    }
+    
+    // Return admin session data
     return NextResponse.json({
       isAdmin: true,
-      email: payload.email,
-    });
+      email: decoded.email,
+      exp: decoded.exp
+    }, { status: 200 });
   } catch (error) {
-    console.error('Error verifying admin token:', error);
-    return NextResponse.json({ isAdmin: false }, { status: 401 });
+    console.error('Admin session check error:', error);
+    return NextResponse.json({ isAdmin: false, error: 'Invalid session' }, { status: 401 });
   }
 } 

@@ -23,7 +23,6 @@ import {
   Bell,
   RefreshCw
 } from 'lucide-react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 // Mock admin data
 const mockAdmin = {
@@ -40,7 +39,6 @@ interface SystemStatus {
   responseTime: number;
 }
 
-// Update the Metrics interface to make it compatible with AdminMetrics
 type Metrics = {
   totalUsers: number;
   totalBusinesses: number;
@@ -97,6 +95,32 @@ export default function AdminDashboard() {
       });
       
       setLoading(false);
+    }
+  };
+
+  const handleCreateCoupon = async () => {
+    try {
+      const type = (window.prompt('Coupon Type (AFFILIATE or CONTENT_MEAL):', 'AFFILIATE') || '').trim();
+      const bizId = (window.prompt('Business ID:', '') || '').trim();
+      const infId = (window.prompt('Influencer ID:', '') || '').trim();
+      const offerId = (window.prompt('Offer ID:', '') || '').trim();
+      if (!type || !bizId || !infId || !offerId) return;
+
+      const res = await fetch('/api/coupon/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, bizId, infId, offerId })
+      });
+
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j.error || `Failed (${res.status})`);
+      }
+
+      const created = await res.json();
+      alert(`Coupon created: ${created.couponId} (code: ${created.code})`);
+    } catch (err: any) {
+      alert(`Create failed: ${err?.message || 'Unknown error'}`);
     }
   };
   
@@ -205,232 +229,227 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-8">
-        <TabsList className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="coupons">Coupons</TabsTrigger>
-          <TabsTrigger value="system">System</TabsTrigger>
-          <TabsTrigger value="tools">Tools</TabsTrigger>
-        </TabsList>
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          {error}
+        </div>
+      )}
 
-        {/* Overview */}
-        <TabsContent value="overview" className="space-y-8">
-          {/* Platform Overview Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="hover:shadow-lg transition-shadow border-brand/20">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="text-blue-600 bg-blue-100 p-3 rounded-lg"><Users className="w-5 h-5" /></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-600">Total Users</p>
-                    <p className="text-2xl font-bold text-gray-900">{loading ? '...' : formatNumber(metrics?.totalUsers || 0)}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-shadow border-brand/20">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="text-green-600 bg-green-100 p-3 rounded-lg"><Database className="w-5 h-5" /></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-600">Platform Revenue</p>
-                    <p className="text-2xl font-bold text-gray-900">{loading ? '...' : formatCurrency(metrics?.totalRevenueCents || 0)}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-shadow border-brand/20">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="text-indigo-600 bg-indigo-100 p-3 rounded-lg"><Building2 className="w-5 h-5" /></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-600">Businesses</p>
-                    <p className="text-2xl font-bold text-gray-900">{loading ? '...' : formatNumber(metrics?.totalBusinesses || 0)}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-shadow border-brand/20">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="text-purple-600 bg-purple-100 p-3 rounded-lg"><Activity className="w-5 h-5" /></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-600">Active Coupons</p>
-                    <p className="text-2xl font-bold text-gray-900">{loading ? '...' : formatNumber(metrics?.activeCoupons || 0)}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Quick KPI Preview */}
-          <Card className="border-brand/20">
-            <CardHeader>
-              <CardTitle>Key Performance Preview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1">
-                <GlobalKPIs metrics={metrics as any} />
+      {/* Platform Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="hover:shadow-lg transition-shadow border-brand/20">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="text-blue-600 bg-blue-100 p-3 rounded-lg"><Users className="w-5 h-5" /></div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-600">Total Users</p>
+                <p className="text-2xl font-bold text-gray-900">{loading ? '...' : formatNumber(metrics?.totalUsers || 0)}</p>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Analytics */}
-        <TabsContent value="analytics" className="space-y-8">
-          <GlobalKPIs metrics={metrics as any} />
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-            <LifecycleFunnel />
-            <ExceptionMonitoring />
-          </div>
-        </TabsContent>
+        <Card className="hover:shadow-lg transition-shadow border-brand/20">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="text-green-600 bg-green-100 p-3 rounded-lg"><Database className="w-5 h-5" /></div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-600">Platform Revenue</p>
+                <p className="text-2xl font-bold text-gray-900">{loading ? '...' : formatCurrency(metrics?.totalRevenueCents || 0)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Coupons */}
-        <TabsContent value="coupons" className="space-y-6">
+        <Card className="hover:shadow-lg transition-shadow border-brand/20">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="text-indigo-600 bg-indigo-100 p-3 rounded-lg"><Building2 className="w-5 h-5" /></div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-600">Businesses</p>
+                <p className="text-2xl font-bold text-gray-900">{loading ? '...' : formatNumber(metrics?.totalBusinesses || 0)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow border-brand/20">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="text-purple-600 bg-purple-100 p-3 rounded-lg"><Activity className="w-5 h-5" /></div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-600">Active Coupons</p>
+                <p className="text-2xl font-bold text-gray-900">{loading ? '...' : formatNumber(metrics?.activeCoupons || 0)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* System Status Panel */}
+      <Card className="bg-gray-50 border-gray-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="w-5 h-5 text-brand" />
+            System Component Status
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="text-center py-4">Loading system status...</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {systemStatus.map((component) => (
+                <div key={component.component} className="p-4 bg-white rounded-lg border">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium text-sm">{component.component}</span>
+                    {getStatusIcon(component.status)}
+                  </div>
+                  <Badge className={`text-xs mb-2 ${getStatusBadge(component.status)}`}>
+                    {component.status}
+                  </Badge>
+                  <div className="space-y-1 text-xs text-gray-600">
+                    <div className="flex justify-between">
+                      <span>Uptime:</span>
+                      <span className="font-medium">{component.uptime.toFixed(2)}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Response:</span>
+                      <span className="font-medium">{component.responseTime}ms</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Main Analytics Section */}
+      <div className="space-y-8">
+        {/* Global KPIs - Full Width */}
+        <GlobalKPIs metrics={metrics as any} />
+
+        {/* Funnel and Exception Monitoring */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+          <LifecycleFunnel />
+          <ExceptionMonitoring />
+        </div>
+      </div>
+
+      {/* Coupon Management Section */}
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-brand" />
+            Coupon Management
+          </h2>
+          <Button size="sm" className="bg-brand hover:bg-brand/90" onClick={handleCreateCoupon}>
+            Create System Coupon
+          </Button>
+        </div>
+        
+        <CouponsTable onCouponSelect={() => {}} />
+      </div>
+
+      {/* Admin Actions & Tools */}
+      <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+        <CardContent className="p-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-brand" />
-              Coupon Management
-            </h2>
-            <Button size="sm" className="bg-brand hover:bg-brand/90">
-              Create System Coupon
-            </Button>
+            <div>
+              <h3 className="font-semibold text-purple-900 mb-2 flex items-center gap-2">
+                <Shield className="w-5 h-5" />
+                Administrative Tools
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-purple-800">
+                <div>
+                  <p className="font-medium">User Management:</p>
+                  <ul className="space-y-1 text-purple-700">
+                    <li>• Manage user accounts and permissions</li>
+                    <li>• Bulk user operations and exports</li>
+                    <li>• Account verification and KYC review</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium">Financial Operations:</p>
+                  <ul className="space-y-1 text-purple-700">
+                    <li>• Process and review payouts</li>
+                    <li>• Monitor transaction patterns</li>
+                    <li>• Generate financial reports</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium">Platform Controls:</p>
+                  <ul className="space-y-1 text-purple-700">
+                    <li>• Configure system parameters</li>
+                    <li>• Manage fraud detection rules</li>
+                    <li>• Deploy feature flags and updates</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
-          <CouponsTable onCouponSelect={() => {}} />
-        </TabsContent>
+        </CardContent>
+      </Card>
 
-        {/* System */}
-        <TabsContent value="system" className="space-y-8">
-          {/* System Status Panel */}
-          <Card className="bg-gray-50 border-gray-200">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Globe className="w-5 h-5 text-brand" />
-                System Component Status
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="text-center py-4">Loading system status...</div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                  {systemStatus.map((component) => (
-                    <div key={component.component} className="p-4 bg-white rounded-lg border">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-sm">{component.component}</span>
-                        {getStatusIcon(component.status)}
-                      </div>
-                      <Badge className={`text-xs mb-2 ${getStatusBadge(component.status)}`}>
-                        {component.status}
-                      </Badge>
-                      <div className="space-y-1 text-xs text-gray-600">
-                        <div className="flex justify-between">
-                          <span>Uptime:</span>
-                          <span className="font-medium">{component.uptime.toFixed(2)}%</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Response:</span>
-                          <span className="font-medium">{component.responseTime}ms</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+      {/* Quick Actions */}
+      <Card className="bg-gray-50 border-gray-200">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-1">
+                ⚡ Quick Actions
+              </h3>
+              <p className="text-gray-600 text-sm">
+                Common administrative tasks and emergency controls
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <Button size="sm" className="bg-brand hover:bg-brand/90">
+                <Users className="w-4 h-4 mr-2" />
+                User Management
+              </Button>
+              <Button variant="outline" size="sm">
+                <Building2 className="w-4 h-4 mr-2" />
+                Business Approvals
+              </Button>
+              <Button variant="outline" size="sm">
+                <Activity className="w-4 h-4 mr-2" />
+                System Maintenance
+              </Button>
+              <Button variant="outline" size="sm">
+                <Database className="w-4 h-4 mr-2" />
+                Data Export
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-          {/* System Health */}
-          <Card>
-            <CardHeader>
-              <CardTitle>System Health</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ExceptionMonitoring />
-            </CardContent>
-          </Card>
-
-          {/* Emergency Contacts & Support */}
-          <Card className="bg-red-50 border-red-200">
-            <CardContent className="p-6">
-              <div className="text-center">
-                <h3 className="font-semibold text-red-900 mb-2">🚨 Emergency Support</h3>
-                <p className="text-red-700 text-sm mb-4">For critical system issues requiring immediate attention</p>
-                <div className="flex justify-center gap-3">
-                  <Button variant="outline" size="sm" className="border-red-300 text-red-700 hover:bg-red-100">📞 Emergency Hotline</Button>
-                  <Button variant="outline" size="sm" className="border-red-300 text-red-700 hover:bg-red-100">🔧 System Recovery</Button>
-                  <Button variant="outline" size="sm" className="border-red-300 text-red-700 hover:bg-red-100">📊 Incident Management</Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Tools */}
-        <TabsContent value="tools" className="space-y-8">
-          {/* Admin Actions & Tools */}
-          <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-purple-900 mb-2 flex items-center gap-2">
-                    <Shield className="w-5 h-5" />
-                    Administrative Tools
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-purple-800">
-                    <div>
-                      <p className="font-medium">User Management:</p>
-                      <ul className="space-y-1 text-purple-700">
-                        <li>• Manage user accounts and permissions</li>
-                        <li>• Bulk user operations and exports</li>
-                        <li>• Account verification and KYC review</li>
-                      </ul>
-                    </div>
-                    <div>
-                      <p className="font-medium">Financial Operations:</p>
-                      <ul className="space-y-1 text-purple-700">
-                        <li>• Process and review payouts</li>
-                        <li>• Monitor transaction patterns</li>
-                        <li>• Generate financial reports</li>
-                      </ul>
-                    </div>
-                    <div>
-                      <p className="font-medium">Platform Controls:</p>
-                      <ul className="space-y-1 text-purple-700">
-                        <li>• Configure system parameters</li>
-                        <li>• Manage fraud detection rules</li>
-                        <li>• Deploy feature flags and updates</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Quick Actions */}
-          <Card className="bg-gray-50 border-gray-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">⚡ Quick Actions</h3>
-                  <p className="text-gray-600 text-sm">Common administrative tasks and emergency controls</p>
-                </div>
-                <div className="flex gap-3">
-                  <Button size="sm" className="bg-brand hover:bg-brand/90"><Users className="w-4 h-4 mr-2" />User Management</Button>
-                  <Button variant="outline" size="sm"><Building2 className="w-4 h-4 mr-2" />Business Approvals</Button>
-                  <Button variant="outline" size="sm"><Activity className="w-4 h-4 mr-2" />System Maintenance</Button>
-                  <Button variant="outline" size="sm"><Database className="w-4 h-4 mr-2" />Data Export</Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {/* Emergency Contacts & Support */}
+      <Card className="bg-red-50 border-red-200">
+        <CardContent className="p-6">
+          <div className="text-center">
+            <h3 className="font-semibold text-red-900 mb-2">
+              🚨 Emergency Support
+            </h3>
+            <p className="text-red-700 text-sm mb-4">
+              For critical system issues requiring immediate attention
+            </p>
+            <div className="flex justify-center gap-3">
+              <Button variant="outline" size="sm" className="border-red-300 text-red-700 hover:bg-red-100">
+                📞 Emergency Hotline
+              </Button>
+              <Button variant="outline" size="sm" className="border-red-300 text-red-700 hover:bg-red-100">
+                🔧 System Recovery
+              </Button>
+              <Button variant="outline" size="sm" className="border-red-300 text-red-700 hover:bg-red-100">
+                📊 Incident Management
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 } 

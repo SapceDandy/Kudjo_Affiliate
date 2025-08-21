@@ -2,6 +2,7 @@ import './globals.css';
 import { Inter } from 'next/font/google';
 import { Shell } from '@/components/layout/shell';
 import { AuthProvider } from '@/lib/auth';
+import { Analytics } from '@/components/analytics';
 import { Metadata } from 'next';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -41,6 +42,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <AuthProvider>
           <Shell>{children}</Shell>
+          <Analytics />
         </AuthProvider>
       </body>
     </html>

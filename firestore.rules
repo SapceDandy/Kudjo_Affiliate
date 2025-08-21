@@ -22,9 +22,18 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Allow business owners to create and manage their own profile docs
     match /businesses/{bizId} {
       allow read: if isOwner(bizId) || isAdmin();
-      allow write: if isAdmin();
+      allow create: if isOwner(bizId) || isAdmin();
+      allow update: if isOwner(bizId) || isAdmin();
+    }
+
+    // Add influencers collection rules (previously missing)
+    match /influencers/{infId} {
+      allow read: if isOwner(infId) || isAdmin();
+      allow create: if isOwner(infId) || isAdmin();
+      allow update: if isOwner(infId) || isAdmin();
     }
 
     match /offers/{offerId} {

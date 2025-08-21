@@ -25,7 +25,7 @@ export default function Home() {
                 size="lg"
                 className="bg-brand hover:bg-brand-light"
               >
-                <Link href="/influencer/signup">Join as Influencer</Link>
+                <Link href="/auth/signup?role=influencer">Join as Influencer</Link>
               </Button>
               <Button 
                 asChild 
@@ -33,7 +33,7 @@ export default function Home() {
                 variant="outline"
                 className="border-brand text-brand hover:bg-brand-dark"
               >
-                <Link href="/business/signup">Register Business</Link>
+                <Link href="/auth/signup?role=business">Register Business</Link>
               </Button>
             </div>
 

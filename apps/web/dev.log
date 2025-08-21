@@ -1,0 +1,16 @@
+
+> @kudjo/web@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.31
+  - Local:        http://localhost:3000
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1538ms
+ ✓ Compiled /middleware in 410ms (185 modules)
+ ○ Compiling /api/control-center/login ...
+ ✓ Compiled /api/control-center/login in 675ms (182 modules)
+ POST /api/control-center/login 200 in 759ms
+ POST /api/control-center/login 200 in 20ms
+[?25h

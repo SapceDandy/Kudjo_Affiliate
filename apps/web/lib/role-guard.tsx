@@ -16,27 +16,17 @@ export function RoleGuard({ children, allowedRoles, fallbackPath = '/auth/signin
   const [authorized, setAuthorized] = useState(false);
 
   useEffect(() => {
-    // Still loading auth state
-    if (loading) {
-      return;
-    }
+    if (loading) return;
 
-    // No user, redirect to signin
     if (!user) {
       router.push(fallbackPath);
       return;
     }
 
-    // Check if user has admin role (from cookie)
     const isAdmin = user.role === 'admin';
-    
-    // Check if user has business role
     const isBusiness = user.role === 'business';
-    
-    // Check if user has influencer role
     const isInfluencer = user.role === 'influencer';
 
-    // Determine if user is authorized
     const hasAllowedRole = (
       (isAdmin && allowedRoles.includes('admin')) ||
       (isBusiness && allowedRoles.includes('business')) ||
@@ -44,13 +34,13 @@ export function RoleGuard({ children, allowedRoles, fallbackPath = '/auth/signin
     );
 
     if (!hasAllowedRole) {
-      // Redirect based on user's role if they're not authorized
+      // Redirect to the correct dashboard for the user's role
       if (isAdmin) {
-        router.push('/admin/dashboard');
+        router.push('/control-center');
       } else if (isBusiness) {
-        router.push('/business/dashboard');
+        router.push('/business');
       } else if (isInfluencer) {
-        router.push('/influencer/dashboard');
+        router.push('/influencer');
       } else {
         router.push(fallbackPath);
       }
@@ -59,7 +49,6 @@ export function RoleGuard({ children, allowedRoles, fallbackPath = '/auth/signin
     }
   }, [user, loading, allowedRoles, router, fallbackPath]);
 
-  // Show loading state while checking authorization
   if (loading || !authorized) {
     return (
       <div className="flex items-center justify-center min-h-screen">

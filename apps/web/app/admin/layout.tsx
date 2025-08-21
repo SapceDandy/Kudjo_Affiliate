@@ -49,42 +49,46 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
         <div className="container mx-auto px-4">
           <nav className="flex space-x-1">
-            <Link href="/admin/dashboard">
-              <Button 
-                variant={isActive('/admin/dashboard') ? "default" : "ghost"} 
-                className={isActive('/admin/dashboard') ? "bg-brand hover:bg-brand/90" : ""}
-              >
+            <Button 
+              asChild 
+              variant={isActive('/admin/dashboard') ? "default" : "ghost"} 
+              className={isActive('/admin/dashboard') ? "bg-brand hover:bg-brand/90" : ""}
+            >
+              <Link href="/admin/dashboard">
                 <BarChart3 className="w-4 h-4 mr-2" />
                 Dashboard
-              </Button>
-            </Link>
-            <Link href="/admin/coupons">
-              <Button 
-                variant={isActive('/admin/coupons') ? "default" : "ghost"}
-                className={isActive('/admin/coupons') ? "bg-brand hover:bg-brand/90" : ""}
-              >
+              </Link>
+            </Button>
+            <Button 
+              asChild 
+              variant={isActive('/admin/coupons') ? "default" : "ghost"}
+              className={isActive('/admin/coupons') ? "bg-brand hover:bg-brand/90" : ""}
+            >
+              <Link href="/admin/coupons">
                 <Tag className="w-4 h-4 mr-2" />
                 Coupons
-              </Button>
-            </Link>
-            <Link href="/admin/users">
-              <Button 
-                variant={isActive('/admin/users') ? "default" : "ghost"}
-                className={isActive('/admin/users') ? "bg-brand hover:bg-brand/90" : ""}
-              >
+              </Link>
+            </Button>
+            <Button 
+              asChild 
+              variant={isActive('/admin/users') ? "default" : "ghost"}
+              className={isActive('/admin/users') ? "bg-brand hover:bg-brand/90" : ""}
+            >
+              <Link href="/admin/users">
                 <Users className="w-4 h-4 mr-2" />
                 Users
-              </Button>
-            </Link>
-            <Link href="/admin/settings">
-              <Button 
-                variant={isActive('/admin/settings') ? "default" : "ghost"}
-                className={isActive('/admin/settings') ? "bg-brand hover:bg-brand/90" : ""}
-              >
+              </Link>
+            </Button>
+            <Button 
+              asChild 
+              variant={isActive('/admin/settings') ? "default" : "ghost"}
+              className={isActive('/admin/settings') ? "bg-brand hover:bg-brand/90" : ""}
+            >
+              <Link href="/admin/settings">
                 <Settings className="w-4 h-4 mr-2" />
                 Settings
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </nav>
         </div>
       </header>

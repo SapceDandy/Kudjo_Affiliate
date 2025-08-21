@@ -24,7 +24,7 @@ export function EditOfferDialog({ offerId, open, onClose }: EditOfferDialogProps
   useEffect(() => {
     const fetchOffer = async () => {
       try {
-        const res = await fetch(`/api/offer.get?offerId=${offerId}`);
+        const res = await fetch(`/api/offer/${offerId}`);
         if (!res.ok) throw new Error('Failed to fetch offer');
         const offer = await res.json();
         setForm({
@@ -46,7 +46,7 @@ export function EditOfferDialog({ offerId, open, onClose }: EditOfferDialogProps
     e.preventDefault();
     try {
       setLoading(true);
-      const res = await fetch('/api/offer.update', {
+      const res = await fetch('/api/offer/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

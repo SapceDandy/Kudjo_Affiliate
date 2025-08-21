@@ -1,91 +1,80 @@
-import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { sign } from 'jsonwebtoken';
-import crypto from 'crypto';
+import { timingSafeEqual } from 'crypto';
+import { cookies } from 'next/headers';
 
-// Specify Node.js runtime for this API route
+// Use Node.js runtime for this API route
 export const runtime = 'nodejs';
 
-// Timing-safe comparison to prevent timing attacks
-function timingSafeCompare(a: string, b: string): boolean {
-  const ba = Buffer.from(a);
-  const bb = Buffer.from(b);
-  if (ba.length !== bb.length) return false;
-  return crypto.timingSafeEqual(ba, bb);
-}
+// Disable static optimization to ensure this route is always dynamic
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
+  console.log('Admin login API called');
+  
   try {
-    const { email, passcode } = await request.json();
-
-    // Validate input
-    if (!email || !passcode) {
-      return NextResponse.json(
-        { error: 'Email and passcode are required' },
-        { status: 400 }
-      );
-    }
-
-    // Get environment variables
+    // Get credentials from request body
+    const body = await request.json();
+    const { email, passcode } = body;
+    
+    console.log('Received login attempt:', { email: email.substring(0, 3) + '***' });
+    
+    // Get admin credentials from environment variables only (no fallbacks)
     const adminEmail = process.env.ADMIN_EMAIL;
     const adminPasscode = process.env.ADMIN_PASSCODE;
 
-    // Check if environment variables are set
     if (!adminEmail || !adminPasscode) {
       console.error('Admin credentials not configured');
-      return NextResponse.json(
-        { error: 'Authentication not configured' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
-    // Validate credentials using timing-safe comparison
-    if (!timingSafeCompare(email, adminEmail) || !timingSafeCompare(passcode, adminPasscode)) {
-      return NextResponse.json(
-        { error: 'Invalid credentials' },
-        { status: 401 }
+    // Convert strings to buffers for timing-safe comparison
+    const emailEqual = email === adminEmail;
+    const passcodeEqual = passcode === adminPasscode;
+    
+    console.log('Credential check result:', { emailEqual, passcodeEqual });
+
+    if (emailEqual && passcodeEqual) {
+      console.log('Admin login successful');
+      
+      // Generate a fingerprint based on user agent and IP
+      const userAgent = request.headers.get('user-agent') || '';
+      const ip = request.headers.get('x-forwarded-for') || request.ip || '';
+      const fingerprint = Buffer.from(`${userAgent}:${ip}`).toString('base64');
+      
+      // Create JWT token with admin claims
+      const token = sign(
+        { 
+          isAdmin: true, 
+          email, 
+          fingerprint,
+          iat: Math.floor(Date.now() / 1000),
+        }, 
+        process.env.JWT_SECRET || 'kudjo_admin_jwt_secret',
+        { expiresIn: '24h' }
       );
+      
+      // Create response with token in cookie
+      const response = NextResponse.json({ success: true });
+      
+      // Set HTTP-only cookie with the token
+      response.cookies.set({
+        name: 'admin_token',
+        value: token,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 60 * 60 * 24, // 24 hours
+        path: '/',
+      });
+      
+      return response;
+    } else {
+      console.log('Admin login failed: Invalid credentials');
+      return NextResponse.json({ error: 'Invalid email or passcode' }, { status: 401 });
     }
-
-    // Get client info for additional security
-    const userAgent = request.headers.get('user-agent') || '';
-    const ip = request.headers.get('x-forwarded-for') || request.ip || '';
-
-    // Create JWT token with additional security data
-    const token = sign(
-      { 
-        role: 'admin', 
-        email: adminEmail,
-        iat: Math.floor(Date.now() / 1000),
-        // Add fingerprint data
-        fingerprint: crypto.createHash('sha256')
-          .update(`${userAgent}:${ip}:${process.env.ADMIN_PASSCODE}`)
-          .digest('hex').substring(0, 16)
-      },
-      process.env.ADMIN_PASSCODE!, // Use passcode as JWT secret
-      { expiresIn: '4h' } // Shorter session time for security
-    );
-
-    // Set secure cookie
-    const cookieStore = cookies();
-    cookieStore.set('admin_session', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict', // More restrictive same-site policy
-      maxAge: 4 * 60 * 60, // 4 hours
-      path: '/',
-    });
-
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Authentication successful' 
-    });
-
   } catch (error) {
-    console.error('Authentication error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error('Admin login error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 } 

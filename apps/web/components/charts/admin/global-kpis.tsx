@@ -71,7 +71,7 @@ interface AdminMetrics {
   activeCoupons: number;
   totalRedemptions: number;
   totalRevenueCents: number;
-  generatedAt: string;
+  generatedAt?: string;
 }
 
 export function GlobalKPIs({ className, metrics: propMetrics }: GlobalKPIsProps) {

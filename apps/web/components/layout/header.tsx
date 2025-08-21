@@ -8,6 +8,16 @@ import { useAuth } from '@/lib/auth';
 export function Header() {
   const { user, signOut } = useAuth();
 
+  const getPrimaryLink = () => {
+    if (!user) return null;
+    if (user.role === 'admin') return { href: '/control-center', label: 'Control Center' };
+    if (user.role === 'business') return { href: '/business', label: 'Dashboard' };
+    if (user.role === 'influencer') return { href: '/influencer', label: 'Dashboard' };
+    return null;
+  };
+
+  const primary = getPrimaryLink();
+
   return (
     <header className="border-b">
       <div className="container mx-auto flex h-16 items-center px-4">
@@ -17,22 +27,19 @@ export function Header() {
             alt="Kudjo"
             width={100}
             height={32}
-            className="h-8 w-auto"
+            className="h-8"
+            style={{ width: 'auto', height: 'auto' }}
             priority
           />
         </Link>
         <nav className="ml-auto flex items-center space-x-4">
           {user ? (
             <>
-              <Link href="/influencer">
-                <Button variant="ghost">Influencer</Button>
-              </Link>
-              <Link href="/business">
-                <Button variant="ghost">Business</Button>
-              </Link>
-              <Link href="/admin">
-                <Button variant="ghost">Admin</Button>
-              </Link>
+              {primary && (
+                <Button asChild variant="ghost">
+                  <Link href={primary.href}>{primary.label}</Link>
+                </Button>
+              )}
               <Button 
                 variant="outline" 
                 onClick={() => signOut()}
@@ -42,11 +49,9 @@ export function Header() {
               </Button>
             </>
           ) : (
-            <Link href="/auth/signin">
-              <Button className="bg-brand hover:bg-brand-light">
-                Sign In
-              </Button>
-            </Link>
+            <Button asChild className="bg-brand hover:bg-brand-light">
+              <Link href="/auth/signin">Sign In</Link>
+            </Button>
           )}
         </nav>
       </div>

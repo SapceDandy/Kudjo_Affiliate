@@ -1,31 +1,28 @@
-import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { NextRequest, NextResponse } from 'next/server';
 
-// Specify Node.js runtime for this API route
+// Use Node.js runtime for this API route
 export const runtime = 'nodejs';
 
-export async function POST() {
-  try {
-    // Clear the admin session cookie
-    const cookieStore = cookies();
-    cookieStore.set('admin_session', '', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 0, // Expire immediately
-      path: '/',
-    });
+// Disable static optimization to ensure this route is always dynamic
+export const dynamic = 'force-dynamic';
 
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Logout successful' 
-    });
-
-  } catch (error) {
-    console.error('Logout error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
+export async function POST(request: NextRequest) {
+  console.log('Admin logout API called');
+  
+  // Create response
+  const response = NextResponse.json({ success: true }, { status: 200 });
+  
+  // Clear admin token cookie
+  response.cookies.set({
+    name: 'admin_token',
+    value: '',
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 0, // Expire immediately
+    path: '/',
+  });
+  
+  console.log('Admin token cookie cleared');
+  return response;
 } 

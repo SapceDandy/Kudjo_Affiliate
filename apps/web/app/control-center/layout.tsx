@@ -49,42 +49,46 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
         <div className="container mx-auto px-4">
           <nav className="flex space-x-1">
-            <Link href="/control-center/dashboard">
-              <Button 
-                variant={isActive('/control-center/dashboard') ? "default" : "ghost"} 
-                className={isActive('/control-center/dashboard') ? "bg-brand hover:bg-brand/90" : ""}
-              >
+            <Button 
+              asChild 
+              variant={isActive('/control-center/dashboard') ? "default" : "ghost"} 
+              className={isActive('/control-center/dashboard') ? "bg-brand hover:bg-brand/90" : ""}
+            >
+              <Link href="/control-center/dashboard">
                 <BarChart3 className="w-4 h-4 mr-2" />
                 Dashboard
-              </Button>
-            </Link>
-            <Link href="/control-center/coupons">
-              <Button 
-                variant={isActive('/control-center/coupons') ? "default" : "ghost"}
-                className={isActive('/control-center/coupons') ? "bg-brand hover:bg-brand/90" : ""}
-              >
+              </Link>
+            </Button>
+            <Button 
+              asChild 
+              variant={isActive('/control-center/coupons') ? "default" : "ghost"}
+              className={isActive('/control-center/coupons') ? "bg-brand hover:bg-brand/90" : ""}
+            >
+              <Link href="/control-center/coupons">
                 <Tag className="w-4 h-4 mr-2" />
                 Coupons
-              </Button>
-            </Link>
-            <Link href="/control-center/users">
-              <Button 
-                variant={isActive('/control-center/users') ? "default" : "ghost"}
-                className={isActive('/control-center/users') ? "bg-brand hover:bg-brand/90" : ""}
-              >
+              </Link>
+            </Button>
+            <Button 
+              asChild 
+              variant={isActive('/control-center/users') ? "default" : "ghost"}
+              className={isActive('/control-center/users') ? "bg-brand hover:bg-brand/90" : ""}
+            >
+              <Link href="/control-center/users">
                 <Users className="w-4 h-4 mr-2" />
                 Users
-              </Button>
-            </Link>
-            <Link href="/control-center/settings">
-              <Button 
-                variant={isActive('/control-center/settings') ? "default" : "ghost"}
-                className={isActive('/control-center/settings') ? "bg-brand hover:bg-brand/90" : ""}
-              >
+              </Link>
+            </Button>
+            <Button 
+              asChild 
+              variant={isActive('/control-center/settings') ? "default" : "ghost"}
+              className={isActive('/control-center/settings') ? "bg-brand hover:bg-brand/90" : ""}
+            >
+              <Link href="/control-center/settings">
                 <Settings className="w-4 h-4 mr-2" />
                 Settings
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </nav>
         </div>
       </header>

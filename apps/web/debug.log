@@ -1,0 +1,29 @@
+
+> @kudjo/web@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.31
+  - Local:        http://localhost:3000
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1513ms
+ ✓ Compiled /middleware in 179ms (185 modules)
+ ✓ Compiled /api/control-center/login in 467ms (182 modules)
+=== LOGIN ATTEMPT ===
+Received email: "admin@kudjo.app"
+Received passcode: "kudjo_admin_2024"
+Email length: 15
+Passcode length: 16
+Expected email: "admin@kudjo.app"
+Expected passcode: "kudjo_admin_2024"
+Email match (raw): true
+Passcode match (raw): true
+Email match (timing-safe): true
+Passcode match (timing-safe): true
+✅ Credentials valid, creating token...
+✅ Login successful, token created
+ POST /api/control-center/login 200 in 554ms
+ ✓ Compiled in 989ms (569 modules)
+ ✓ Compiled in 394ms (185 modules)
+[?25h
