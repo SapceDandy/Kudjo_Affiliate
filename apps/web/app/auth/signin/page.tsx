@@ -57,6 +57,25 @@ export default function SignInPage() {
     }
   };
 
+  const handleDemoSignIn = async (role: 'business' | 'influencer') => {
+    setLoading(true);
+    setError('');
+    
+    // Pre-fill with demo account email
+    const demoEmail = role === 'business' ? 'demo.business@example.com' : 'demo.influencer@example.com';
+    const demoPassword = 'demo123';
+    
+    try {
+      // Actually sign in with the demo credentials
+      await signIn(demoEmail, demoPassword);
+      router.push(role === 'business' ? '/business' : '/influencer');
+    } catch (err) {
+      setError('Demo sign-in failed. Please create demo accounts first using the "Create Demo Business & Influencer" button in the admin dashboard.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleAdminLogin = () => {
     router.push('/control-center/login');
   };
@@ -98,6 +117,14 @@ export default function SignInPage() {
             </svg>
             Continue with Google as Business
           </Button>
+          <Button 
+            className="w-full mb-2" 
+            variant="outline" 
+            onClick={() => handleDemoSignIn('business')} 
+            disabled={loading}
+          >
+            Demo: Continue as Business
+          </Button>
         </TabsContent>
         
         <TabsContent value="influencer">
@@ -125,6 +152,14 @@ export default function SignInPage() {
               />
             </svg>
             Continue with Google as Influencer
+          </Button>
+          <Button 
+            className="w-full mb-2" 
+            variant="outline" 
+            onClick={() => handleDemoSignIn('influencer')} 
+            disabled={loading}
+          >
+            Demo: Continue as Influencer
           </Button>
         </TabsContent>
       </Tabs>

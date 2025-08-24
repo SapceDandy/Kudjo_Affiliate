@@ -6,6 +6,9 @@ import { Steps } from '@/components/ui/steps';
 import { BasicInfoForm } from './basic-info-form';
 import { PosSelectionForm } from './pos-selection-form';
 import { PosSetupForm } from './pos-setup-form';
+import { useAuth } from '@/lib/auth';
+import { db } from '@/lib/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 interface OnboardingData {
   name: string;
@@ -25,14 +28,40 @@ export default function OnboardPage() {
     posProvider: 'manual',
   });
   const router = useRouter();
+  const { user } = useAuth();
 
-  const handleNext = (data?: Partial<OnboardingData>) => {
-    if (data) {
-      setFormData((prev) => ({ ...prev, ...data }));
-    }
+  const handleNext = async (data?: Partial<OnboardingData>) => {
+    const nextData = data ? { ...formData, ...data } as OnboardingData : formData;
+    setFormData(nextData);
+
     if (step < STEPS.length - 1) {
       setStep((s) => s + 1);
-    } else {
+      return;
+    }
+
+    // Finalize: persist defaults and mark business active
+    if (!user?.uid) {
+      router.push('/auth/signin');
+      return;
+    }
+    try {
+      await setDoc(doc(db, 'businesses', user.uid), {
+        id: user.uid,
+        ownerId: user.uid,
+        name: nextData.name,
+        address: nextData.address,
+        defaultSplitPct: nextData.defaultSplitPct,
+        couponSettings: {
+          defaultDiscountPct: nextData.defaultSplitPct,
+          tierSplits: { Bronze: 10, Silver: 15, Gold: 20, Platinum: 25 },
+          maxActiveInfluencers: 5,
+          couponLimit: 100,
+        },
+        posProvider: nextData.posProvider,
+        status: 'active',
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+    } finally {
       router.push('/business');
     }
   };

@@ -28,6 +28,8 @@ export default function AdminLoginPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, passcode }),
+        cache: 'no-store',
+        credentials: 'include',
       });
       
       const data = await response.json();
@@ -35,9 +37,13 @@ export default function AdminLoginPage() {
       
       if (response.ok) {
         setSuccess('Login successful! Redirecting...');
+        // First try using the Next.js router
+        router.replace('/control-center/dashboard');
+        
+        // Always force a redirect after a delay to ensure navigation happens
         setTimeout(() => {
-          router.push('/control-center/dashboard');
-        }, 500);
+          window.location.href = '/control-center/dashboard';
+        }, 1000); // Increased timeout to ensure cookie is set properly
       } else {
         setError(data.error || 'Invalid credentials');
       }

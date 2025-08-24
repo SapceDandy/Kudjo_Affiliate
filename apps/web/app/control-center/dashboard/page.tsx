@@ -459,6 +459,35 @@ export default function AdminDashboardPage() {
                   >
                     Send Alerts
                   </Button>
+                  <Button
+                    className="w-full"
+                    size="sm"
+                    variant="default"
+                    onClick={async () => {
+                      try {
+                        const res = await fetch('/api/control-center/users', { method: 'POST' });
+                        if (!res.ok) throw new Error('Seed failed');
+                        const js = await res.json();
+                        
+                        // Show credentials in alert for easy copy-paste
+                        const { businessEmail, influencerEmail, password } = js.credentials || {};
+                        alert(
+                          `Demo data created successfully!\n\n` +
+                          `Business Login: ${businessEmail}\n` +
+                          `Influencer Login: ${influencerEmail}\n` +
+                          `Password: ${password}\n\n` +
+                          `Use these credentials on the sign-in page.`
+                        );
+                        
+                        const response = await fetch('/api/control-center/metrics');
+                        if (response.ok) setMetrics(await response.json());
+                      } catch (e) {
+                        alert('Failed to create demo data');
+                      }
+                    }}
+                  >
+                    Create Demo Business & Influencer
+                  </Button>
                 </div>
               </CardContent>
             </Card>
