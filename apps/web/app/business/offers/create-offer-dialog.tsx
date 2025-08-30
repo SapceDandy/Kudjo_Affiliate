@@ -18,6 +18,7 @@ export function CreateOfferDialog({ open, onClose }: CreateOfferDialogProps) {
     minSpend: '',
     startAt: new Date().toISOString().split('T')[0],
     endAt: '',
+    syncToPos: true,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,6 +59,15 @@ export function CreateOfferDialog({ open, onClose }: CreateOfferDialogProps) {
               className="w-full p-2 border rounded"
               required
             />
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              id="syncToPos"
+              type="checkbox"
+              checked={form.syncToPos}
+              onChange={(e) => setForm((f) => ({ ...f, syncToPos: e.target.checked }))}
+            />
+            <label htmlFor="syncToPos" className="text-sm">Sync to POS (if configured)</label>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Description</label>

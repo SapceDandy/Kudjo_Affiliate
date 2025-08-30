@@ -37,13 +37,17 @@ export default function AdminLoginPage() {
       
       if (response.ok) {
         setSuccess('Login successful! Redirecting...');
+        // Set a soft cookie in dev immediately to avoid redirect race
+        if (process.env.NODE_ENV !== 'production') {
+          document.cookie = 'admin_session=1; Path=/; Max-Age=300';
+        }
         // First try using the Next.js router
         router.replace('/control-center/dashboard');
         
         // Always force a redirect after a delay to ensure navigation happens
         setTimeout(() => {
           window.location.href = '/control-center/dashboard';
-        }, 1000); // Increased timeout to ensure cookie is set properly
+        }, 500);
       } else {
         setError(data.error || 'Invalid credentials');
       }

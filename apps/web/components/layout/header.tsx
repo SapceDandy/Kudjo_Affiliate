@@ -35,11 +35,6 @@ export function Header() {
         <nav className="ml-auto flex items-center space-x-4">
           {user ? (
             <>
-              {primary && (
-                <Button asChild variant="ghost">
-                  <Link href={primary.href}>{primary.label}</Link>
-                </Button>
-              )}
               <Button 
                 variant="outline" 
                 onClick={() => signOut()}

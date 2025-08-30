@@ -1,0 +1,382 @@
+---
+description: Use this rule when working on authentication and routing logic with Next.js App Router, especially for setting up middleware guard, Auth.js v5 configuration, and route protections.
+globs:
+  - "app/**/*.ts"
+  - "app/**/*.tsx"
+  - "middleware.ts"
+alwaysApply: false
+---
+
+Project Rules (Global, Always-On)
+0) Source of truth & scope
+
+Stack & versions (pin these):
+
+Framework: Next.js [14.x] App Router (/app) (no Pages Router). Follow official App Router docs for layouts, server/client components, route handlers, and middleware. 
+nextjs.org
++1
+
+Auth: Auth.js (NextAuth) v5 route handlers under /app/api/auth/[...nextauth]/route.ts. Export GET and POST handlers and use AuthOptions. Prefer session strategy jwt. 
+NextAuth
+Auth.js
+
+Env & deploy: Vercel for builds and runtime env vars. Never hardcode secrets; read from env. 
+Vercel
+nextjs.org
+
+Validation: Zod at all external boundaries (API routes, form actions, webhooks). 
+Zod
+
+Project intent: Build production-ready, testable code with minimal scaffolding debt. If information is missing (envs, URLs, DB schema), ask for it in the diff or TODOs—do not invent.
+
+File boundaries: Respect existing folder layout and module boundaries. Do not move files or rename directories without an explicit instruction.
+
+Non-goals: Do not introduce new frameworks, CSS systems, or major libs unless requested.
+
+1) Directory & routing conventions (Next.js App Router)
+
+Public vs Protected areas
+
+Public: /app/(marketing)/* (landing, pricing, sign-in, legal).
+
+Protected: /app/(app)/* (dashboard and all authenticated UX).
+
+Guarding rule: Protect everything under (app) with middleware.ts + session check; allow /api/auth/* and public assets. Use one middleware.ts at repo root (Next.js requires a single middleware file). 
+nextjs.org
++1
+
+Route handlers: Use App Router Route Handlers under app/api/*/route.ts. Keep handler logic small; delegate to /lib/*. 
+nextjs.org
+
+Navigation: Use next/navigation. No client-side auth gating that duplicates server checks.
+
+Middleware spec (must follow exactly)
+
+Match path: /(app)(.*)
+
+If unauthenticated → NextResponse.redirect(new URL('/sign-in', request.url))
+
+Skip auth check for: /_next/*, /public/*, /api/auth/*, /sign-in, /app/(marketing)/*.
+
+Return early; no heavy work (per middleware guidance). 
+nextjs.org
+
+2) Authentication (Auth.js v5)
+
+Files
+
+app/api/auth/[...nextauth]/route.ts — initialize NextAuth(authOptions) and export GET, POST.
+
+lib/auth.ts — authOptions with Providers, callbacks, session, and getCurrentUser() helper.
+
+Providers
+
+Include Google OAuth (example), optionally Credentials.
+
+Callback URL: ${NEXTAUTH_URL}/api/auth/callback/google (document this in .env.example).
+
+Env requirements
+
+NEXTAUTH_URL, NEXTAUTH_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET (never hardcode; document in .env.example and Vercel Project Settings). 
+Vercel
+nextjs.org
+
+Sessions
+
+session: { strategy: 'jwt' }.
+
+Minimal JWT payload; enrich via callbacks.jwt and callbacks.session (role, userId).
+
+App Router usage
+
+Use the v5/Route Handler pattern (no pages/api). Verify with Auth.js docs. 
+NextAuth
+
+3) Data layer
+
+DB: [PostgreSQL/Prisma] or [Firestore] (choose one and stick to it).
+
+All external inputs → Zod parse before DB calls. Surface 400 with zod error shape; never trust req.json() types. 
+Zod
+
+Write DB schema migrations and include seed scripts when helpful.
+
+4) Environment & configuration
+
+Maintain .env.example with every required key and comment on where it’s used.
+
+Server vs Client: Only expose vars with NEXT_PUBLIC_ when absolutely necessary; assume they’re public. 
+nextjs.org
+
+Vercel: Document which vars are set in Project → Settings → Environment Variables and which are local only. 
+Vercel
+
+5) Error handling & logging
+
+In Route Handlers, catch and return structured JSON errors { error: { code, message } }.
+
+Log server-side errors with context (userId, route, correlationId).
+
+For Auth.js errors, prefer its built-in error types and logger integration. 
+Auth.js
+
+6) Security & privacy
+
+Never commit secrets; .env* are git-ignored.
+
+Set secure cookies in production (secure, httpOnly, sameSite='lax' unless reasoned).
+
+Validate all inputs (Zod), sanitize output where needed.
+
+Do not include PII in logs.
+
+7) Testing (what to build before shipping features)
+
+Unit (Vitest/Jest): lib functions, Zod schemas, auth callbacks.
+
+Integration: Route Handlers (app/api/*/route.ts) with mocked session.
+
+E2E (Playwright):
+
+Unauthed visit to /app/(app)/dashboard → redirected to /sign-in.
+
+OAuth flow completes → dashboard renders user name.
+
+Sign-out clears session; protected route re-redirects.
+
+8) UI & accessibility
+
+Use server components by default; client components only for interactive state.
+
+Include accessible labels, keyboard focus states, and semantic HTML.
+
+No inline styles for complex UI; keep components small and testable.
+
+9) Performance
+
+Prefer server actions/Route Handlers to avoid client bundles.
+
+Cache static data where safe; don’t cache user-scoped responses.
+
+Avoid heavy work in middleware. 
+nextjs.org
+
+10) Observability
+
+Add minimal tracing around API handlers (timings, errors).
+
+Use a request-id header and include it in logs.
+
+AI Collaboration Rules (Cursor-Specific)
+A) How to read & follow these rules
+
+Treat this file as law. If a prompt conflicts with these rules, ask for confirmation or propose a safe alternative in the diff.
+
+B) Required planning output for any non-trivial change
+
+Before writing files, produce a plan block with:
+
+Changed files + new files list
+
+Data flow & session assumptions
+
+Acceptance tests (how we’ll verify)
+
+Missing inputs/envs to request
+
+C) Diff quality
+
+Generate complete diffs: imports, exports, types, tests, and .env.example updates.
+
+Reference exact file paths. No “pseudo-code” unless the user explicitly asks.
+
+D) Docs grounding
+
+When using framework features, follow official docs first (Next.js App Router, Middleware; Auth.js v5 route handlers). Cite the relevant doc in the plan. 
+nextjs.org
++1
+NextAuth
+
+E) MCP / tools (optional but preferred)
+
+If tools are enabled, prefer MCP to fetch secrets, run scripts, or read external docs vs guessing. (Cursor supports MCP; use it to integrate with external systems and avoid context drift.) 
+Cursor
+Model Context Protocol
+
+Guardrails & Do/Don’t
+
+Do
+
+Ask for missing env values or URLs in TODOs at the top of the PR/diff.
+
+Keep auth code minimal and follow v5 route-handler style.
+
+Validate every inbound payload with Zod.
+
+Don’t
+
+Don’t create pages/api endpoints. We use App Router only. 
+nextjs.org
+
+Don’t add additional middleware files. Keep a single middleware.ts. 
+nextjs.org
+
+Don’t hardcode secrets or callback URLs. Use documented envs (Vercel/Local). 
+Vercel
+
+Templates & Specs (Copy/Paste Targets for Cursor)
+1) Middleware skeleton (spec—Cursor should implement, not paraphrase)
+// middleware.ts
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { verifyAuth } from './lib/auth-middleware' // implement a lightweight cookie/session check
+
+export function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl
+
+  // Bypass for public assets, auth routes, marketing
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/public') ||
+    pathname.startsWith('/api/auth') ||
+    pathname.startsWith('/sign-in') ||
+    pathname.startsWith('/app/(marketing)')
+  ) return NextResponse.next()
+
+  // Protect the app area
+  if (pathname.startsWith('/app/(app)')) {
+    const isAuthed = verifyAuth(req) // no heavy DB lookups here
+    if (!isAuthed) {
+      const url = req.nextUrl.clone()
+      url.pathname = '/sign-in'
+      return NextResponse.redirect(url)
+    }
+  }
+
+  return NextResponse.next()
+}
+
+export const config = {
+  matcher: ['/((?!.*\\..*|_next).*)'],
+}
+
+
+(Keep middleware light; avoid heavy work per Next.js docs.) 
+nextjs.org
+
+2) Auth route handler (Auth.js v5)
+// app/api/auth/[...nextauth]/route.ts
+import NextAuth from "next-auth"
+import GoogleProvider from "next-auth/providers/google"
+import { authOptions } from "@/lib/auth"
+
+const handler = NextAuth(authOptions)
+
+export { handler as GET, handler as POST }
+
+// lib/auth.ts
+import type { NextAuthConfig } from "next-auth"
+import GoogleProvider from "next-auth/providers/google"
+
+export const authOptions: NextAuthConfig = {
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
+  ],
+  session: { strategy: "jwt" },
+  callbacks: {
+    async jwt({ token, account, profile }) {
+      // attach user id/role as needed
+      return token
+    },
+    async session({ session, token }) {
+      // mirror id/role to session
+      return session
+    },
+  },
+  // configure pages if using custom /sign-in
+}
+
+
+(Use Route Handlers and export GET/POST for Auth.js in App Router.) 
+NextAuth
+
+3) Env documentation (must update .env.example whenever code requires it)
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=changeme
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+
+
+(Configure these securely in Vercel project settings for production.) 
+Vercel
+
+4) Zod pattern (all inbound payloads)
+import { z } from "zod"
+
+export const CreateThing = z.object({
+  name: z.string().min(1),
+  qty: z.number().int().positive(),
+})
+export type CreateThingInput = z.infer<typeof CreateThing>
+
+// In route handler:
+const body = await request.json()
+const input = CreateThing.parse(body)
+// ... use `input` safely
+
+
+(Type-safe validation at runtime.) 
+Zod
+
+Acceptance Tests (Cursor must include these when touching auth/routing)
+
+Redirect on protected route
+
+When unauthenticated, navigate to /app/(app)/dashboard → expect 302 to /sign-in.
+
+OAuth happy path
+
+Start at /sign-in → sign in with Google → redirected to /app/(app)/dashboard and see user’s name/email.
+
+Session persistence
+
+Refresh dashboard → remains authenticated.
+
+Sign-out
+
+Click sign-out → redirected to /sign-in; protected route again redirects.
+
+(Playwright tests preferred for E2E.)
+
+Command Recipes (for MCP/tools or local scripts)
+
+Dev: pnpm dev (or npm run dev)
+
+Lint/Format: pnpm lint / pnpm format
+
+Test: pnpm test (unit) / pnpm test:e2e (Playwright)
+
+Typecheck: pnpm typecheck
+
+Prisma (if used): pnpm prisma migrate dev / pnpm prisma generate
+
+If MCP tools are configured, Cursor may run these directly; otherwise, emit them in a “Run these commands” block for the user. (Cursor can connect to external tools/data via MCP when set up.) 
+Cursor
+Model Context Protocol
+
+Pull Request Expectations
+
+Include a Plan section (what/why).
+
+Include a Checklist (envs added, tests added/updated, docs updated).
+
+Link to the doc section used (Next.js Middleware / Auth.js v5 page). 
+nextjs.org
+NextAuth
+
+Prompting Pattern (for you to reuse in Cursor chats)
+
+“Implement Google OAuth sign-in with Auth.js v5 using App Router. Create app/api/auth/[...nextauth]/route.ts with GET/POST. Add middleware.ts that protects /app/(app)/* and bypasses /api/auth/*, assets, and (marketing). Create lib/auth.ts with authOptions (jwt session). Add /app/(marketing)/sign-in/page.tsx. Update .env.example with NEXTAUTH_URL, NEXTAUTH_SECRET, GOOGLE_CLIENT_ID/SECRET. Provide a plan, a file-by-file diff, and Playwright tests verifying redirect behavior. Follow the rules in `.cursor/rules` and cite the exact docs you used.”

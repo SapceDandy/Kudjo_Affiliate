@@ -1,5 +1,7 @@
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import fs from 'fs';
+import path from 'path';
 
 // Initialize Firebase Admin
 let adminDb: any;
@@ -7,18 +9,48 @@ let adminDb: any;
 try {
   // Check if Firebase Admin is already initialized
   if (getApps().length === 0) {
-    // Try to use service account from environment variables
-    const serviceAccount = {
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "kudjo-affiliate",
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL || "firebase-adminsdk-xxxxx@kudjo-affiliate.iam.gserviceaccount.com",
-      privateKey: (process.env.FIREBASE_PRIVATE_KEY || "").replace(/\\n/g, '\n'),
-    };
-    
-    initializeApp({
-      credential: cert(serviceAccount)
-    });
-    
-    console.log("Firebase Admin initialized successfully");
+    let initialized = false;
+    // First, try env-provided credentials
+    const envPrivateKey = (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n');
+    const envClientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    const envProjectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID;
+    if (envPrivateKey && envClientEmail && envProjectId) {
+      initializeApp({ credential: cert({ projectId: envProjectId, clientEmail: envClientEmail, privateKey: envPrivateKey }) });
+      initialized = true;
+      console.log('Firebase Admin initialized from env credentials');
+    }
+
+    if (!initialized) {
+      // Next, try GOOGLE_APPLICATION_CREDENTIALS
+      const gacPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+      if (gacPath && fs.existsSync(gacPath)) {
+        const sa = JSON.parse(fs.readFileSync(gacPath, 'utf-8'));
+        initializeApp({ credential: cert(sa) });
+        initialized = true;
+        console.log('Firebase Admin initialized from GOOGLE_APPLICATION_CREDENTIALS');
+      }
+    }
+
+    if (!initialized) {
+      // Finally, try common local files in repo
+      const candidates = [
+        path.resolve(process.cwd(), 'scripts/firebase-service-account.json'),
+        path.resolve(process.cwd(), 'service-account.json'),
+      ];
+      for (const p of candidates) {
+        if (fs.existsSync(p)) {
+          const sa = JSON.parse(fs.readFileSync(p, 'utf-8'));
+          initializeApp({ credential: cert(sa) });
+          initialized = true;
+          console.log('Firebase Admin initialized from local service account file:', path.basename(p));
+          break;
+        }
+      }
+    }
+
+    if (!initialized) {
+      throw new Error('Firebase Admin credentials not found. Set FIREBASE_PRIVATE_KEY/FIREBASE_CLIENT_EMAIL or provide GOOGLE_APPLICATION_CREDENTIALS/service-account file.');
+    }
   }
   
   adminDb = getFirestore();

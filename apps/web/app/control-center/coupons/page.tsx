@@ -111,6 +111,38 @@ export default function CouponsPage() {
     setShowCouponDialog(true);
   };
 
+  const handleMarkUsed = async () => {
+    if (!selectedCoupon) return;
+    try {
+      const res = await fetch('/api/control-center/coupons/mark-used', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: selectedCoupon.id })
+      });
+      if (!res.ok) throw new Error('Failed');
+      setShowCouponDialog(false);
+      loadPage('init');
+    } catch (e) {
+      alert('Failed to mark used');
+    }
+  };
+
+  const handleEditCoupon = async (updates: any) => {
+    if (!selectedCoupon) return;
+    try {
+      const res = await fetch('/api/control-center/coupons/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: selectedCoupon.id, updates })
+      });
+      if (!res.ok) throw new Error('Failed');
+      setShowCouponDialog(false);
+      loadPage('init');
+    } catch (e) {
+      alert('Update failed');
+    }
+  };
+
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
@@ -241,24 +273,18 @@ export default function CouponsPage() {
       <Dialog open={showCouponDialog} onOpenChange={setShowCouponDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              Coupon Details
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-8 w-8 p-0" 
-                onClick={() => setShowCouponDialog(false)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </DialogTitle>
+            <DialogTitle>Coupon Details</DialogTitle>
           </DialogHeader>
           
           {selectedCoupon && (
             <div className="space-y-4">
               <div className="bg-gray-50 p-4 rounded-lg text-center">
                 <p className="text-sm text-gray-500">Coupon Code</p>
-                <p className="text-2xl font-mono font-bold">{selectedCoupon.code}</p>
+                <input
+                  className="w-full text-center font-mono text-2xl font-bold bg-transparent border-b focus:outline-none"
+                  value={selectedCoupon.code}
+                  onChange={(e) => setSelectedCoupon({ ...selectedCoupon, code: e.target.value })}
+                />
               </div>
               
               <div className="grid grid-cols-2 gap-4">
@@ -309,12 +335,13 @@ export default function CouponsPage() {
               </div>
               
               <div className="pt-4 flex justify-end space-x-2">
-                <Button variant="outline" size="sm">Edit Coupon</Button>
+                <Button variant="outline" size="sm" onClick={() => handleEditCoupon({ code: selectedCoupon.code })}>Save</Button>
                 {!selectedCoupon.used && (
                   <Button 
                     variant="outline" 
                     size="sm"
                     className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                    onClick={handleMarkUsed}
                   >
                     Mark as Used
                   </Button>

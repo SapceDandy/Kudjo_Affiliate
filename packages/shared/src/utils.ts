@@ -130,3 +130,14 @@ export function addDays(date: Date, days: number): Date {
   result.setDate(result.getDate() + days);
   return result;
 } 
+
+// Influencer tiers
+export type Tier = 'Small' | 'Medium' | 'Large' | 'XL' | 'Huge';
+
+export function tierForFollowers(count: number): Tier {
+  if (count < 20000) return 'Small';
+  if (count < 100000) return 'Medium';
+  if (count < 500000) return 'Large';
+  if (count < 1000000) return 'XL';
+  return 'Huge';
+}

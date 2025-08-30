@@ -1,3 +1,5 @@
+'use client';
+
 import { RoleGuard } from '@/lib/role-guard';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';

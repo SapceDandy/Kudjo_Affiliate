@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   getAuth, 
   onAuthStateChanged, 
@@ -40,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const router = useRouter();
 
   // Check for admin cookie
   const checkAdminSession = async () => {
@@ -81,7 +83,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let isMounted = true;
     (async () => {
       try {
-        console.log('Initializing auth state');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Initializing auth state');
+        }
         // First, try to resolve admin session once
         const adminSession = await checkAdminSession();
         if (!isMounted) return;
@@ -99,12 +103,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (!isMounted) return;
             setLoading(true);
             if (firebaseUser) {
-              console.log('Firebase user detected:', firebaseUser.uid);
+              if (process.env.NODE_ENV === 'development') {
+                console.log('Firebase user detected:', firebaseUser.uid);
+              }
               const role = await fetchUserRole(firebaseUser);
-              console.log('User role from Firestore:', role);
+              if (process.env.NODE_ENV === 'development') {
+                console.log('User role from Firestore:', role);
+              }
               setUser({ uid: firebaseUser.uid, email: firebaseUser.email, displayName: firebaseUser.displayName, photoURL: firebaseUser.photoURL, role });
             } else {
-              console.log('No user detected, setting user to null');
+              if (process.env.NODE_ENV === 'development') {
+                console.log('No user detected, setting user to null');
+              }
               setUser(null);
             }
           } catch (err) {
@@ -149,22 +159,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signUp = async (email: string, password: string, role: 'business' | 'influencer') => {
+  const signUp = async (
+    email: string,
+    password: string,
+    role: 'business' | 'influencer'
+  ): Promise<'business'> => {
     setLoading(true);
     setError(null);
     try {
       const auth = firebaseAuth;
       const db = firebaseDb;
+      // Only businesses are allowed to self-register.
+      if (role !== 'business') {
+        throw new Error('Only businesses can sign up. Influencers are created by admin.');
+      }
       const result = await createUserWithEmailAndPassword(auth, email, password);
-      const collectionName = role === 'business' ? 'businesses' : 'influencers';
-      await setDoc(doc(db, collectionName, result.user.uid), {
+      await setDoc(doc(db, 'businesses', result.user.uid), {
         ownerId: result.user.uid,
         email,
         createdAt: serverTimestamp(),
         status: 'active',
       }, { merge: true });
-      setUser({ uid: result.user.uid, email: result.user.email, displayName: result.user.displayName, photoURL: result.user.photoURL, role });
-      return role;
+      setUser({ uid: result.user.uid, email: result.user.email, displayName: result.user.displayName, photoURL: result.user.photoURL, role: 'business' });
+      return 'business';
     } catch (err) {
       console.error('Sign up error:', err);
       setError(err instanceof Error ? err : new Error('Sign up failed'));
@@ -267,6 +284,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await firebaseSignOut(auth);
       }
       setUser(null);
+      // Always send user back to home after sign-out
+      router.push('/');
     } catch (err) {
       console.error('Sign out error:', err);
       setError(err instanceof Error ? err : new Error('Sign out failed'));

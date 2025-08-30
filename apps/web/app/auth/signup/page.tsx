@@ -13,7 +13,7 @@ export default function SignUpPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'business' | 'influencer'>('business');
+  const [activeTab, setActiveTab] = useState<'business'>('business');
   const { signUp, signInWithGoogle } = useAuth();
   const router = useRouter();
 
@@ -37,14 +37,10 @@ export default function SignUpPage() {
     }
     
     try {
-      await signUp(email, password, activeTab);
+      await signUp(email, password, 'business');
       
       // Redirect based on role
-      if (activeTab === 'business') {
-        router.replace('/business/onboard');
-      } else {
-        router.replace('/influencer/dashboard');
-      }
+      router.replace('/business/onboard');
     } catch (err: any) {
       console.error('Sign-up error:', err);
       
@@ -63,19 +59,15 @@ export default function SignUpPage() {
     }
   };
 
-  const handleGoogleSignUp = async (role: 'business' | 'influencer') => {
+  const handleGoogleSignUp = async (role: 'business') => {
     setLoading(true);
     setError('');
     
     try {
-      await signInWithGoogle(role);
+      await signInWithGoogle('business');
       
       // Redirect based on role
-      if (role === 'business') {
-        router.replace('/business/onboard');
-      } else {
-        router.replace('/influencer/dashboard');
-      }
+      router.replace('/business/onboard');
     } catch (err: any) {
       console.error('Google sign-up error:', err);
       
@@ -99,26 +91,10 @@ export default function SignUpPage() {
           <CardTitle className="text-brand">Create Account</CardTitle>
           <CardDescription>Sign up to start using Kudjo</CardDescription>
           
-          <Tabs 
-            defaultValue="business" 
-            className="mt-4"
-            onValueChange={(value) => setActiveTab(value as 'business' | 'influencer')}
-          >
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="business">Business</TabsTrigger>
-              <TabsTrigger value="influencer">Influencer</TabsTrigger>
-            </TabsList>
-            <TabsContent value="business" className="mt-2">
-              <p className="text-sm text-gray-600">
-                Create a business account to offer promotions and track performance.
-              </p>
-            </TabsContent>
-            <TabsContent value="influencer" className="mt-2">
-              <p className="text-sm text-gray-600">
-                Create an influencer account to promote businesses and earn money.
-              </p>
-            </TabsContent>
-          </Tabs>
+          <div className="mt-4 space-y-2">
+            <p className="text-sm text-gray-600">Create a business account to offer promotions and track performance.</p>
+            <p className="text-xs text-yellow-700 bg-yellow-50 p-2 rounded">Influencer sign-up requires TikTok or Instagram login and admin approval. Please use the Influencer portal when enabled.</p>
+          </div>
         </CardHeader>
         
         <CardContent className="space-y-6">
@@ -149,7 +125,7 @@ export default function SignUpPage() {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
               </svg>
-              Sign up with Google as {activeTab === 'business' ? 'Business' : 'Influencer'}
+              Sign up with Google as Business
             </Button>
           </div>
 
@@ -211,7 +187,7 @@ export default function SignUpPage() {
               className="w-full bg-brand hover:bg-brand/90 text-white" 
               disabled={loading}
             >
-              {loading ? 'Creating Account...' : `Create ${activeTab === 'business' ? 'Business' : 'Influencer'} Account`}
+              {loading ? 'Creating Account...' : 'Create Business Account'}
             </Button>
           </form>
         </CardContent>

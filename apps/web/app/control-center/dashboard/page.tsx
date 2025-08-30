@@ -52,7 +52,6 @@ interface CouponFormData {
   type: string;
   bizId: string;
   infId: string;
-  offerId: string;
 }
 
 const CHART_COLORS = {
@@ -72,8 +71,7 @@ export default function AdminDashboardPage() {
   const [couponForm, setCouponForm] = useState<CouponFormData>({
     type: 'AFFILIATE',
     bizId: '',
-    infId: '',
-    offerId: ''
+    infId: ''
   });
   const [isCreating, setIsCreating] = useState(false);
 
@@ -99,7 +97,7 @@ export default function AdminDashboardPage() {
   }, []);
 
   const handleCreateCoupon = async () => {
-    if (!couponForm.bizId || !couponForm.infId || !couponForm.offerId) {
+    if (!couponForm.bizId || !couponForm.infId) {
       alert('Please fill in all required fields');
       return;
     }
@@ -121,7 +119,7 @@ export default function AdminDashboardPage() {
       alert(`Coupon created: ${created.couponId} (code: ${created.code})`);
       
       // Reset form and close modal
-      setCouponForm({ type: 'AFFILIATE', bizId: '', infId: '', offerId: '' });
+      setCouponForm({ type: 'AFFILIATE', bizId: '', infId: '' });
       setShowCouponModal(false);
       
       // Refresh metrics
@@ -203,15 +201,7 @@ export default function AdminDashboardPage() {
                 />
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="offerId">Offer ID</Label>
-                <Input
-                  id="offerId"
-                  value={couponForm.offerId}
-                  onChange={(e) => setCouponForm(prev => ({ ...prev, offerId: e.target.value }))}
-                  placeholder="Enter offer ID"
-                />
-              </div>
+              {/* Offer ID is auto-generated based on business and influencer */}
               
               <div className="flex justify-end space-x-2 pt-4">
                 <Button variant="outline" onClick={() => setShowCouponModal(false)} disabled={isCreating}>

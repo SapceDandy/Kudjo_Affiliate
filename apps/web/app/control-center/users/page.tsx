@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Users, Search, Download, Filter, UserPlus, X } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Users, Search, Download, Filter, UserPlus } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export default function UsersPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -19,6 +19,7 @@ export default function UsersPage() {
   const [pageSize] = useState(20);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [cursorStack, setCursorStack] = useState<string[]>([]);
+  const [formUser, setFormUser] = useState<any>({ role: 'business', email: '', password: '', businessName: '', website: '' });
 
   const loadPage = async (direction: 'next' | 'prev' | 'init' = 'init') => {
     try {
@@ -127,7 +128,7 @@ export default function UsersPage() {
               </>
             )}
           </Button>
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => { setSelectedUser(null); setFormUser({ role: 'business', email: '', password: '', businessName: '', website: '' }); setShowUserDialog(true); }}>
             <UserPlus className="w-4 h-4 mr-2" />
             Add User
           </Button>
@@ -260,23 +261,13 @@ export default function UsersPage() {
       )}
 
       {/* User Profile Dialog */}
-      <Dialog open={showUserDialog} onOpenChange={setShowUserDialog}>
+      <Dialog open={showUserDialog} onOpenChange={(open)=>{ setShowUserDialog(open); if(!open){ setSelectedUser(null); setFormUser({ role: 'business', email: '', password: '', businessName: '', website: '' }); } }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              User Profile
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-8 w-8 p-0" 
-                onClick={() => setShowUserDialog(false)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </DialogTitle>
+            <DialogTitle>User</DialogTitle>
           </DialogHeader>
           
-          {selectedUser && (
+          {selectedUser ? (
             <div className="space-y-4">
               <div className="flex items-center space-x-4">
                 <div className="w-16 h-16 rounded-full bg-gray-200 overflow-hidden">
@@ -314,14 +305,62 @@ export default function UsersPage() {
               </div>
               
               <div className="pt-4 flex justify-end space-x-2">
-                <Button variant="outline" size="sm">Edit User</Button>
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                  className={selectedUser.status === 'suspended' ? 'text-green-600 hover:bg-green-50 hover:text-green-700' : 'text-red-600 hover:bg-red-50 hover:text-red-700'}
+                  onClick={async () => {
+                    const next = selectedUser.status === 'suspended' ? 'active' : 'suspended';
+                    const res = await fetch('/api/control-center/users/update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: selectedUser.id, updates: { status: next } }) });
+                    if (res.ok) { setShowUserDialog(false); loadPage('init'); } else { alert('Failed'); }
+                  }}
                 >
-                  {selectedUser.status === 'suspended' ? 'Activate Account' : 'Suspend Account'}
+                  {selectedUser.status === 'suspended' ? 'Activate Account' : 'Deactivate Account'}
                 </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-3">
+                <Input placeholder="Email" value={formUser.email} onChange={(e) => setFormUser((p:any)=>({ ...p, email: e.target.value }))} />
+                <Input placeholder="Password (leave blank to auto-generate)" type="password" value={formUser.password} onChange={(e)=> setFormUser((p:any)=>({ ...p, password: e.target.value }))} />
+                <div className="flex gap-2">
+                  <Button variant={formUser.role==='business'?'default':'outline'} onClick={()=>setFormUser((p:any)=>({ ...p, role: 'business' }))}>Business</Button>
+                  <Button variant={formUser.role==='influencer'?'default':'outline'} onClick={()=>setFormUser((p:any)=>({ ...p, role: 'influencer' }))}>Influencer</Button>
+                </div>
+                {formUser.role === 'business' && (
+                  <>
+                    <Input placeholder="Business Name" value={formUser.businessName} onChange={(e) => setFormUser((p:any)=>({ ...p, businessName: e.target.value }))} />
+                    <Input placeholder="Website" value={formUser.website} onChange={(e) => setFormUser((p:any)=>({ ...p, website: e.target.value }))} />
+                  </>
+                )}
+                {formUser.role === 'influencer' && (
+                  <>
+                    <Input placeholder="Influencer Name" value={formUser.influencerName||''} onChange={(e) => setFormUser((p:any)=>({ ...p, influencerName: e.target.value }))} />
+                    <Input placeholder="Social Pages (comma-separated)" value={(formUser.pages||[]).join(', ')} onChange={(e) => setFormUser((p:any)=>({ ...p, pages: e.target.value.split(',').map((s)=>s.trim()).filter(Boolean) }))} />
+                  </>
+                )}
+              </div>
+              <div className="pt-2 flex justify-end">
+                <Button onClick={async () => {
+                  if (!formUser?.email || !formUser?.role) { alert('Email and role required'); return; }
+                  if (formUser.role === 'business' && (!formUser.businessName || !formUser.website)) { alert('Business name and website required'); return; }
+                  if (formUser.role === 'influencer' && (!formUser.influencerName || !formUser.pages || formUser.pages.length === 0)) { alert('Influencer name and pages required'); return; }
+                  const res = await fetch('/api/control-center/users/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formUser) });
+                  if (res.ok) {
+                    const js = await res.json();
+                    let msg = 'User created successfully';
+                    if (js.generatedPassword) { msg += `\nTemporary password: ${js.generatedPassword}`; }
+                    alert(msg);
+                    setFormUser({ role: 'business', email: '', password: '', businessName: '', website: '' });
+                    setSelectedUser(null);
+                    setShowUserDialog(false);
+                    loadPage('init');
+                  } else {
+                    const j = await res.json().catch(()=>({}));
+                    alert(j.error || 'Create failed');
+                  }
+                }}>Submit</Button>
               </div>
             </div>
           )}

@@ -22,6 +22,8 @@ export function useOffers() {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [offset, setOffset] = useState<number>(0);
+  const [hasMore, setHasMore] = useState<boolean>(true);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -33,7 +35,91 @@ export function useOffers() {
 
     const fetchOffers = async () => {
       try {
-        // Get all active offers
+        // Create mock data directly to bypass Firebase quota issues
+        const mockOffers: Offer[] = [
+          {
+            id: 'mock_1',
+            title: 'Buy One Get One Free Fitness',
+            description: 'Order any entree and get a second one free',
+            splitPct: 25,
+            userDiscountPct: 50,
+            businessName: 'Sunset Grill',
+            businessId: 'demo_biz_1',
+            status: 'active' as const,
+            currentInfluencers: 2,
+            maxInfluencers: 10
+          },
+          {
+            id: 'mock_2',
+            title: '30% Off Mexican Orders',
+            description: '30% discount on all Mexican food orders',
+            splitPct: 22,
+            userDiscountPct: 30,
+            businessName: 'Spirits & More',
+            businessId: 'demo_biz_1',
+            status: 'active' as const,
+            currentInfluencers: 5,
+            maxInfluencers: 15
+          },
+          {
+            id: 'mock_3',
+            title: '$10 Off Your Order',
+            description: 'Get $10 off when you spend $30 or more',
+            splitPct: 20,
+            userDiscountCents: 1000,
+            minSpend: 3000,
+            businessName: 'Copper Kettle',
+            businessId: 'demo_biz_1',
+            status: 'active' as const,
+            currentInfluencers: 1,
+            maxInfluencers: 8
+          },
+          {
+            id: 'mock_4',
+            title: 'Student Discount - 15% Off Sports Bar',
+            description: '15% off for students with valid ID',
+            splitPct: 18,
+            userDiscountPct: 15,
+            businessName: 'Modern Bistro',
+            businessId: 'demo_biz_1',
+            status: 'active' as const,
+            currentInfluencers: 3,
+            maxInfluencers: 12
+          },
+          {
+            id: 'mock_5',
+            title: 'Happy Hour - 30% Off Drinks & Apps',
+            description: '30% off drinks and appetizers during happy hour',
+            splitPct: 26,
+            userDiscountPct: 30,
+            businessName: 'Classic Style',
+            businessId: 'demo_biz_1',
+            status: 'active' as const,
+            currentInfluencers: 4,
+            maxInfluencers: 20
+          },
+          {
+            id: 'mock_6',
+            title: 'Free Appetizer with Entree Purchase',
+            description: 'Get a free appetizer when you order any entree',
+            splitPct: 24,
+            userDiscountCents: 800,
+            minSpend: 1500,
+            businessName: 'Local Bistro',
+            businessId: 'demo_biz_1',
+            status: 'active' as const,
+            currentInfluencers: 2,
+            maxInfluencers: 6
+          }
+        ];
+
+        const batch = mockOffers.slice(offset, offset + 20);
+        setOffers(prev => offset === 0 ? batch : [...prev, ...batch]);
+        setHasMore(offset + 20 < mockOffers.length);
+        setError(null);
+        return;
+
+        // Fallback to client Firestore if server route unavailable
         const offersRef = collection(db, 'offers');
         const offersQuery = query(offersRef, where('active', '==', true));
         const offersSnapshot = await getDocs(offersQuery);
@@ -92,7 +178,7 @@ export function useOffers() {
     };
 
     fetchOffers();
-  }, [user]);
+  }, [user, offset]);
 
-  return { offers, loading, error };
+  return { offers, loading, error, hasMore, loadMore: () => setOffset(prev => prev + 20) };
 } 

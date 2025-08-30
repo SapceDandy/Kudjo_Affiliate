@@ -11,6 +11,7 @@ export function RotatingLogo() {
         width={400}
         height={400}
         className="object-contain"
+        style={{ height: 'auto', width: '100%', maxWidth: 400 }}
         priority
       />
     </div>

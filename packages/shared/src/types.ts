@@ -42,6 +42,9 @@ export interface OfferDoc {
   title: string;
   description?: string;
   splitPct: number;
+  userDiscountPct?: number;
+  userDiscountCents?: number;
+  payoutPerRedemptionCents?: number;
   publicCode: string;
   minSpend?: number;
   blackout?: string[];

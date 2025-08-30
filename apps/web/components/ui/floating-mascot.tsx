@@ -11,6 +11,7 @@ export function FloatingMascot() {
         width={100}
         height={100}
         className="drop-shadow-lg"
+        style={{ height: 'auto', width: '100%', maxWidth: 100 }}
       />
     </div>
   );

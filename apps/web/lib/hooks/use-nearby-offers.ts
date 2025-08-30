@@ -17,6 +17,8 @@ export function useNearbyOffers() {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [offset, setOffset] = useState<number>(0);
+  const [hasMore, setHasMore] = useState<boolean>(true);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -38,41 +40,50 @@ export function useNearbyOffers() {
           pos = null;
         }
 
-        // Get all active offers
-        const offersRef = collection(db, 'offers');
-        const offersQuery = query(offersRef, where('active', '==', true));
-        const offersSnapshot = await getDocs(offersQuery);
+        // If no device location, try influencer preferredGeo
+        let fallbackGeo: { lat: number; lng: number } | null = null;
+        if (!pos) {
+          try {
+            const infDoc = await getDoc(doc(db, 'influencers', user.uid));
+            const inf = infDoc.exists() ? (infDoc.data() as any) : null;
+            if (inf?.preferredGeo && typeof inf.preferredGeo.lat === 'number' && typeof inf.preferredGeo.lng === 'number') {
+              fallbackGeo = { lat: inf.preferredGeo.lat, lng: inf.preferredGeo.lng };
+            }
+          } catch {}
+        }
+
+        // Prefer server endpoint to avoid client rules issues and to include business geo
+        const params = new URLSearchParams();
+        params.set('limit', '20');
+        params.set('offset', String(offset));
+        const res = await fetch(`/api/offers/list?${params.toString()}`);
+        if (!res.ok) throw new Error('Failed to load offers');
+        const js = await res.json();
+        const serverOffers = (js.items || []) as any[];
 
         const isTestAccount = Boolean(user.email && /test|demo|example/i.test(user.email));
-        const shouldBypassGeo = !pos || isTestAccount;
+        const effectivePos = pos || (fallbackGeo ? ({ coords: { latitude: fallbackGeo.lat, longitude: fallbackGeo.lng } } as any) : null);
+        const shouldBypassGeo = !effectivePos || isTestAccount;
 
         const offersWithDetails = await Promise.all(
-          offersSnapshot.docs.map(async (offerDoc) => {
+          serverOffers.map(async (o) => {
             try {
-              const offerData = offerDoc.data();
-              const bizRef = doc(db, 'businesses', offerData.bizId);
-              const bizDoc = await getDoc(bizRef);
-              const bizData = bizDoc.data();
-              if (!bizData) return null;
-
+              const bizData = { name: o.businessName, geo: o.businessGeo } as any;
               let distance = Infinity;
-              if (pos && bizData.geo) {
+              if (effectivePos && bizData?.geo) {
                 distance = calculateDistance(
-                  pos.coords.latitude,
-                  pos.coords.longitude,
+                  (effectivePos as any).coords.latitude,
+                  (effectivePos as any).coords.longitude,
                   bizData.geo.lat,
                   bizData.geo.lng
                 );
               }
-
-              // If we have location, filter to 100 miles radius
               if (!shouldBypassGeo && (isNaN(distance) || distance > 100)) return null;
-
               return {
-                id: offerDoc.id,
-                title: offerData.title,
-                description: offerData.description,
-                splitPct: offerData.splitPct,
+                id: o.id,
+                title: o.title,
+                description: o.description,
+                splitPct: o.splitPct,
                 businessName: bizData.name,
                 distance: Number.isFinite(distance) ? distance : Math.floor(Math.random() * 80) + 5,
               } as Offer;
@@ -85,8 +96,10 @@ export function useNearbyOffers() {
 
         const validOffers = offersWithDetails.filter((offer): offer is Offer => offer !== null);
         validOffers.sort((a, b) => a.distance - b.distance);
-
-        setOffers(validOffers);
+        setOffers(prev => offset === 0 ? validOffers : [...prev, ...validOffers]);
+        // hasMore: if nextOffset is provided by backend assume more available
+        const data = js as any;
+        setHasMore(Boolean(data.nextOffset));
         setError(null);
       } catch (err) {
         console.error('Error fetching nearby offers:', err);
@@ -97,9 +110,9 @@ export function useNearbyOffers() {
     };
 
     fetchOffers();
-  }, [user]);
+  }, [user, offset]);
 
-  return { offers, loading, error };
+  return { offers, loading, error, hasMore, loadMore: () => setOffset(prev => prev + 20) };
 }
 
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {

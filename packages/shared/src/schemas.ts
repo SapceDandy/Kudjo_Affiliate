@@ -21,6 +21,17 @@ export const BusinessSchema = z.object({
   status: z.enum(['active', 'paused', 'closed']).default('active'),
 });
 
+// NEW: Influencer schema additions for follower count and tier
+export const InfluencerSchema = z.object({
+  ownerId: z.string(),
+  handle: z.string().min(2),
+  followerCount: z.number().int().nonnegative().default(0),
+  tier: z.enum(['Small', 'Medium', 'Large', 'XL', 'Huge']).default('Small'),
+  approved: z.boolean().default(false),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
 export const OfferSchema = z.object({
   bizId: z.string(),
   title: z.string().min(2),

@@ -1,4 +1,6 @@
 import admin from 'firebase-admin';
+import fs from 'fs';
+import path from 'path';
 
 // Define the types locally to avoid import path issues
 type UserRole = 'influencer' | 'business' | 'admin';
@@ -111,11 +113,31 @@ interface RedemptionDoc {
   holdUntil?: string;
 }
 
-// Initialize Firebase Admin if not already done
+// Initialize Firebase Admin if not already done (env → local files → ADC)
 if (admin.apps.length === 0) {
-  admin.initializeApp({
-    projectId: 'kudjo-affiliate'
-  });
+  const projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'kudjo-affiliate';
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const privateKey = (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n');
+  if (projectId && clientEmail && privateKey) {
+    admin.initializeApp({ credential: admin.credential.cert({ projectId, clientEmail, privateKey }) });
+  } else {
+    const candidates = [
+      path.resolve(process.cwd(), 'scripts/firebase-service-account.json'),
+      path.resolve(process.cwd(), 'service-account.json'),
+    ];
+    let initialized = false;
+    for (const p of candidates) {
+      if (fs.existsSync(p)) {
+        const sa = JSON.parse(fs.readFileSync(p, 'utf-8'));
+        admin.initializeApp({ credential: admin.credential.cert(sa) });
+        initialized = true;
+        break;
+      }
+    }
+    if (!initialized) {
+      admin.initializeApp({ projectId });
+    }
+  }
 }
 
 const db = admin.firestore();
@@ -152,7 +174,7 @@ const businessNames = [
   'Zen Spa', 'Relax Zone', 'Peaceful Mind', 'Harmony Health', 'Balance Point'
 ];
 
-const cities = [
+const baseCities = [
   { name: 'San Francisco', state: 'CA', lat: 37.7749, lng: -122.4194 },
   { name: 'Los Angeles', state: 'CA', lat: 34.0522, lng: -118.2437 },
   { name: 'New York', state: 'NY', lat: 40.7128, lng: -74.0060 },
@@ -169,6 +191,11 @@ const cities = [
   { name: 'Phoenix', state: 'AZ', lat: 33.4484, lng: -112.0740 },
   { name: 'San Diego', state: 'CA', lat: 32.7157, lng: -117.1611 }
 ];
+
+// Allow forcing Austin-only seed for local testing
+const cities = process.env.SEED_AUSTIN_ONLY === '1' ? [
+  { name: 'Austin', state: 'TX', lat: 30.2672, lng: -97.7431 }
+] : baseCities;
 
 // Influencer data
 const influencerHandles = [
@@ -247,18 +274,23 @@ function generateBusinessHours() {
   return hours;
 }
 
-function generateOfferTitle(cuisine: string): string {
-  const templates = [
-    `${randomInt(10, 50)}% Off ${cuisine}`,
-    `Buy One Get One Free ${cuisine}`,
-    `Free Appetizer with ${cuisine} Entree`,
-    `$${randomInt(5, 20)} Off Your Order`,
-    `Happy Hour Special`,
-    `Student Discount`,
-    `First Time Customer Deal`,
-    `Weekend Special`
+function generateDiscountOffer(cuisine: string): { title: string; userDiscountPct?: number; userDiscountCents?: number; minSpend?: number } {
+  const discountTypes = [
+    { title: `20% Off ${cuisine} Orders`, userDiscountPct: 20 },
+    { title: `25% Off ${cuisine} Orders`, userDiscountPct: 25 },
+    { title: `30% Off ${cuisine} Orders`, userDiscountPct: 30 },
+    { title: `Buy One Get One Free ${cuisine}`, userDiscountPct: 50 }, // Effectively 50% off when ordering 2
+    { title: `Buy One Get One 50% Off ${cuisine}`, userDiscountPct: 25 }, // Effectively 25% off when ordering 2
+    { title: `Free Appetizer with ${cuisine} Entree`, userDiscountCents: 800, minSpend: 1500 }, // $8 off appetizer with $15+ entree
+    { title: `$10 Off Your ${cuisine} Order`, userDiscountCents: 1000, minSpend: 3000 }, // $10 off $30+
+    { title: `$15 Off Your ${cuisine} Order`, userDiscountCents: 1500, minSpend: 5000 }, // $15 off $50+
+    { title: `${cuisine} Happy Hour - 30% Off Drinks & Apps`, userDiscountPct: 30 },
+    { title: `Student Discount - 15% Off ${cuisine}`, userDiscountPct: 15 },
+    { title: `First Time Customer - 25% Off ${cuisine}`, userDiscountPct: 25 },
+    { title: `Weekend ${cuisine} Special - BOGO Entrees`, userDiscountPct: 50 },
+    { title: `Early Bird ${cuisine} - 20% Off Before 6PM`, userDiscountPct: 20 }
   ];
-  return randomChoice(templates);
+  return randomChoice(discountTypes);
 }
 
 async function createBusinesses(): Promise<string[]> {
@@ -303,11 +335,13 @@ async function createBusinesses(): Promise<string[]> {
       posProvider: randomChoice(['square', 'toast', 'clover', 'manual']),
       posStatus: randomChoice(['connected', 'connected', 'connected', 'disconnected']), // 75% connected
       defaultSplitPct: randomInt(15, 30),
-      rules: {
-        minSpend: Math.random() < 0.6 ? randomInt(10, 50) : undefined,
-        blackout: Math.random() < 0.3 ? ['2024-12-25', '2024-01-01'] : undefined,
-        hours: Math.random() < 0.4 ? ['17:00-21:00'] : undefined
-      },
+      rules: Object.fromEntries(
+        Object.entries({
+          minSpend: Math.random() < 0.6 ? randomInt(10, 50) : undefined,
+          blackout: Math.random() < 0.3 ? ['2024-12-25', '2024-01-01'] : undefined,
+          hours: Math.random() < 0.4 ? ['17:00-21:00'] : undefined
+        }).filter(([_, v]) => v !== undefined)
+      ),
       status: randomChoice(['active', 'active', 'active', 'paused']) // 75% active
     };
     
@@ -391,20 +425,26 @@ async function createOffers(businessIds: string[]): Promise<string[]> {
       const bizDoc = await db.doc(`businesses/${bizId}`).get();
       const bizData = bizDoc.data() as BusinessDoc;
       
-      const offerData: OfferDoc = {
+      const maybeEndAt = Math.random() < 0.7 ? new Date(Date.now() + randomInt(30, 365) * 24 * 60 * 60 * 1000).toISOString() : undefined;
+      const discountOffer = generateDiscountOffer(bizData.cuisine || 'Food');
+      const offerData: any = {
         bizId,
-        title: generateOfferTitle(bizData.cuisine || 'Food'),
+        title: discountOffer.title,
         description: `Great deal on ${bizData.cuisine || 'delicious food'} at ${bizData.name}`,
         splitPct: randomInt(15, 35),
+        userDiscountPct: discountOffer.userDiscountPct,
+        userDiscountCents: discountOffer.userDiscountCents,
+        payoutPerRedemptionCents: randomInt(200, 800), // $2-8 per redemption
         publicCode: `${bizData.name.replace(/\s+/g, '').toUpperCase().slice(0, 6)}${randomInt(10, 99)}`,
-        minSpend: Math.random() < 0.6 ? randomInt(20, 100) : undefined,
+        minSpend: discountOffer.minSpend || (Math.random() < 0.6 ? randomInt(20, 100) : undefined),
         blackout: Math.random() < 0.2 ? ['2024-12-25'] : undefined,
         startAt: new Date(Date.now() - randomInt(1, 90) * 24 * 60 * 60 * 1000).toISOString(),
-        endAt: Math.random() < 0.7 ? new Date(Date.now() + randomInt(30, 365) * 24 * 60 * 60 * 1000).toISOString() : undefined,
+        endAt: maybeEndAt,
         status: randomChoice(['active', 'active', 'active', 'paused']) // 75% active
       };
       
-      const docRef = await db.collection('offers').add(offerData);
+      const cleanedOffer = Object.fromEntries(Object.entries(offerData).filter(([_, v]) => v !== undefined)) as unknown as OfferDoc;
+      const docRef = await db.collection('offers').add(cleanedOffer as any);
       offerIds.push(docRef.id);
     }
   }
@@ -445,7 +485,7 @@ async function createCouponsAndActivity(businessIds: string[], influencerIds: st
     const infShort = infData.handle.replace('@', '').slice(0, 3).toUpperCase();
     const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
     
-    const couponData: CouponDoc = {
+    const couponData: Partial<CouponDoc> = {
       type: couponType,
       bizId,
       infId,
@@ -458,15 +498,13 @@ async function createCouponsAndActivity(businessIds: string[], influencerIds: st
         : undefined,
       createdAt: createdAt.toISOString(),
       admin: {
-        posAdded: Math.random() < 0.7, // 70% added to POS
-        posAddedAt: Math.random() < 0.7 
-          ? new Date(createdAt.getTime() + randomInt(1, 3) * 60 * 60 * 1000).toISOString() 
-          : undefined,
-        notes: Math.random() < 0.2 ? 'Special promotion for high-value influencer' : undefined
+        posAdded: Math.random() < 0.7,
+        ...(Math.random() < 0.7 ? { posAddedAt: new Date(createdAt.getTime() + randomInt(1, 3) * 60 * 60 * 1000).toISOString() } : {}),
+        ...(Math.random() < 0.2 ? { notes: 'Special promotion for high-value influencer' } : {})
       }
     };
-    
-    const couponRef = await db.collection('coupons').add(couponData);
+    const cleanedCoupon = JSON.parse(JSON.stringify(couponData));
+    const couponRef = await db.collection('coupons').add(cleanedCoupon as any);
     
     // Create affiliate link for AFFILIATE type coupons
     if (couponType === 'AFFILIATE') {
@@ -485,7 +523,7 @@ async function createCouponsAndActivity(businessIds: string[], influencerIds: st
       await db.collection('affiliateLinks').add(linkData);
       
       // Update coupon with linkId
-      await couponRef.update({ linkId: shortCode });
+      await couponRef.update({ linkId: shortCode } as any);
     }
     
     // Generate realistic activity for some coupons
@@ -515,9 +553,9 @@ async function createCouponsAndActivity(businessIds: string[], influencerIds: st
           
           // Create individual redemptions
           for (let use = 0; use < uses; use++) {
-            const redemptionData: RedemptionDoc = {
+            const redemptionData: Partial<RedemptionDoc> = {
               couponId: couponRef.id,
-              linkId: couponType === 'AFFILIATE' ? shortCode : undefined,
+              ...(couponType === 'AFFILIATE' && shortCode ? { linkId: shortCode } : {}),
               bizId,
               infId,
               offerId,
@@ -528,12 +566,9 @@ async function createCouponsAndActivity(businessIds: string[], influencerIds: st
               eventId: `pos_${randomInt(100000, 999999)}`,
               createdAt: new Date(activityDate.getTime() + use * 60 * 60 * 1000).toISOString(),
               status: randomChoice(['pending', 'payable', 'paid']),
-              holdUntil: Math.random() < 0.1 
-                ? new Date(activityDate.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString() 
-                : undefined
+              ...(Math.random() < 0.1 ? { holdUntil: new Date(activityDate.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString() } : {})
             };
-            
-            await db.collection('redemptions').add(redemptionData);
+            await db.collection('redemptions').add(JSON.parse(JSON.stringify(redemptionData)) as any);
           }
         }
       }

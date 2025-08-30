@@ -4,9 +4,10 @@ import QRCode from 'qrcode';
 import { generateShortCode, nowIso } from '../utils/shared';
 
 export async function handleLinkCreate(req: Request, res: Response): Promise<void> {
-  const { offerId, infId } = req.body as any;
+  const { offerId, infId, utmSource = 'affiliate', utmMedium = 'influencer', utmCampaign = '' } = req.body as any;
   const shortCode = generateShortCode(7);
-  const url = `${process.env.PUBLIC_URL || 'https://example.com'}/u/${shortCode}`;
+  const baseUrl = process.env.PUBLIC_URL || 'https://example.com';
+  const url = `${baseUrl}/a/${shortCode}?utm_source=${encodeURIComponent(utmSource)}&utm_medium=${encodeURIComponent(utmMedium)}&utm_campaign=${encodeURIComponent(utmCampaign)}`;
   const qrUrl = await QRCode.toDataURL(url);
 
   await admin.firestore().collection('shortUrls').doc(shortCode).set({ url, offerId, infId, createdAt: nowIso() });
@@ -15,10 +16,14 @@ export async function handleLinkCreate(req: Request, res: Response): Promise<voi
     infId,
     offerId,
     shortCode,
+    token: shortCode,
     url,
     qrUrl,
+    utmSource,
+    utmMedium,
+    utmCampaign,
     status: 'active',
     createdAt: nowIso(),
   });
-  res.json({ shortUrl: url, qrUrl });
+  res.json({ shortUrl: url, qrUrl, token: shortCode });
 } 

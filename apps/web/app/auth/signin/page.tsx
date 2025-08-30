@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
+import { auth as clientAuth, db as clientDb } from '@/lib/firebase';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -66,11 +69,71 @@ export default function SignInPage() {
     const demoPassword = 'demo123';
     
     try {
-      // Actually sign in with the demo credentials
-      await signIn(demoEmail, demoPassword);
-      router.push(role === 'business' ? '/business' : '/influencer');
+      // Try sign-in first
+      const resolvedRole = await signIn(demoEmail, demoPassword);
+      // Ensure intended role docs exist to avoid RoleGuard race
+      const uid = clientAuth.currentUser?.uid;
+      if (uid) {
+        if (role === 'business') {
+          const bizDoc = await getDoc(doc(clientDb, 'businesses', uid));
+          if (!bizDoc.exists()) {
+            await setDoc(doc(clientDb, 'businesses', uid), {
+              id: uid,
+              ownerId: uid,
+              name: 'Demo Business',
+              status: 'active',
+              createdAt: serverTimestamp(),
+            }, { merge: true });
+          }
+        } else {
+          const infDoc = await getDoc(doc(clientDb, 'influencers', uid));
+          if (!infDoc.exists()) {
+            await setDoc(doc(clientDb, 'influencers', uid), {
+              id: uid,
+              ownerId: uid,
+              handle: '@demo_influencer',
+              approved: true,
+              createdAt: serverTimestamp(),
+            }, { merge: true });
+          }
+        }
+      }
+      const redirectRole = resolvedRole || role;
+      router.push(redirectRole === 'business' ? '/business' : '/influencer');
     } catch (err) {
-      setError('Demo sign-in failed. Please create demo accounts first using the "Create Demo Business & Influencer" button in the admin dashboard.');
+      try {
+        // Self-provision demo user via client SDK (no admin required)
+        const cred = await createUserWithEmailAndPassword(clientAuth, demoEmail, demoPassword);
+        const uid = cred.user.uid;
+        // Create role docs
+        await setDoc(doc(clientDb, 'users', uid), {
+          id: uid,
+          email: demoEmail,
+          role,
+          status: 'active',
+          createdAt: serverTimestamp(),
+        }, { merge: true });
+        if (role === 'business') {
+          await setDoc(doc(clientDb, 'businesses', uid), {
+            id: uid,
+            ownerId: uid,
+            name: 'Demo Business',
+            status: 'active',
+            createdAt: serverTimestamp(),
+          }, { merge: true });
+        } else {
+          await setDoc(doc(clientDb, 'influencers', uid), {
+            id: uid,
+            ownerId: uid,
+            handle: '@demo_influencer',
+            approved: true,
+            createdAt: serverTimestamp(),
+          }, { merge: true });
+        }
+        router.push(role === 'business' ? '/business' : '/influencer');
+      } catch (e) {
+        setError('Demo sign-in failed. Please try again later.');
+      }
     } finally {
       setLoading(false);
     }

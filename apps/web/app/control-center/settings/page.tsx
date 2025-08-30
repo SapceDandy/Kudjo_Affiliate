@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,10 +45,41 @@ export default function SettingsPage() {
     setSecuritySettings(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleSaveSettings = () => {
-    // In a real app, this would save to backend
-    alert('Settings saved successfully');
+  const handleSaveSettings = async () => {
+    try {
+      const res = await fetch('/api/control-center/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+        body: JSON.stringify({
+          general: generalSettings,
+          notifications: notificationSettings,
+          security: securitySettings,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed');
+      alert('Settings saved successfully');
+    } catch (e) {
+      alert('Failed to save settings');
+    }
   };
+
+  // Load existing settings on mount
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await fetch('/api/control-center/settings', { headers: { 'Cache-Control': 'no-store' } });
+        if (res.ok) {
+          const js = await res.json();
+          if (!mounted) return;
+          if (js.general) setGeneralSettings(js.general);
+          if (js.notifications) setNotificationSettings(js.notifications);
+          if (js.security) setSecuritySettings(js.security);
+        }
+      } catch {}
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   return (
     <div className="container mx-auto p-6">

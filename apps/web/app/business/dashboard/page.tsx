@@ -16,6 +16,10 @@ import {
 export default function BusinessDashboard() {
   const [loading, setLoading] = useState(true);
   const [businessId, setBusinessId] = useState<string | null>(null);
+  const [reqTitle, setReqTitle] = useState('');
+  const [reqDesc, setReqDesc] = useState('');
+  const [reqSplit, setReqSplit] = useState<number>(20);
+  const [reqCap, setReqCap] = useState<number>(5000);
 
   // Simulate loading user data
   useEffect(() => {
@@ -114,6 +118,73 @@ export default function BusinessDashboard() {
         </CardHeader>
         <CardContent>
           {businessId && <PricingTiers businessId={businessId} />}
+        </CardContent>
+      </Card>
+
+      {/* Send Request to Affiliates */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Send Request to Affiliates</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <input
+            className="w-full border rounded px-3 py-2"
+            placeholder="Request title (e.g., Review our new menu)"
+            value={reqTitle}
+            onChange={(e) => setReqTitle(e.target.value)}
+          />
+          <textarea
+            className="w-full border rounded px-3 py-2"
+            placeholder="Short description and requirements"
+            rows={3}
+            value={reqDesc}
+            onChange={(e) => setReqDesc(e.target.value)}
+          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">Affiliate payout split (%)</label>
+              <input
+                type="number"
+                className="w-full border rounded px-3 py-2"
+                min={0}
+                max={100}
+                value={reqSplit}
+                onChange={(e) => setReqSplit(Number(e.target.value))}
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">Content meal cap (cents)</label>
+              <input
+                type="number"
+                className="w-full border rounded px-3 py-2"
+                min={0}
+                value={reqCap}
+                onChange={(e) => setReqCap(Number(e.target.value))}
+              />
+            </div>
+          </div>
+          <div className="pt-2">
+            <Button
+              onClick={async () => {
+                if (!businessId) { alert('Business ID not loaded yet'); return; }
+                if (!reqTitle.trim()) { alert('Title is required'); return; }
+                const res = await fetch('/api/requests/create', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ bizId: businessId, title: reqTitle, description: reqDesc, splitPct: reqSplit, contentMealCapCents: reqCap })
+                });
+                if (res.ok) {
+                  setReqTitle(''); setReqDesc(''); setReqSplit(20); setReqCap(5000);
+                  alert('Request sent to affiliates');
+                } else {
+                  const j = await res.json().catch(()=>({ error: 'Failed' }));
+                  alert(j.error || 'Failed to create request');
+                }
+              }}
+            >
+              Send Request
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

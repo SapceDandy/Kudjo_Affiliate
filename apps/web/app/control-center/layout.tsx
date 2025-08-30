@@ -39,13 +39,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Shield className="h-6 w-6 text-brand" />
             <span className="font-bold text-xl">Control Center</span>
           </div>
-          <Button 
-            variant="outline" 
-            onClick={handleLogout}
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-          >
-            Sign Out
-          </Button>
+          {/* Hide sign out here; rely on global header */}
         </div>
         <div className="container mx-auto px-4">
           <nav className="flex space-x-1">

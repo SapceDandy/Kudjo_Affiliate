@@ -1,4 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const res = await fetch(`${process.env.FUNCTIONS_URL || 'http://localhost:5001'}/api/offer.create`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': req.headers.get('authorization') || '' },
+      body: JSON.stringify(body),
+    });
+    const js = await res.json();
+    return NextResponse.json(js, { status: res.status });
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message || 'failed' }, { status: 500 });
+  }
+}
+
+import { NextRequest, NextResponse } from 'next/server';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { z } from 'zod';

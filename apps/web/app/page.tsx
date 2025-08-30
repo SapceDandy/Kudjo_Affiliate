@@ -3,8 +3,10 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { FloatingMascot } from '@/components/ui/floating-mascot';
+import { useAuth } from '@/lib/auth';
 
 export default function Home() {
+  const { user } = useAuth();
   return (
     <div className="h-[calc(100vh-7rem)] overflow-hidden bg-white relative">
       <div className="absolute inset-0 flex items-center justify-center">
@@ -20,21 +22,40 @@ export default function Home() {
             </div>
 
             <div className="flex gap-4">
-              <Button 
-                asChild 
-                size="lg"
-                className="bg-brand hover:bg-brand-light"
-              >
-                <Link href="/auth/signup?role=influencer">Join as Influencer</Link>
-              </Button>
-              <Button 
-                asChild 
-                size="lg" 
-                variant="outline"
-                className="border-brand text-brand hover:bg-brand-dark"
-              >
-                <Link href="/auth/signup?role=business">Register Business</Link>
-              </Button>
+              {user ? (
+                <Button 
+                  asChild 
+                  size="lg"
+                  className="bg-brand hover:bg-brand-light"
+                >
+                  <Link href={
+                    user.role === 'influencer' ? '/influencer' :
+                    user.role === 'business' ? '/business' :
+                    user.role === 'admin' ? '/control-center' :
+                    '/auth/signin'
+                  }>
+                    Go to Dashboard
+                  </Link>
+                </Button>
+              ) : (
+                <>
+                  <Button 
+                    asChild 
+                    size="lg"
+                    className="bg-brand hover:bg-brand-light"
+                  >
+                    <Link href="/auth/signup?role=influencer">Join as Influencer</Link>
+                  </Button>
+                  <Button 
+                    asChild 
+                    size="lg" 
+                    variant="outline"
+                    className="border-brand text-brand hover:bg-brand-dark"
+                  >
+                    <Link href="/auth/signup?role=business">Register Business</Link>
+                  </Button>
+                </>
+              )}
             </div>
 
             <div className="grid grid-cols-3 gap-6 text-center max-w-4xl">
