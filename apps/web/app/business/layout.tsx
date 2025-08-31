@@ -3,7 +3,7 @@
 import { RoleGuard } from '@/lib/role-guard';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth';
+import { useDemoAuth } from '@/lib/demo-auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
@@ -18,7 +18,7 @@ export default function BusinessLayout({ children }: { children: React.ReactNode
 }
 
 function RequireBusinessSetup({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user } = useDemoAuth();
   const router = useRouter();
   const [checking, setChecking] = useState(true);
 

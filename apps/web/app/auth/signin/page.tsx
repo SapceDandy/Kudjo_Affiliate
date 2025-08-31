@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth } from '@/lib/auth';
+import { useDemoAuth } from '@/lib/demo-auth';
 import { auth as clientAuth, db as clientDb } from '@/lib/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
@@ -19,7 +19,7 @@ export default function SignInPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-  const { signIn, signInWithGoogle } = useAuth();
+  const { switchUser } = useDemoAuth();
   const router = useRouter();
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
@@ -28,14 +28,31 @@ export default function SignInPage() {
     setError('');
     
     try {
-      console.log('Starting email sign-in');
-      const resolvedRole = await signIn(email, password);
-      console.log('Email sign-in successful, resolved role:', resolvedRole);
-      const redirectRole = resolvedRole || activeTab;
-      console.log('Redirecting to:', redirectRole === 'business' ? '/business' : '/influencer');
-      router.push(redirectRole === 'business' ? '/business' : '/influencer');
+      // Check if user exists in Firestore first
+      const userCheckResponse = await fetch('/api/auth/check-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, role: activeTab })
+      });
+      
+      if (userCheckResponse.ok) {
+        const userData = await userCheckResponse.json();
+        if (userData.exists) {
+          // User exists, proceed with demo sign-in
+          console.log('Existing user found, signing in directly');
+          switchUser(activeTab);
+          router.push(activeTab === 'business' ? '/business/dashboard' : '/influencer/dashboard');
+          return;
+        }
+      }
+      
+      // User doesn't exist, redirect to signup
+      console.log('User not found, redirecting to signup');
+      router.push(`/auth/signup?role=${activeTab}&email=${encodeURIComponent(email)}`);
+      
     } catch (err) {
-      setError('Invalid email or password');
+      console.error('Sign-in error:', err);
+      setError('Sign-in failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -46,12 +63,10 @@ export default function SignInPage() {
     setError('');
     
     try {
-      console.log('Starting Google sign-in with role:', role);
-      const resolvedRole = await signInWithGoogle(role);
-      console.log('Google sign-in successful, resolved role:', resolvedRole);
-      const redirectRole = resolvedRole || role;
-      console.log('Redirecting to:', redirectRole === 'business' ? '/business' : '/influencer');
-      router.push(redirectRole === 'business' ? '/business' : '/influencer');
+      console.log('Starting demo Google sign-in with role:', role);
+      switchUser(role);
+      console.log('Demo Google sign-in successful, role:', role);
+      router.push(role === 'business' ? '/business/dashboard' : '/influencer/dashboard');
     } catch (err: any) {
       console.error('Google sign-in error:', err);
       setError(err.message || 'Google sign-in failed');
@@ -69,8 +84,8 @@ export default function SignInPage() {
     const demoPassword = 'demo123';
     
     try {
-      // Try sign-in first
-      const resolvedRole = await signIn(demoEmail, demoPassword);
+      // Demo sign-in
+      switchUser(role);
       // Ensure intended role docs exist to avoid RoleGuard race
       const uid = clientAuth.currentUser?.uid;
       if (uid) {
@@ -98,7 +113,7 @@ export default function SignInPage() {
           }
         }
       }
-      const redirectRole = resolvedRole || role;
+      const redirectRole = role;
       router.push(redirectRole === 'business' ? '/business' : '/influencer');
     } catch (err) {
       try {

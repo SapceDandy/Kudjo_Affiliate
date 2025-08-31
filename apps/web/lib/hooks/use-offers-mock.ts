@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/lib/auth';
+import { useDemoAuth } from '@/lib/demo-auth';
 
 interface Offer {
   id: string;
@@ -30,7 +30,7 @@ export function useOffers() {
   const [error, setError] = useState<string | null>(null);
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const { user } = useAuth();
+  const { user } = useDemoAuth();
   
   // Mock influencer data - in real app this would come from user profile
   const mockInfluencerFollowers = 15000; // Demo influencer has 15k followers

@@ -76,10 +76,24 @@ fi
 echo "✅ Using Firebase project: $PROJECT_ID"
 echo ""
 
-# Set environment variables for Firebase Admin
-export GOOGLE_APPLICATION_CREDENTIALS=""
-export FIRESTORE_EMULATOR_HOST="localhost:8080"
+# Set environment variables for Firebase Admin (prefer production unless SEED_EMULATOR=1)
 export GCLOUD_PROJECT="$PROJECT_ID"
+
+# If GOOGLE_APPLICATION_CREDENTIALS not set, try common service account file
+if [ -z "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
+  if [ -f "scripts/firebase-service-account.json" ]; then
+    export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/scripts/firebase-service-account.json"
+  elif [ -f "service-account.json" ]; then
+    export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/service-account.json"
+  fi
+fi
+
+# Only use emulator if explicitly requested
+if [ "$SEED_EMULATOR" = "1" ]; then
+  export FIRESTORE_EMULATOR_HOST="${FIRESTORE_EMULATOR_HOST:-localhost:8080}"
+else
+  unset FIRESTORE_EMULATOR_HOST
+fi
 
 echo "🌱 Starting database seeding..."
 echo "This may take several minutes..."

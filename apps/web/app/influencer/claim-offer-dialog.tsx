@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Copy, ExternalLink, QrCode } from 'lucide-react';
-import { useAuth } from '@/lib/auth';
+import { useDemoAuth } from '@/lib/demo-auth';
 import { useAnalytics } from '@/components/analytics';
+import toast from 'react-hot-toast';
 
 interface ClaimOfferDialogProps {
   offerId: string;
@@ -32,8 +34,8 @@ export function ClaimOfferDialog({ offerId, open, onClose }: ClaimOfferDialogPro
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [campaignData, setCampaignData] = useState<CampaignData | null>(null);
-  const [overrideCooldown, setOverrideCooldown] = useState(false);
-  const { user } = useAuth();
+  const [legalAccepted, setLegalAccepted] = useState(false);
+  const { user } = useDemoAuth();
   const { trackCampaignStart, trackCouponClaim } = useAnalytics();
 
   const handleStartCampaign = async () => {
@@ -42,29 +44,42 @@ export function ClaimOfferDialog({ offerId, open, onClose }: ClaimOfferDialogPro
       return;
     }
 
+    if (!legalAccepted) {
+      setError('Please accept the legal terms to continue.');
+      return;
+    }
+
     try {
       setLoading(true);
       setError('');
 
-      // Simulate campaign creation with mock data (bypassing Firebase quota issues)
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
+      // Use new JOIN CAMPAIGN API
+      const response = await fetch('/api/influencer/join-campaign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          offerId,
+          infId: user.uid,
+          legalAccepted: true,
+        }),
+      });
 
-      // Generate mock campaign data
-      const mockAffiliateCode = `AFF${Math.random().toString(36).substr(2, 8).toUpperCase()}`;
-      const mockContentCode = `MEAL${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
-      const mockLinkId = `link_${Date.now()}`;
-      
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result?.error || 'Failed to join campaign');
+      }
+
       setCampaignData({
         affiliateLink: {
-          url: `${window.location.origin}/r/${mockLinkId}`,
-          qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${window.location.origin}/r/${mockLinkId}`)}`,
-          shortCode: mockLinkId
+          url: result.coupons.affiliate.linkUrl,
+          qrUrl: result.coupons.affiliate.qrUrl,
+          shortCode: result.coupons.affiliate.linkId,
         },
         contentCoupon: {
-          code: mockContentCode,
-          qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${mockContentCode}`,
-          couponId: `coupon_${Date.now()}`
-        }
+          code: result.coupons.contentMeal.code,
+          qrUrl: result.coupons.contentMeal.qrUrl,
+          couponId: result.coupons.contentMeal.id,
+        },
       });
 
       // Track analytics events
@@ -72,9 +87,16 @@ export function ClaimOfferDialog({ offerId, open, onClose }: ClaimOfferDialogPro
       trackCouponClaim('CONTENT_MEAL', offerId);
       trackCampaignStart(offerId, 'business-id-from-offer');
 
+      // Show success toast
+      toast.success('Campaign started! You now have both your affiliate link and content coupon.');
+
     } catch (err) {
       console.error('Campaign creation error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to start campaign. Please try again.');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to start campaign. Please try again.';
+      setError(errorMessage);
+      
+      // Show error toast
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -83,9 +105,10 @@ export function ClaimOfferDialog({ offerId, open, onClose }: ClaimOfferDialogPro
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      // You could add a toast notification here
+      toast.success('Copied to clipboard!');
     } catch (err) {
       console.error('Failed to copy:', err);
+      toast.error('Unable to copy to clipboard.');
     }
   };
 
@@ -125,26 +148,26 @@ export function ClaimOfferDialog({ offerId, open, onClose }: ClaimOfferDialogPro
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-md text-sm">
                   {error}
-                  {error.includes('Creation temporarily blocked') && (
-                    <div className="mt-2">
-                      <label className="flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={overrideCooldown}
-                          onChange={(e) => setOverrideCooldown(e.target.checked)}
-                          className="rounded"
-                        />
-                        Override cooldown (dev only)
-                      </label>
-                    </div>
-                  )}
                 </div>
               )}
+
+              <div className="space-y-3">
+                <div className="flex items-start gap-2">
+                  <Checkbox
+                    id="legal-terms"
+                    checked={legalAccepted}
+                    onCheckedChange={(checked) => setLegalAccepted(checked === true)}
+                  />
+                  <label htmlFor="legal-terms" className="text-sm leading-relaxed">
+                    I agree to post content within 7 days and keep it posted for 7-14 days as required by the campaign terms.
+                  </label>
+                </div>
+              </div>
               
               <Button
                 className="w-full"
                 onClick={handleStartCampaign}
-                disabled={loading}
+                disabled={loading || !legalAccepted}
               >
                 {loading ? 'Starting Campaign...' : 'Start Campaign'}
               </Button>
@@ -187,14 +210,16 @@ export function ClaimOfferDialog({ offerId, open, onClose }: ClaimOfferDialogPro
                       </div>
                       
                       <div className="flex justify-center">
-                        <div className="relative w-48 h-48">
-                          <Image
-                            src={campaignData.affiliateLink.qrUrl}
-                            alt="Affiliate Link QR Code"
-                            fill
-                            className="object-contain"
-                          />
-                        </div>
+                        {campaignData && (
+                          <div className="relative w-48 h-48">
+                            <Image
+                              src={campaignData.affiliateLink.qrUrl}
+                              alt="Affiliate Link QR Code"
+                              fill
+                              className="object-contain"
+                            />
+                          </div>
+                        )}
                       </div>
                       
                       <p className="text-xs text-muted-foreground text-center">
@@ -217,12 +242,12 @@ export function ClaimOfferDialog({ offerId, open, onClose }: ClaimOfferDialogPro
                         <p className="text-sm font-medium">Your free meal coupon code:</p>
                         <div className="flex items-center gap-2">
                           <code className="flex-1 bg-gray-100 px-3 py-2 rounded text-lg font-mono text-center">
-                            {campaignData.contentCoupon.code}
+                            {campaignData?.contentCoupon.code}
                           </code>
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => copyToClipboard(campaignData.contentCoupon.code)}
+                            onClick={() => campaignData && copyToClipboard(campaignData.contentCoupon.code)}
                           >
                             <Copy className="w-4 h-4" />
                           </Button>
@@ -230,14 +255,16 @@ export function ClaimOfferDialog({ offerId, open, onClose }: ClaimOfferDialogPro
                       </div>
                       
                       <div className="flex justify-center">
-                        <div className="relative w-48 h-48">
-                          <Image
-                            src={campaignData.contentCoupon.qrUrl}
-                            alt="Content Coupon QR Code"
-                            fill
-                            className="object-contain"
-                          />
-                        </div>
+                        {campaignData && (
+                          <div className="relative w-48 h-48">
+                            <Image
+                              src={campaignData.contentCoupon.qrUrl}
+                              alt="Content Coupon QR Code"
+                              fill
+                              className="object-contain"
+                            />
+                          </div>
+                        )}
                       </div>
                       
                       <p className="text-xs text-muted-foreground text-center">

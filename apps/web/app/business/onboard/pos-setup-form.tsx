@@ -28,15 +28,26 @@ export function PosSetupForm({ onNext, initialData }: PosSetupFormProps) {
   const handleManualEnable = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/business.pos.connect', {
+      // Get businessId from localStorage or session - for now use mock
+      const businessId = localStorage.getItem('businessId') || 'mock-business-id';
+      
+      const res = await fetch('/api/business/pos/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider: 'manual' }),
+        body: JSON.stringify({ 
+          provider: 'manual',
+          businessId 
+        }),
       });
-      if (!res.ok) throw new Error('Failed to enable manual mode');
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: 'Failed to enable manual mode' }));
+        throw new Error(errorData.error || 'Failed to enable manual mode');
+      }
+      
       onNext(); // No data needed for final step
     } catch (err) {
-      setError('Failed to set up manual mode. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to set up manual mode. Please try again.');
     } finally {
       setLoading(false);
     }

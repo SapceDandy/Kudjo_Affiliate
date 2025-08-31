@@ -4,14 +4,14 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useAuth } from '@/lib/auth';
+import { useDemoAuth } from '@/lib/demo-auth';
 
 export function SignInForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
+  const { switchUser } = useDemoAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -20,10 +20,16 @@ export function SignInForm() {
     setLoading(true);
 
     try {
-      await signIn(email, password);
-      router.push('/dashboard');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to sign in');
+      // Demo auth - switch user based on email
+      if (email.includes('business')) {
+        switchUser('business');
+        router.push('/business/dashboard');
+      } else {
+        switchUser('influencer');
+        router.push('/influencer/dashboard');
+      }
+    } catch (error: any) {
+      setError(error.message || 'Failed to sign in');
     } finally {
       setLoading(false);
     }

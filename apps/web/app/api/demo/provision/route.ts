@@ -50,7 +50,7 @@ export async function POST() {
     const demoPassword = 'demo123';
 
     // Ensure Auth users
-    async function ensureUser(uid: string, email: string, displayName: string) {
+    const ensureUser = async (uid: string, email: string, displayName: string) => {
       try {
         await auth.createUser({ uid, email, password: demoPassword, displayName });
       } catch (e: any) {

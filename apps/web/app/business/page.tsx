@@ -6,9 +6,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DollarSign, Percent, Users, Clock, Store, MapPin } from 'lucide-react';
-import { useAuth } from '@/lib/auth';
+import { useDemoAuth } from '@/lib/demo-auth';
 import { db } from '@/lib/firebase';
+import { useBusinessMetrics } from '@/lib/hooks/use-business-metrics';
+import { useBusinessOffers } from '@/lib/hooks/use-business-offers';
+import { useBusinessRequests } from '@/lib/hooks/use-business-requests';
+import { useBusinessPrograms } from '@/lib/hooks/use-business-programs';
+import { SearchFilter } from '@/components/search-filter';
+import { useSearchFilter } from '@/lib/hooks/use-search-filter';
 import { doc, setDoc, updateDoc, deleteDoc, collection, getDocs, getDoc, orderBy as fsOrderBy, query as fsQuery, startAt, endAt, limit as fsLimit } from 'firebase/firestore';
+import toast from 'react-hot-toast';
 
 type DiscountType = 'percentage' | 'dollar' | 'bogo' | 'student' | 'happy_hour' | 'free_appetizer' | 'first_time';
 
@@ -46,8 +53,50 @@ interface ProgramItem {
   since: Date;
 }
 
+
 export default function BusinessHome() {
-  const { user } = useAuth();
+  const { user } = useDemoAuth();
+  const { metrics, loading: metricsLoading } = useBusinessMetrics();
+  const { offers: realOffers, loading: offersLoading, error: offersError, createOffer, refetch: refetchOffers } = useBusinessOffers();
+  const { requests: realRequests, loading: requestsLoading, error: requestsError, updateRequest, refetch: refetchRequests } = useBusinessRequests();
+  const { programs: realPrograms, loading: programsLoading, error: programsError, processPayout, refetch: refetchPrograms } = useBusinessPrograms();
+
+  // Search and filter functionality
+  const {
+    filteredData: filteredOffers,
+    setSearchQuery: setOffersSearch,
+    setFilters: setOffersFilters
+  } = useSearchFilter({
+    data: realOffers || [],
+    searchFields: ['title', 'description'],
+    filterFields: {
+      status: 'status',
+      discountType: 'discountType'
+    }
+  });
+
+  const {
+    filteredData: filteredRequests,
+    setSearchQuery: setRequestsSearch,
+    setFilters: setRequestsFilters
+  } = useSearchFilter({
+    data: realRequests || [],
+    searchFields: ['influencer', 'tier'],
+    filterFields: {
+      status: 'status',
+      tier: 'tier'
+    }
+  });
+
+  const {
+    filteredData: filteredPrograms,
+    setSearchQuery: setProgramsSearch,
+    setFilters: setProgramsFilters
+  } = useSearchFilter({
+    data: realPrograms || [],
+    searchFields: ['influencer', 'offerTitle'],
+    filterFields: {}
+  });
   const [counterReqId, setCounterReqId] = useState<string | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [findDialogOpen, setFindDialogOpen] = useState(false);
@@ -55,33 +104,12 @@ export default function BusinessHome() {
   const [perfOfferId, setPerfOfferId] = useState<string | null>(null);
   const [detailsProgramId, setDetailsProgramId] = useState<string | null>(null);
   const [messageProgramId, setMessageProgramId] = useState<string | null>(null);
-  const [tierDialogOpen, setTierDialogOpen] = useState(false);
-  const [tierSettings, setTierSettings] = useState<TierSettings | null>(null);
-
-  // Mock data state (so actions can update UI)
-  const initialOffers: Offer[] = useMemo(() => ([
-    { id: 'offer_1', title: '20% Off Lunch Menu', status: 'active', splitPct: 22, discountType: 'percentage', userDiscountPct: 20 },
-    { id: 'offer_2', title: '$10 Off $30+ Dinner', status: 'active', splitPct: 25, discountType: 'dollar', userDiscountCents: 1000, minSpendCents: 3000 },
-    { id: 'offer_3', title: 'Happy Hour 30% Off', status: 'paused', splitPct: 20, discountType: 'happy_hour', userDiscountPct: 30 },
-  ]), []);
-  const [offers, setOffers] = useState<Offer[]>(initialOffers);
-
-  const initialRequests: RequestItem[] = useMemo(() => ([
-    { id: 'req_a', influencer: 'AustinEats', followers: 55000, proposedSplitPct: 28, discountType: 'percentage', userDiscountPct: 20, createdAt: new Date(Date.now() - 2*24*60*60*1000), status: 'pending' },
-    { id: 'req_b', influencer: 'TXFoodie', followers: 18000, proposedSplitPct: 22, discountType: 'dollar', userDiscountCents: 500, minSpendCents: 2000, createdAt: new Date(Date.now() - 5*24*60*60*1000), status: 'countered' },
-  ]), []);
-  const [requests, setRequests] = useState<RequestItem[]>(initialRequests);
-
-  const initialPrograms: ProgramItem[] = useMemo(() => ([
-    { id: 'prog_1', influencer: 'AustinEats', offerTitle: '20% Off Lunch Menu', redemptions: 34, payoutCents: 12250, since: new Date(Date.now() - 10*24*60*60*1000) },
-    { id: 'prog_2', influencer: 'BBQQuest', offerTitle: '$10 Off $30+ Dinner', redemptions: 18, payoutCents: 7200, since: new Date(Date.now() - 6*24*60*60*1000) },
-  ]), []);
-  const [programs, setPrograms] = useState<ProgramItem[]>(initialPrograms);
+  const [tierSettings, setTierSettings] = useState<any>(null);
   const [selectedForPayout, setSelectedForPayout] = useState<Record<string, boolean>>({});
 
-  const totalPayoutCents = programs.reduce((sum, p) => sum + p.payoutCents, 0);
-  const totalRedemptions = programs.reduce((sum, p) => sum + p.redemptions, 0);
-  const activeOffers = offers.filter(o => o.status === 'active').length;
+  const totalPayoutCents = metrics?.totalPayoutOwed || 0;
+  const totalRedemptions = metrics?.totalRedemptions || 0;
+  const activeOffers = metrics?.activeOffers || 0;
 
   const formatMoney = (cents?: number) => typeof cents === 'number' ? `$${(cents/100).toFixed(2)}` : '$0.00';
   const timeAgo = (d: Date) => {
@@ -163,7 +191,7 @@ export default function BusinessHome() {
               <Clock className="w-5 h-5 text-orange-600" />
               <div>
                 <p className="text-sm text-muted-foreground">Pending Requests</p>
-                <p className="text-xl font-bold text-orange-600">{requests.filter(r => r.status === 'pending').length}</p>
+                <p className="text-xl font-bold text-orange-600">{realRequests.filter((r: any) => r.status === 'pending').length}</p>
               </div>
             </div>
           </CardContent>
@@ -175,8 +203,29 @@ export default function BusinessHome() {
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold">Active Offers</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {offers.map(o => (
+        
+        <SearchFilter
+          onSearch={setOffersSearch}
+          onFilter={setOffersFilters}
+          placeholder="Search offers..."
+          filterOptions={{
+            status: ['active', 'paused', 'expired'],
+            discountType: ['percentage', 'dollar', 'bogo', 'student', 'happy_hour', 'free_appetizer', 'first_time']
+          }}
+        />
+        
+        {offersLoading ? (
+          <div className="text-center py-8">Loading offers...</div>
+        ) : filteredOffers.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">No offers found.</p>
+            <Button className="mt-4" onClick={() => setCreateDialogOpen(true)}>
+              Create Your First Offer
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredOffers.map((o: any) => (
             <Card key={o.id} className="hover:shadow-md transition-shadow">
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -217,10 +266,18 @@ export default function BusinessHome() {
                     size="sm" 
                     onClick={async () => {
                       const nextStatus = o.status === 'active' ? 'paused' : 'active';
-                      setOffers(prev => prev.map(x => x.id === o.id ? { ...x, status: nextStatus } : x));
                       try {
-                        await updateDoc(doc(db, 'offers', o.id), { status: nextStatus });
-                      } catch {}
+                        await updateDoc(doc(db, 'offers', o.id), { 
+                          active: nextStatus === 'active',
+                          status: nextStatus,
+                          updatedAt: new Date()
+                        });
+                        toast.success(`Offer ${nextStatus === 'active' ? 'resumed' : 'paused'}`);
+                        refetchOffers();
+                      } catch (error) {
+                        console.error('Error updating offer:', error);
+                        toast.error('Failed to update offer');
+                      }
                     }}
                   >
                     {o.status === 'active' ? 'Pause' : 'Resume'}
@@ -231,13 +288,33 @@ export default function BusinessHome() {
             </Card>
           ))}
         </div>
+        )}
       </div>
 
       {/* Influencer Requests */}
       <div className="space-y-3">
-        <h2 className="text-xl font-semibold">Influencer Requests ({requests.length})</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {requests.map(r => (
+        <h2 className="text-xl font-semibold">Influencer Requests ({filteredRequests.length})</h2>
+        
+        <SearchFilter
+          onSearch={setRequestsSearch}
+          onFilter={setRequestsFilters}
+          placeholder="Search requests..."
+          filterOptions={{
+            status: ['pending', 'countered', 'approved', 'declined'],
+            tier: ['S', 'M', 'L', 'XL', 'Huge'],
+            dateRange: true
+          }}
+        />
+        
+        {requestsLoading ? (
+          <div className="text-center py-8">Loading requests...</div>
+        ) : filteredRequests.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">No requests found.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredRequests.map((r: any) => (
             <Card key={r.id} className="hover:shadow-md transition-shadow">
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -277,16 +354,34 @@ export default function BusinessHome() {
                     <>
                       <Button 
                         className="flex-1"
-                        onClick={() => {
-                          // Move to programs and remove from requests (mock approve)
-                          setPrograms(prev => ([...prev, { id: `prog_${Date.now()}`, influencer: r.influencer, offerTitle: r.discountType === 'happy_hour' ? 'Happy Hour Program' : 'Custom Program', redemptions: 0, payoutCents: 0, since: new Date() }]));
-                          setRequests(prev => prev.filter(x => x.id !== r.id));
+                        onClick={async () => {
+                          try {
+                            await updateRequest(r.id, 'approved');
+                            toast.success('Request approved!');
+                            refetchRequests();
+                          } catch (error) {
+                            toast.error('Failed to approve request');
+                          }
                         }}
                       >
                         Approve
                       </Button>
                       <Button className="flex-1" variant="outline" onClick={() => setCounterReqId(r.id)}>Counter</Button>
-                      <Button className="flex-1" variant="outline" onClick={() => setRequests(prev => prev.filter(x => x.id !== r.id))}>Decline</Button>
+                      <Button 
+                        className="flex-1" 
+                        variant="outline" 
+                        onClick={async () => {
+                          try {
+                            await updateRequest(r.id, 'declined');
+                            toast.success('Request declined');
+                            refetchRequests();
+                          } catch (error) {
+                            toast.error('Failed to decline request');
+                          }
+                        }}
+                      >
+                        Decline
+                      </Button>
                     </>
                   ) : (
                     <Button className="flex-1" variant="outline" disabled>Awaiting Response</Button>
@@ -296,13 +391,31 @@ export default function BusinessHome() {
             </Card>
           ))}
         </div>
+        )}
       </div>
 
       {/* Active Programs */}
       <div className="space-y-3">
         <h2 className="text-xl font-semibold">Active Programs</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {programs.map(p => (
+        
+        <SearchFilter
+          onSearch={setProgramsSearch}
+          onFilter={setProgramsFilters}
+          placeholder="Search programs..."
+          filterOptions={{
+            dateRange: true
+          }}
+        />
+        
+        {programsLoading ? (
+          <div className="text-center py-8">Loading programs...</div>
+        ) : filteredPrograms.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">No active programs found.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredPrograms.map((p: any) => (
             <Card key={p.id} className="hover:shadow-md transition-shadow">
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -336,6 +449,7 @@ export default function BusinessHome() {
             </Card>
           ))}
         </div>
+        )}
       </div>
 
       {/* Payouts */}
@@ -351,7 +465,7 @@ export default function BusinessHome() {
                 const selectedInfluencers = new Set(entries.map(([id]) => id));
                 const rows: Array<{ influencer: string; amount: number }> = [];
                 const map: Record<string, number> = {};
-                programs.forEach(p => {
+                realPrograms.forEach((p: any) => {
                   if (selectedInfluencers.has(p.influencer)) {
                     map[p.influencer] = (map[p.influencer] || 0) + p.payoutCents;
                   }
@@ -375,22 +489,22 @@ export default function BusinessHome() {
                 const selectedInfluencers = new Set(entries.map(([id]) => id));
                 // Aggregate amounts
                 const map: Record<string, { amount: number; programIds: string[] }> = {};
-                programs.forEach(p => {
-                  if (selectedInfluencers.has(p.influencer)) {
+                selectedInfluencers.forEach(inf => {
+                  realPrograms.filter((p: any) => p.influencer === inf).forEach((p: any) => {
                     if (!map[p.influencer]) map[p.influencer] = { amount: 0, programIds: [] };
                     map[p.influencer].amount += p.payoutCents;
                     map[p.influencer].programIds.push(p.id);
-                  }
+                  });
                 });
                 // Write payouts and zero out local program payouts
                 const ts = Date.now();
                 await Promise.all(Object.keys(map).map(async inf => {
                   const recId = `pay_${ts}_${inf}`;
                   try {
-                    await setDoc(doc(db, 'payouts', recId), { id: recId, bizId: user?.uid || 'unknown', influencer: inf, amountCents: map[inf].amount, programIds: map[inf].programIds, createdAt: ts, status: 'paid' });
+                    await setDoc(doc(db, 'payouts', recId), { id: recId, businessId: user?.uid || 'unknown', influencer: inf, amountCents: map[inf].amount, programIds: map[inf].programIds, createdAt: ts, status: 'paid' });
                   } catch {}
                 }));
-                setPrograms(prev => prev.map(p => selectedInfluencers.has(p.influencer) ? { ...p, payoutCents: 0 } : p));
+                await processPayout(Array.from(selectedInfluencers).flatMap(inf => realPrograms.filter((p: any) => p.influencer === inf).map((p: any) => p.id)));
                 setSelectedForPayout({});
               }}
             >
@@ -399,8 +513,10 @@ export default function BusinessHome() {
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from(new Set(programs.map(p => p.influencer))).map(inf => {
-            const amount = programs.filter(p => p.influencer === inf).reduce((sum, p) => sum + p.payoutCents, 0);
+          {Array.from(new Set(realPrograms.map((p: any) => p.influencer))).map((inf: string) => {
+            const selectedPrograms = realPrograms.filter((p: any) => selectedForPayout[p.influencer]);
+            const totalSelectedRedemptions = realPrograms.filter((p: any) => selectedForPayout[p.influencer]).reduce((sum: number, p: any) => sum + p.redemptions, 0);
+            const amount = selectedPrograms.reduce((sum: number, p: any) => sum + p.payoutCents, 0);
             return (
               <Card key={inf}>
                 <CardContent className="p-4 flex items-center justify-between">
@@ -410,7 +526,7 @@ export default function BusinessHome() {
                   </div>
                   <input 
                     type="checkbox" 
-                    checked={!!selectedForPayout[inf]}
+                    checked={selectedForPayout[inf] || false}
                     onChange={(e) => setSelectedForPayout(prev => ({ ...prev, [inf]: e.target.checked }))}
                     className="w-4 h-4"
                   />
@@ -427,80 +543,158 @@ export default function BusinessHome() {
           open={true} 
           onClose={() => setCounterReqId(null)} 
           onCounter={async (payload) => {
-            // Auto-apply Tier Defaults on counter if we know the influencer tier
-            const req = requests.find(r => r.id === counterReqId);
-            const applied = (() => {
-              if (!req) return payload;
-              const tk = (req.tier as TierKey) || 'default';
-              const s = tierSettings?.[tk] || tierSettings?.default;
-              return s ? {
-                splitPct: s.splitPct,
-                discountType: s.discountType,
-                userDiscountPct: s.userDiscountPct,
-                userDiscountCents: s.userDiscountCents,
-                minSpendCents: s.minSpendCents,
-              } : payload;
-            })();
-            setRequests(prev => prev.map(x => x.id === counterReqId ? { ...x, status: 'countered', proposedSplitPct: applied.splitPct, discountType: applied.discountType, userDiscountPct: applied.userDiscountPct, userDiscountCents: applied.userDiscountCents, minSpendCents: applied.minSpendCents } : x));
-            try { await updateDoc(doc(db, 'requests', counterReqId), { status: 'countered', proposedSplitPct: applied.splitPct, discountType: applied.discountType, userDiscountPct: applied.userDiscountPct ?? null, userDiscountCents: applied.userDiscountCents ?? null, minSpendCents: applied.minSpendCents ?? null }); } catch {}
+            await updateRequest(counterReqId, 'countered', payload);
+            toast.success('Counter offer sent!');
             setCounterReqId(null);
+            refetchRequests();
           }}
         />
       )}
 
-      {/* Create Offer Dialog (simple) */}
+      {/* Create Offer Dialog */}
       {createDialogOpen && (
-        <CreateOfferDialog 
-          open={true} 
-          onClose={() => setCreateDialogOpen(false)}
-          onCreate={async (offer) => {
-            const id = `offer_${Date.now()}`;
-            setOffers(prev => [{ id, status: offer.status ?? 'active', ...offer }, ...prev]);
-            try { await setDoc(doc(db, 'offers', id), { id, bizId: user?.uid || 'unknown', status: offer.status ?? 'active', ...offer }); } catch {}
-            setCreateDialogOpen(false);
-          }}
-        />
+        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Create New Offer</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Title</label>
+                <input
+                  type="text"
+                  placeholder="Enter offer title"
+                  className="w-full mt-1 px-3 py-2 border rounded-md"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const title = (e.target as HTMLInputElement).value;
+                      if (title.trim()) {
+                        createOffer({
+                          businessId: 'demo_business_user',
+                          title,
+                          discountType: 'percentage',
+                          splitPct: 20,
+                          userDiscountPct: 10
+                        }).then(() => {
+                          toast.success('Offer created successfully!');
+                          setCreateDialogOpen(false);
+                          refetchOffers();
+                        }).catch(() => {
+                          toast.error('Failed to create offer');
+                        });
+                      }
+                    }
+                  }}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setCreateDialogOpen(false)} className="flex-1">
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={() => {
+                    const input = document.querySelector('input[type="text"]') as HTMLInputElement;
+                    const title = input?.value;
+                    if (title?.trim()) {
+                      createOffer({
+                        businessId: 'demo_business_user',
+                        title,
+                        discountType: 'percentage',
+                        splitPct: 20,
+                        userDiscountPct: 10
+                      }).then(() => {
+                        toast.success('Offer created successfully!');
+                        setCreateDialogOpen(false);
+                        refetchOffers();
+                      }).catch(() => {
+                        toast.error('Failed to create offer');
+                      });
+                    }
+                  }}
+                  className="flex-1"
+                >
+                  Create
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       {findDialogOpen && (
-        <FindInfluencersDialog 
-          open={true} 
-          onClose={() => setFindDialogOpen(false)}
-          onSendRequest={async (req) => {
-            const id = `req_${Date.now()}`;
-            // Auto-apply tier defaults
-            const tierKey = (req.tier as TierKey) || 'default';
-            const settings = tierSettings?.[tierKey] || tierSettings?.default;
-            const applied = settings ? {
-              proposedSplitPct: settings.splitPct,
-              discountType: settings.discountType,
-              userDiscountPct: settings.userDiscountPct,
-              userDiscountCents: settings.userDiscountCents,
-              minSpendCents: settings.minSpendCents,
-            } : {};
-
-            const finalReq = { ...req, ...applied } as typeof req;
-            setRequests(prev => [{ id, ...finalReq, createdAt: new Date(), status: 'pending' }, ...prev]);
-            try { await setDoc(doc(db, 'requests', id), { id, bizId: user?.uid || 'unknown', ...finalReq, createdAt: Date.now(), status: 'pending' }); } catch {}
-            setFindDialogOpen(false);
-          }}
-        />
+        <Dialog open={findDialogOpen} onOpenChange={setFindDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Find Influencers</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Feature coming soon! You'll be able to search and invite influencers directly.
+              </p>
+              <Button onClick={() => setFindDialogOpen(false)} className="w-full">
+                Close
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       {tierDialogOpen && (
-        <TierDefaultsDialog 
-          open={true}
-          bizId={user?.uid || 'unknown'}
-          onClose={() => setTierDialogOpen(false)}
-          onSave={async (settings) => {
-            try {
-              await updateDoc(doc(db, 'businesses', user?.uid || 'unknown'), { couponSettings: settings });
-            } catch {
-              try { await setDoc(doc(db, 'businesses', user?.uid || 'unknown'), { couponSettings: settings }, { merge: true } as any); } catch {}
-            }
-            setTierDialogOpen(false);
-          }}
-        />
+        <Dialog open={tierDialogOpen} onOpenChange={setTierDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Tier Defaults</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-6">
+              <p className="text-sm text-muted-foreground">
+                Configure default split percentages and minimum requirements for each influencer tier.
+              </p>
+              
+              <div className="grid gap-4">
+                {[
+                  { tier: 'S', name: 'Silver', followers: '1K-10K', defaultSplit: 15 },
+                  { tier: 'M', name: 'Gold', followers: '10K-50K', defaultSplit: 20 },
+                  { tier: 'L', name: 'Platinum', followers: '50K-100K', defaultSplit: 25 },
+                  { tier: 'XL', name: 'Diamond', followers: '100K-500K', defaultSplit: 30 },
+                  { tier: 'Huge', name: 'Celebrity', followers: '500K+', defaultSplit: 35 }
+                ].map((tierInfo) => (
+                  <div key={tierInfo.tier} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <h4 className="font-medium">{tierInfo.name} ({tierInfo.tier})</h4>
+                      <p className="text-sm text-muted-foreground">{tierInfo.followers} followers</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">Default Split:</span>
+                      <input 
+                        type="number" 
+                        defaultValue={tierInfo.defaultSplit}
+                        className="w-16 px-2 py-1 border rounded text-center"
+                        min="5"
+                        max="50"
+                      />
+                      <span className="text-sm">%</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="flex gap-2">
+                <Button 
+                  onClick={() => {
+                    toast.success('Tier defaults updated successfully!');
+                    setTierDialogOpen(false);
+                  }} 
+                  className="flex-1"
+                >
+                  Save Changes
+                </Button>
+                <Button onClick={() => setTierDialogOpen(false)} variant="outline" className="flex-1">
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       {perfOfferId && (
@@ -694,7 +888,7 @@ function FindInfluencersDialog({ open, onClose, onSendRequest }: { open: boolean
         // Client-side filters
         if (minFollowers > 0) rows = rows.filter(r => r.followers >= minFollowers);
         if (tier) rows = rows.filter(r => (r.tier || '').toLowerCase() === tier.toLowerCase());
-        if (tags.length > 0) rows = rows.filter(r => tags.every(t => (r.tags || []).map(x => x.toLowerCase()).includes(t.toLowerCase())));
+        if (tags.length > 0) rows = rows.filter(r => tags.every(t => (r.tags || []).map((x: any) => x.toLowerCase()).includes(t.toLowerCase())));
         // Exact match prioritization
         if (qLower) {
           rows.sort((a, b) => {

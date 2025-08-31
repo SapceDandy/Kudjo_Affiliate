@@ -80,7 +80,7 @@ export default function TestDataPage() {
       setStatus('✅ All demo offers created successfully!');
     } catch (error) {
       console.error('Error creating offers:', error);
-      setStatus(`❌ Error: ${error.message}`);
+      setStatus(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
     }

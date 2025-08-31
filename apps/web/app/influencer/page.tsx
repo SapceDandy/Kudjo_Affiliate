@@ -1,17 +1,17 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Loading } from '@/components/ui/loading';
-import { MapPin, DollarSign, Clock, Users } from 'lucide-react';
-import { useNearbyOffers } from '@/lib/hooks/use-nearby-offers-mock';
-import { useOffers } from '@/lib/hooks/use-offers-mock';
-import { useCampaigns } from '@/lib/hooks/use-campaigns';
-import { useRequests } from '@/lib/hooks/use-requests';
+import { MapPin, DollarSign, Clock, Users, Search, Filter, X } from 'lucide-react';
+import { useAvailableCampaigns } from '@/lib/hooks/use-available-campaigns';
 import { ClaimOfferDialog } from './claim-offer-dialog';
+import toast from 'react-hot-toast';
 
 interface Campaign {
   id: string;
@@ -115,44 +115,101 @@ function CampaignCard({ campaign, showDistance = false, onStart }: {
 }
 
 export default function InfluencerPage() {
-  const { offers: nearbyOffers, loading: nearbyLoading, error: nearbyError, hasMore: nearbyHasMore, loadMore: nearbyLoadMore } = useNearbyOffers();
-  const { offers: allOffers, loading: allLoading, error: allError, hasMore: allHasMore, loadMore: allLoadMore } = useOffers();
-  // Mock campaigns data
-  const campaigns = [
-    { id: 'prog_1', offerId: 'demo_offer_1', bizId: 'Demo Bistro' }
-  ];
-  
-  // Mock requests data  
-  const requests = [
-    { 
-      id: 'req_1', 
-      title: 'Weekend Brunch Partnership',
-      description: 'Looking for food influencers to promote our weekend brunch specials',
-      splitPct: 25,
-      userDiscountPct: 20,
-      bizId: 'Local Cafe',
-      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-      status: 'pending',
-      businessResponse: null
-    },
-    { 
-      id: 'req_2', 
-      title: 'Summer BBQ Campaign',
-      description: 'Partner with us for our summer BBQ menu promotion',
-      splitPct: 30,
-      userDiscountPct: 25,
-      bizId: 'BBQ House',
-      createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
-      status: 'counter_offered',
-      businessResponse: 'We can offer 28% split instead of 30%'
-    }
-  ];
-  const reqLoading = false;
-  const [negotiatingRequest, setNegotiatingRequest] = useState<string | null>(null);
-  const [claimOffer, setClaimOffer] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('nearby');
+  const [mainView, setMainView] = useState('dashboard'); // 'dashboard' or 'deals'
+  const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
+  const [showClaimDialog, setShowClaimDialog] = useState(false);
+  const [activeCampaigns, setActiveCampaigns] = useState<any[]>([]);
+  const [requests, setRequests] = useState<any[]>([]);
+  const [metrics, setMetrics] = useState<any>(null);
+  const [negotiatingRequest, setNegotiatingRequest] = useState<string | null>(null);
+  const [showNegotiationDialog, setShowNegotiationDialog] = useState(false);
+  const [showContentDialog, setShowContentDialog] = useState(false);
+  const [selectedActiveOfferId, setSelectedActiveOfferId] = useState<string | null>(null);
   const [viewingCampaign, setViewingCampaign] = useState<string | null>(null);
-  const [mainView, setMainView] = useState<'dashboard' | 'deals'>('dashboard');
+  
+  // Search and filter state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    businessName: '',
+    minSplitPct: '',
+    maxSplitPct: '',
+    discountType: ''
+  });
+  
+  const { 
+    campaigns: availableCampaigns, 
+    loading: campaignsLoading, 
+    error: campaignsError,
+    hasMore: campaignsHasMore,
+    loadMore: loadMoreCampaigns,
+    refetch: refetchCampaigns,
+    search: searchCampaigns,
+    filter: filterCampaigns,
+    clearFilters: clearCampaignFilters
+  } = useAvailableCampaigns();
+  
+  // Real active campaigns data
+  const [activeCampaignsLoading, setActiveCampaignsLoading] = useState(true);
+  
+  // Real requests data  
+  const [reqLoading, setReqLoading] = useState(true);
+  
+  // Load active campaigns and requests
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Load active campaigns
+        const campaignsRes = await fetch('/api/influencer/active-campaigns');
+        if (campaignsRes.ok) {
+          const campaignsData = await campaignsRes.json();
+          setActiveCampaigns(campaignsData.campaigns || []);
+        }
+        
+        // Load requests
+        const requestsRes = await fetch('/api/influencer/requests');
+        if (requestsRes.ok) {
+          const requestsData = await requestsRes.json();
+          setRequests(requestsData.requests || []);
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setActiveCampaignsLoading(false);
+        setReqLoading(false);
+      }
+    };
+    
+    loadData();
+  }, []);
+
+  // Search and filter handlers
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    searchCampaigns(query);
+  };
+
+  const handleFilter = () => {
+    const filterObj = {
+      businessName: filters.businessName || undefined,
+      minSplitPct: filters.minSplitPct ? parseInt(filters.minSplitPct) : undefined,
+      maxSplitPct: filters.maxSplitPct ? parseInt(filters.maxSplitPct) : undefined,
+      discountType: filters.discountType as 'percentage' | 'fixed' | undefined
+    };
+    filterCampaigns(filterObj);
+  };
+
+  const handleClearFilters = () => {
+    setSearchQuery('');
+    setFilters({
+      businessName: '',
+      minSplitPct: '',
+      maxSplitPct: '',
+      discountType: ''
+    });
+    clearCampaignFilters();
+  };
 
   const getTimeAgo = (date: Date) => {
     const days = Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
@@ -162,7 +219,88 @@ export default function InfluencerPage() {
   };
 
   const handleClaimCampaign = (offerId: string) => {
-    setClaimOffer(offerId);
+    setSelectedCampaign(offerId);
+    setShowClaimDialog(true);
+  };
+
+  const handleShareCampaign = async (couponId: string, platform: string = 'instagram') => {
+    try {
+      const response = await fetch('/api/influencer/share-campaign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ couponId, platform })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        // Copy share URL to clipboard
+        await navigator.clipboard.writeText(data.shareUrl);
+        toast.success('Share link copied to clipboard!');
+      } else {
+        toast.error('Failed to generate share link');
+      }
+    } catch (error) {
+      console.error('Error sharing campaign:', error);
+      toast.error('Failed to share campaign');
+    }
+  };
+
+  const handleSubmitContent = async (couponId: string, contentData: any) => {
+    try {
+      const response = await fetch('/api/influencer/submit-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ couponId, ...contentData })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        toast.success(data.message || 'Content submitted successfully!');
+        // Refresh active campaigns
+        const loadData = async () => {
+          const campaignsRes = await fetch('/api/influencer/active-campaigns');
+          if (campaignsRes.ok) {
+            const campaignsData = await campaignsRes.json();
+            setActiveCampaigns(campaignsData.campaigns || []);
+          }
+        };
+        loadData();
+      } else {
+        toast.error('Failed to submit content');
+      }
+    } catch (error) {
+      console.error('Error submitting content:', error);
+      toast.error('Failed to submit content');
+    }
+  };
+
+  const handleSendNegotiation = async (negotiationData: any) => {
+    try {
+      const response = await fetch('/api/influencer/requests', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requestId: negotiatingRequest,
+          action: 'counter',
+          counterOffer: negotiationData
+        })
+      });
+      
+      if (response.ok) {
+        toast.success('Counter-offer sent successfully!');
+        // Refresh requests
+        const requestsRes = await fetch('/api/influencer/requests');
+        if (requestsRes.ok) {
+          const requestsData = await requestsRes.json();
+          setRequests(requestsData.requests || []);
+        }
+      } else {
+        toast.error('Failed to send counter-offer');
+      }
+    } catch (error) {
+      console.error('Error sending negotiation:', error);
+      toast.error('Failed to send counter-offer');
+    }
   };
 
   return (
@@ -181,6 +319,14 @@ export default function InfluencerPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          {mainView === 'deals' && (
+            <Button 
+              variant="outline"
+              onClick={() => setMainView('dashboard')}
+            >
+              ← Back to Dashboard
+            </Button>
+          )}
           <Button 
             variant={mainView === 'deals' ? 'default' : 'outline'}
             onClick={() => setMainView('deals')}
@@ -200,90 +346,262 @@ export default function InfluencerPage() {
         </TabsList>
 
         <TabsContent value="nearby" className="space-y-6">
-          {nearbyLoading ? (
-            <Loading message="Finding nearby offers..." />
-          ) : nearbyError ? (
-            <div className="text-center py-12">
-              <p className="text-red-500">{nearbyError}</p>
-              <Button 
-                variant="outline" 
-                className="mt-4"
-                onClick={() => window.location.reload()}
-              >
-                Retry
-              </Button>
-            </div>
-          ) : nearbyOffers.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">No offers available in your area yet.</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Try checking "All Campaigns" or enable location access
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {nearbyOffers.map((offer: any) => (
-                <CampaignCard
-                  key={offer.id}
-                  campaign={{
-                    ...offer,
-                    businessId: offer.bizId || offer.businessId,
-                    status: 'active'
+          {/* Search and Filter Controls */}
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input
+                  placeholder="Search campaigns, businesses, or descriptions..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    handleSearch(e.target.value);
                   }}
-                  showDistance={true}
-                  onStart={handleClaimCampaign}
+                  className="pl-10"
                 />
-              ))}
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2"
+              >
+                <Filter className="w-4 h-4" />
+                Filters
+              </Button>
+              {(searchQuery || Object.values(filters).some(f => f)) && (
+                <Button
+                  variant="outline"
+                  onClick={handleClearFilters}
+                  className="flex items-center gap-2"
+                >
+                  <X className="w-4 h-4" />
+                  Clear
+                </Button>
+              )}
             </div>
+
+            {showFilters && (
+              <Card className="p-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Business Name</label>
+                    <Input
+                      placeholder="Filter by business..."
+                      value={filters.businessName}
+                      onChange={(e) => setFilters(prev => ({ ...prev, businessName: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Min Split %</label>
+                    <Input
+                      type="number"
+                      placeholder="e.g. 20"
+                      value={filters.minSplitPct}
+                      onChange={(e) => setFilters(prev => ({ ...prev, minSplitPct: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Max Split %</label>
+                    <Input
+                      type="number"
+                      placeholder="e.g. 50"
+                      value={filters.maxSplitPct}
+                      onChange={(e) => setFilters(prev => ({ ...prev, maxSplitPct: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Discount Type</label>
+                    <Select value={filters.discountType} onValueChange={(value) => setFilters(prev => ({ ...prev, discountType: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Any type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Any type</SelectItem>
+                        <SelectItem value="percentage">Percentage</SelectItem>
+                        <SelectItem value="fixed">Fixed Amount</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="flex justify-end mt-4">
+                  <Button onClick={handleFilter}>Apply Filters</Button>
+                </div>
+              </Card>
+            )}
+          </div>
+
+          {campaignsLoading && <Loading />}
+          
+          {campaignsError && (
+            <div className="text-red-600 text-sm">{campaignsError}</div>
           )}
-          {nearbyHasMore && (
-            <div className="flex justify-center">
-              <Button variant="outline" onClick={nearbyLoadMore}>Load more</Button>
-            </div>
+          
+          {!campaignsLoading && !campaignsError && (
+            <>
+              <div className="text-sm text-muted-foreground mb-4">
+                Found {availableCampaigns.length} available campaigns
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {availableCampaigns.map((campaign: any) => (
+                  <CampaignCard 
+                    key={campaign.id} 
+                    campaign={{
+                      id: campaign.id,
+                      title: campaign.title,
+                      description: campaign.description,
+                      splitPct: campaign.splitPct,
+                      minSpend: campaign.minSpend,
+                      businessName: campaign.businessName || 'Unknown Business',
+                      businessId: campaign.bizId,
+                      status: campaign.active ? 'active' : 'ended',
+                      expiresAt: campaign.endAt,
+                      maxInfluencers: campaign.maxInfluencers,
+                      currentInfluencers: campaign.currentInfluencers
+                    }} 
+                    showDistance={false}
+                    onStart={handleClaimCampaign}
+                  />
+                ))}
+              </div>
+              
+              {campaignsHasMore && (
+                <Button variant="outline" className="w-full" onClick={loadMoreCampaigns}>
+                  Load More
+                </Button>
+              )}
+            </>
           )}
         </TabsContent>
 
         <TabsContent value="all" className="space-y-6">
-          {allLoading ? (
-            <Loading message="Loading all campaigns..." />
-          ) : allError ? (
-            <div className="text-center py-12">
-              <p className="text-red-500">{allError}</p>
-              <Button 
-                variant="outline" 
-                className="mt-4"
-                onClick={() => window.location.reload()}
-              >
-                Retry
-              </Button>
-            </div>
-          ) : allOffers.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">No campaigns available at the moment.</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Check back later for new opportunities
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {allOffers.map((offer: any) => (
-                <CampaignCard
-                  key={offer.id}
-                  campaign={{
-                    ...offer,
-                    businessId: offer.bizId || offer.businessId,
-                    status: offer.status || 'active'
+          {/* Search and Filter Controls */}
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input
+                  placeholder="Search campaigns, businesses, or descriptions..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    handleSearch(e.target.value);
                   }}
-                  showDistance={false}
-                  onStart={handleClaimCampaign}
+                  className="pl-10"
                 />
-              ))}
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2"
+              >
+                <Filter className="w-4 h-4" />
+                Filters
+              </Button>
+              {(searchQuery || Object.values(filters).some(f => f)) && (
+                <Button
+                  variant="outline"
+                  onClick={handleClearFilters}
+                  className="flex items-center gap-2"
+                >
+                  <X className="w-4 h-4" />
+                  Clear
+                </Button>
+              )}
             </div>
+
+            {showFilters && (
+              <Card className="p-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Business Name</label>
+                    <Input
+                      placeholder="Filter by business..."
+                      value={filters.businessName}
+                      onChange={(e) => setFilters(prev => ({ ...prev, businessName: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Min Split %</label>
+                    <Input
+                      type="number"
+                      placeholder="e.g. 20"
+                      value={filters.minSplitPct}
+                      onChange={(e) => setFilters(prev => ({ ...prev, minSplitPct: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Max Split %</label>
+                    <Input
+                      type="number"
+                      placeholder="e.g. 50"
+                      value={filters.maxSplitPct}
+                      onChange={(e) => setFilters(prev => ({ ...prev, maxSplitPct: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Discount Type</label>
+                    <Select value={filters.discountType} onValueChange={(value) => setFilters(prev => ({ ...prev, discountType: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Any type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Any type</SelectItem>
+                        <SelectItem value="percentage">Percentage</SelectItem>
+                        <SelectItem value="fixed">Fixed Amount</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="flex justify-end mt-4">
+                  <Button onClick={handleFilter}>Apply Filters</Button>
+                </div>
+              </Card>
+            )}
+          </div>
+
+          {campaignsLoading && <Loading />}
+          
+          {campaignsError && (
+            <div className="text-red-600 text-sm">{campaignsError}</div>
           )}
-          {allHasMore && (
-            <div className="flex justify-center">
-              <Button variant="outline" onClick={allLoadMore}>Load more</Button>
-            </div>
+          
+          {!campaignsLoading && !campaignsError && (
+            <>
+              <div className="text-sm text-muted-foreground mb-4">
+                Found {availableCampaigns.length} available campaigns
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {availableCampaigns.map((campaign: any) => (
+                  <CampaignCard 
+                    key={campaign.id} 
+                    campaign={{
+                      id: campaign.id,
+                      title: campaign.title,
+                      description: campaign.description,
+                      splitPct: campaign.splitPct,
+                      minSpend: campaign.minSpend,
+                      businessName: campaign.businessName || 'Unknown Business',
+                      businessId: campaign.bizId,
+                      status: campaign.active ? 'active' : 'ended',
+                      expiresAt: campaign.endAt,
+                      maxInfluencers: campaign.maxInfluencers,
+                      currentInfluencers: campaign.currentInfluencers
+                    }} 
+                    showDistance={false}
+                    onStart={handleClaimCampaign}
+                  />
+                ))}
+              </div>
+              
+              {campaignsHasMore && (
+                <Button variant="outline" className="w-full" onClick={loadMoreCampaigns}>
+                  Load More
+                </Button>
+              )}
+            </>
           )}
         </TabsContent>
 
@@ -334,7 +652,7 @@ export default function InfluencerPage() {
                       </div>
                       <div className="flex items-center gap-1 text-sm">
                         <MapPin className="w-4 h-4 text-blue-600" />
-                        <span className="font-medium">{r.bizId}</span>
+                        <span className="font-medium">{r.businessName}</span>
                       </div>
 
                       {r.businessResponse && (
@@ -345,23 +663,58 @@ export default function InfluencerPage() {
                       )}
 
                       <div className="pt-2 space-y-2">
-                        <div className="flex gap-2">
-                          <Button 
-                            className="flex-1" 
-                            onClick={() => {
-                              alert(`Request accepted! Campaign will begin shortly.\n\nTerms:\n- Split: ${r.splitPct}%\n- Customer discount: ${r.userDiscountPct}%\n- Business: ${r.bizId}`);
-                            }}
-                          >
-                            Accept
-                          </Button>
-                          <Button 
-                            className="flex-1" 
-                            variant="outline"
-                            onClick={() => setNegotiatingRequest(r.id)}
-                          >
-                            Negotiate
-                          </Button>
-                        </div>
+                        {r.status === 'pending' && (
+                          <div className="flex gap-2">
+                            <Button 
+                              className="flex-1" 
+                              onClick={() => {
+                                toast.success(`Request accepted! Campaign will begin shortly.`);
+                              }}
+                            >
+                              Accept
+                            </Button>
+                            <Button 
+                              className="flex-1" 
+                              variant="outline"
+                              onClick={() => setNegotiatingRequest(r.id)}
+                            >
+                              Negotiate
+                            </Button>
+                          </div>
+                        )}
+                        {r.status === 'counter_offered' && (
+                          <div className="flex gap-2">
+                            <Button 
+                              className="flex-1" 
+                              onClick={() => {
+                                toast.success(`Counter-offer accepted! Campaign will begin shortly.`);
+                              }}
+                            >
+                              Accept Counter-Offer
+                            </Button>
+                            <Button 
+                              className="flex-1" 
+                              variant="outline"
+                              onClick={() => setNegotiatingRequest(r.id)}
+                            >
+                              Counter Again
+                            </Button>
+                          </div>
+                        )}
+                        {r.status === 'accepted' && (
+                          <div className="text-center py-2">
+                            <Badge variant="default" className="bg-green-100 text-green-800">
+                              ✓ Accepted - Campaign Active
+                            </Badge>
+                          </div>
+                        )}
+                        {r.status === 'declined' && (
+                          <div className="text-center py-2">
+                            <Badge variant="destructive" className="bg-red-100 text-red-800">
+                              ✗ Declined
+                            </Badge>
+                          </div>
+                        )}
                         <p className="text-xs text-muted-foreground text-center">
                           Review terms and respond to business
                         </p>
@@ -375,53 +728,101 @@ export default function InfluencerPage() {
         </TabsContent>
 
         <TabsContent value="my" className="space-y-6">
-          {campaigns.length === 0 ? (
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h3 className="text-lg font-semibold">My Programs</h3>
+              <p className="text-sm text-muted-foreground">{activeCampaigns.length} active campaigns</p>
+            </div>
+          </div>
+          
+          {activeCampaignsLoading ? (
+            <Loading />
+          ) : activeCampaigns.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">You have no active programs yet.</p>
+              <p className="text-muted-foreground">No active campaigns yet.</p>
+              <Button 
+                variant="outline" 
+                className="mt-4"
+                onClick={() => setMainView('deals')}
+              >
+                Browse Available Deals
+              </Button>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {campaigns.map((c) => (
+              {activeCampaigns.map((c: any) => (
                 <Card key={c.id} className="hover:shadow-md transition-shadow">
                   <CardHeader>
                     <div className="flex justify-between items-start">
-                      <CardTitle className="text-lg">Active Program</CardTitle>
-                      <Badge variant="default">In Progress</Badge>
+                      <CardTitle className="text-lg">{c.title}</CardTitle>
+                      <Badge variant="default">Active</Badge>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      <p className="text-sm text-muted-foreground">Track your deadlines and progress</p>
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm">{c.businessName}</span>
+                      </div>
                       
-                      <div className="flex items-center gap-1 text-sm">
-                        <MapPin className="w-4 h-4 text-blue-600" />
-                        <span className="font-medium">{c.bizId}</span>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm font-medium">Earnings</p>
+                          <p className="text-lg font-bold text-green-600">${(c.earnings / 100).toFixed(2)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">Redemptions</p>
+                          <p className="text-lg font-bold">{c.redemptions}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">Content Due</p>
+                          <p className="text-sm text-orange-600">
+                            {c.deadlineAt ? Math.max(0, Math.ceil((new Date(c.deadlineAt.toDate()).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) + ' days' : 'No deadline'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">Coupon Code</p>
+                          <p className="text-sm font-mono">{c.couponCode}</p>
+                        </div>
                       </div>
-
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span>Content Creation:</span>
-                          <span className="text-orange-600">5 days left</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Post Submission:</span>
-                          <span className="text-green-600">Completed</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Post Removal:</span>
-                          <span className="text-blue-600">23 days left</span>
-                        </div>
-                      </div>
-
-                      <div className="pt-2">
+                      
+                      <div className="flex gap-2">
                         <Button 
-                          className="w-full" 
+                          size="sm" 
                           variant="outline" 
-                          size="sm"
+                          className="flex-1"
                           onClick={() => setViewingCampaign(c.id)}
                         >
                           View Details
                         </Button>
+                        <Button 
+                          size="sm" 
+                          className="flex-1"
+                          onClick={() => handleShareCampaign(c.id)}
+                        >
+                          Share Campaign
+                        </Button>
+                        {c.couponType === 'CONTENT_MEAL' && !c.contentSubmitted && (
+                          <Button 
+                            size="sm" 
+                            variant="secondary"
+                            onClick={() => {
+                              // Simple content submission for demo
+                              const contentUrl = prompt('Enter content URL (Instagram post, TikTok video, etc.):');
+                              const caption = prompt('Enter caption (optional):');
+                              if (contentUrl) {
+                                handleSubmitContent(c.id, {
+                                  contentType: 'photo',
+                                  contentUrl,
+                                  caption,
+                                  platform: 'instagram'
+                                });
+                              }
+                            }}
+                          >
+                            Submit Content
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </CardContent>
@@ -455,7 +856,7 @@ export default function InfluencerPage() {
                   <Users className="w-5 h-5 text-blue-600" />
                   <div>
                     <p className="text-sm text-muted-foreground">Active Campaigns</p>
-                    <p className="text-xl font-bold text-blue-600">{campaigns.length}</p>
+                    <p className="text-xl font-bold text-blue-600">{activeCampaigns.length}</p>
                     <p className="text-xs text-muted-foreground">1 ending soon</p>
                   </div>
                 </div>
@@ -523,7 +924,7 @@ export default function InfluencerPage() {
                 Browse New Deals
               </Button>
             </div>
-            {campaigns.length === 0 ? (
+            {activeCampaigns.length === 0 ? (
               <Card>
                 <CardContent className="p-8 text-center">
                   <p className="text-muted-foreground">No active campaigns yet.</p>
@@ -537,7 +938,7 @@ export default function InfluencerPage() {
               </Card>
             ) : (
               <div className="space-y-4">
-                {campaigns.map((c) => (
+                {activeCampaigns.map((c: any) => (
                   <Card key={c.id} className="hover:shadow-md transition-shadow">
                     <CardContent className="p-6">
                       <div className="flex justify-between items-start">
@@ -666,11 +1067,14 @@ export default function InfluencerPage() {
         </div>
       )}
 
-      {claimOffer && (
+      {selectedCampaign && showClaimDialog && (
         <ClaimOfferDialog
-          offerId={claimOffer}
-          open={true}
-          onClose={() => setClaimOffer(null)}
+          offerId={selectedCampaign}
+          open={showClaimDialog}
+          onClose={() => {
+            setSelectedCampaign(null);
+            setShowClaimDialog(false);
+          }}
         />
       )}
 
@@ -805,7 +1209,25 @@ function NegotiationDialog({ requestId, open, onClose }: { requestId: string; op
                   ? 'Buy One Get One Free'
                   : `${discountType.replace('_', ' ')} discount`;
                   
-                alert(`Negotiation sent!\n\nYour terms:\n- Split: ${splitPct}%\n- Customer gets: ${discountText}\n- Min spend: $${minSpend / 100}\n- Message: ${message}`);
+                // Send negotiation via API
+                fetch('/api/influencer/requests', {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    requestId,
+                    status: 'negotiating',
+                    proposedSplitPct: splitPct,
+                    proposedDiscountType: discountType,
+                    proposedUserDiscountPct: userDiscountPct,
+                    proposedUserDiscountCents: userDiscountCents,
+                    proposedMinSpend: minSpend,
+                    message
+                  })
+                }).then(() => {
+                  toast.success('Negotiation sent!');
+                }).catch(() => {
+                  toast.error('Failed to send negotiation');
+                });
                 onClose();
               }}
               className="flex-1"

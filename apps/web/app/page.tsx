@@ -3,10 +3,10 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { FloatingMascot } from '@/components/ui/floating-mascot';
-import { useAuth } from '@/lib/auth';
+import { useDemoAuth } from '@/lib/demo-auth';
 
 export default function Home() {
-  const { user } = useAuth();
+  const { user } = useDemoAuth();
   return (
     <div className="h-[calc(100vh-7rem)] overflow-hidden bg-white relative">
       <div className="absolute inset-0 flex items-center justify-center">

@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { useAuth } from '@/lib/auth';
+import { useDemoAuth } from '@/lib/demo-auth';
 
 interface Offer {
   id: string;
@@ -19,7 +19,7 @@ export function useNearbyOffers() {
   const [error, setError] = useState<string | null>(null);
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const { user } = useAuth();
+  const { user } = useDemoAuth();
 
   useEffect(() => {
     if (!user) {

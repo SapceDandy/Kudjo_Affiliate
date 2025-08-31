@@ -1,11 +1,11 @@
 'use client';
 
-import { useAuth } from '@/lib/auth';
+import { useDemoAuth } from '@/lib/demo-auth';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
 export default function TestAuthPage() {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading, signOut } = useDemoAuth();
 
   if (loading) {
     return <div>Loading...</div>;

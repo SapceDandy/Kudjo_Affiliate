@@ -1,10 +1,10 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/lib/auth';
+import { useDemoAuth } from '@/lib/demo-auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function SignUpPage() {
@@ -14,8 +14,22 @@ export default function SignUpPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'business'>('business');
-  const { signUp, signInWithGoogle } = useAuth();
+  const { switchUser } = useDemoAuth();
   const router = useRouter();
+
+  // Pre-fill email and role from URL params if redirected from sign-in
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const emailParam = urlParams.get('email');
+    const roleParam = urlParams.get('role');
+    
+    if (emailParam) {
+      setEmail(emailParam);
+    }
+    if (roleParam === 'business' || roleParam === 'influencer') {
+      setActiveTab(roleParam as 'business');
+    }
+  }, []);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,23 +51,11 @@ export default function SignUpPage() {
     }
     
     try {
-      await signUp(email, password, 'business');
-      
-      // Redirect based on role
-      router.replace('/business/onboard');
+      // Demo signup - switch user based on role
+      switchUser(activeTab);
+      router.push(activeTab === 'business' ? '/business/onboard' : '/influencer/dashboard');
     } catch (err: any) {
-      console.error('Sign-up error:', err);
-      
-      // Provide more specific error messages
-      if (err.code === 'auth/email-already-in-use') {
-        setError('This email is already registered. Please sign in instead.');
-      } else if (err.code === 'auth/invalid-email') {
-        setError('Invalid email address.');
-      } else if (err.code === 'auth/weak-password') {
-        setError('Password is too weak. Please choose a stronger password.');
-      } else {
-        setError(`Sign-up failed: ${err.message || 'Unknown error'}`);
-      }
+      setError(err.message || 'Failed to create account');
     } finally {
       setLoading(false);
     }
@@ -64,7 +66,7 @@ export default function SignUpPage() {
     setError('');
     
     try {
-      await signInWithGoogle('business');
+      switchUser('business');
       
       // Redirect based on role
       router.replace('/business/onboard');

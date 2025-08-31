@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useAuth } from '@/lib/auth';
+import { useDemoAuth } from '@/lib/demo-auth';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
@@ -15,6 +15,7 @@ export function SignUpForm({ role = 'influencer' }: { role?: 'influencer' | 'bus
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const { switchUser } = useDemoAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -23,23 +24,11 @@ export function SignUpForm({ role = 'influencer' }: { role?: 'influencer' | 'bus
     setLoading(true);
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(userCredential.user, { displayName: name });
-      
-      // Create user profile in Firestore
-      await setDoc(doc(db, 'users', userCredential.user.uid), {
-        id: userCredential.user.uid,
-        email,
-        name,
-        role,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      });
-
-      // Redirect based on role
-      router.push(role === 'influencer' ? '/influencer' : '/business');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create account');
+      // Demo auth - switch user based on role
+      switchUser(role);
+      router.push(role === 'business' ? '/business/dashboard' : '/influencer/dashboard');
+    } catch (error: any) {
+      setError(error.message || 'Failed to create account');
     } finally {
       setLoading(false);
     }

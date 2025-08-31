@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { collection, query, where, getDocs, orderBy, limit as qlimit, startAfter, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { useAuth } from '@/lib/auth';
+import { useDemoAuth } from '@/lib/demo-auth';
 
 export interface Campaign {
   id: string;
@@ -23,7 +23,7 @@ export interface Campaign {
 }
 
 export function useCampaigns(pageSize: number = 20) {
-  const { user } = useAuth();
+  const { user } = useDemoAuth();
   const [items, setItems] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

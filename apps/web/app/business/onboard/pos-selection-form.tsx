@@ -24,35 +24,32 @@ export function PosSelectionForm({ onNext, initialData }: PosSelectionFormProps)
       <h2 className="text-lg font-semibold text-center">Select POS Provider</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card
-          className={`cursor-pointer hover:border-primary transition-colors ${
-            initialData.posProvider === 'square' ? 'border-primary' : ''
-          }`}
-          onClick={() => handleSelect('square')}
+          className="opacity-50 cursor-not-allowed border-gray-300"
           role="button"
-          aria-label="Square"
+          aria-label="Square (Disabled)"
+          aria-disabled="true"
         >
           <CardContent className="p-4 text-center">
-            <h3 className="font-semibold mb-2">Square</h3>
-            <p className="text-sm text-muted-foreground">
-              Connect your Square account for automatic redemption tracking
+            <h3 className="font-semibold mb-2 text-gray-500">Square</h3>
+            <p className="text-sm text-gray-400">
+              Coming soon - Square integration not yet available
             </p>
+            <p className="text-xs text-red-500 mt-2">Currently unavailable</p>
           </CardContent>
         </Card>
 
         <Card
-          className={`cursor-pointer hover:border-primary transition-colors ${
-            initialData.posProvider === 'clover' ? 'border-primary' : ''
-          }`}
-          onClick={() => handleSelect('clover')}
+          className="opacity-50 cursor-not-allowed border-gray-300"
           role="button"
-          aria-label="Clover"
+          aria-label="Clover (Disabled)"
+          aria-disabled="true"
         >
           <CardContent className="p-4 text-center">
-            <h3 className="font-semibold mb-2">Clover</h3>
-            <p className="text-sm text-muted-foreground">
-              Coming soon - Connect your Clover POS system
+            <h3 className="font-semibold mb-2 text-gray-500">Clover</h3>
+            <p className="text-sm text-gray-400">
+              Coming soon - Clover integration not yet available
             </p>
-            <p className="text-xs text-muted-foreground mt-2">(Not available in MVP)</p>
+            <p className="text-xs text-red-500 mt-2">Currently unavailable</p>
           </CardContent>
         </Card>
 

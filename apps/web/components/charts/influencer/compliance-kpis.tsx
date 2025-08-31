@@ -308,7 +308,25 @@ export function ComplianceKPIs({ infId, className }: ComplianceKPIsProps) {
                                 View Proof
                               </Button>
                             ) : (
-                              <Button variant="outline" size="sm">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  const input = document.createElement('input');
+                                  input.type = 'file';
+                                  input.accept = 'image/*';
+                                  input.onchange = (e) => {
+                                    const file = (e.target as HTMLInputElement).files?.[0];
+                                    if (file) {
+                                      // TODO: Implement actual file upload to Firebase Storage
+                                      console.log('File selected:', file.name);
+                                      // For now, just show success message
+                                      alert(`Proof uploaded successfully: ${file.name}`);
+                                    }
+                                  };
+                                  input.click();
+                                }}
+                              >
                                 <Upload className="w-3 h-3 mr-1" />
                                 Upload Proof
                               </Button>

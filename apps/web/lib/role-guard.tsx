@@ -2,7 +2,7 @@
 
 import { useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth';
+import { useDemoAuth } from '@/lib/demo-auth';
 
 interface RoleGuardProps {
   children: ReactNode;
@@ -11,7 +11,7 @@ interface RoleGuardProps {
 }
 
 export function RoleGuard({ children, allowedRoles, fallbackPath = '/auth/signin' }: RoleGuardProps) {
-  const { user, loading } = useAuth();
+  const { user, loading } = useDemoAuth();
   const router = useRouter();
   const [authorized, setAuthorized] = useState(false);
 

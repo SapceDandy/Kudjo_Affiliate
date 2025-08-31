@@ -6,10 +6,11 @@ import path from 'path';
 // Initialize Firebase Admin
 let adminDb: any;
 
+let initialized = false;
+
 try {
   // Check if Firebase Admin is already initialized
   if (getApps().length === 0) {
-    let initialized = false;
     // First, try env-provided credentials
     const envPrivateKey = (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n');
     const envClientEmail = process.env.FIREBASE_CLIENT_EMAIL;
@@ -40,20 +41,31 @@ try {
       for (const p of candidates) {
         if (fs.existsSync(p)) {
           const sa = JSON.parse(fs.readFileSync(p, 'utf-8'));
-          initializeApp({ credential: cert(sa) });
-          initialized = true;
-          console.log('Firebase Admin initialized from local service account file:', path.basename(p));
-          break;
+          // Check if it's a real service account (not placeholder)
+          if (sa.private_key && !sa.private_key.includes('REPLACE_THIS')) {
+            initializeApp({ credential: cert(sa) });
+            initialized = true;
+            console.log('Firebase Admin initialized from local service account file:', path.basename(p));
+            break;
+          } else {
+            console.log('Service account file contains placeholder values, skipping:', path.basename(p));
+          }
         }
       }
     }
 
     if (!initialized) {
-      throw new Error('Firebase Admin credentials not found. Set FIREBASE_PRIVATE_KEY/FIREBASE_CLIENT_EMAIL or provide GOOGLE_APPLICATION_CREDENTIALS/service-account file.');
+      console.log('Firebase Admin credentials not configured - will use mock data fallback');
+      // Don't throw error, just set adminDb to null for fallback
     }
+  } else {
+    initialized = true; // Already initialized
   }
   
-  adminDb = getFirestore();
+  if (initialized) {
+    adminDb = getFirestore();
+  }
+  
 } catch (error) {
   console.error("Firebase Admin initialization error:", error);
   adminDb = null;

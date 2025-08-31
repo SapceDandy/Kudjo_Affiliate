@@ -1,17 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
-import { z } from 'zod';
+import { CouponCreateSchema, CouponCreateResponse } from '@/lib/schemas/coupon';
 
 // Inline type definitions to avoid import issues
 type CouponType = 'AFFILIATE' | 'CONTENT_MEAL';
-
-const ApiCouponCreate = z.object({
-  type: z.enum(['AFFILIATE', 'CONTENT_MEAL']),
-  bizId: z.string(),
-  infId: z.string(),
-  offerId: z.string().optional(),
-  override: z.boolean().optional(),
-});
 
 // Utility functions
 function makeDocumentId(length = 20): string {
@@ -47,8 +39,8 @@ export async function POST(request: NextRequest) {
   try {
     // Parse and validate request body
     const body = await request.json();
-    const validatedData = ApiCouponCreate.parse(body);
-    let { type, bizId, infId, offerId, override } = validatedData;
+    const parsed = CouponCreateSchema.parse(body);
+    let { type, bizId, infId, offerId, override } = parsed;
 
     // Initialize Firebase Admin directly to avoid null adminDb issues
     const admin = await import('firebase-admin');
@@ -226,30 +218,18 @@ export async function POST(request: NextRequest) {
     await dbRef.collection('coupons').doc(couponId).set(coupon);
 
     // Return response
-    const response: any = {
+    const response: CouponCreateResponse = {
       couponId,
       code,
-      type,
-      status: 'issued',
-    };
-
-    if (linkId) {
-      response.link = {
+      qrUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/qr/${couponId}`,
+      ...(type === 'AFFILIATE' && linkId ? { link: {
         linkId,
         url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/r/${makeDocumentId(8)}`,
         qrUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/qr/${linkId}`,
-      };
-    }
+      } } : {}),
+    };
 
-    if (deadlineAt) {
-      response.deadlineAt = deadlineAt;
-    }
-
-    if (capCents) {
-      response.cap_cents = capCents;
-    }
-
-    return NextResponse.json(response, { status: 201 });
+    return NextResponse.json(response);
 
   } catch (error) {
     console.error('Coupon creation error:', error);

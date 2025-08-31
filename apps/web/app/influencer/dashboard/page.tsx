@@ -5,18 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  DollarSign, 
-  Target, 
-  Clock, 
-  TrendingUp,
-  QrCode,
-  ExternalLink,
-  Calendar,
-  MapPin,
-  Users
-} from 'lucide-react';
-import { useAuth } from '@/lib/auth';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Copy, ExternalLink, QrCode, DollarSign, TrendingUp, Users, Clock, MapPin, Share2, Eye, Target, Calendar } from 'lucide-react';
+import { useDemoAuth } from '@/lib/demo-auth';
+import { useAnalytics } from '@/components/analytics';
+import { useInfluencerMetrics } from '@/lib/hooks/use-influencer-metrics';
+import Image from 'next/image';
 
 interface Campaign {
   id: string;
@@ -47,13 +41,10 @@ interface DashboardStats {
 }
 
 export default function InfluencerDashboard() {
-  const { user } = useAuth();
-  const [stats, setStats] = useState<DashboardStats>({
-    totalEarnings: 0,
-    activeCampaigns: 0,
-    completedCampaigns: 0,
-    pendingPayout: 0,
-  });
+  const { user } = useDemoAuth();
+  const { trackEvent } = useAnalytics();
+  const { metrics, loading: metricsLoading, error: metricsError } = useInfluencerMetrics();
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -62,13 +53,7 @@ export default function InfluencerDashboard() {
       if (!user?.uid) return;
 
       try {
-        // Mock data for now - in production, these would be API calls
-        const mockStats: DashboardStats = {
-          totalEarnings: 245.50,
-          activeCampaigns: 3,
-          completedCampaigns: 8,
-          pendingPayout: 89.25,
-        };
+        // Use real metrics from API hook instead of mock data
 
         const mockCampaigns: Campaign[] = [
           {
@@ -122,7 +107,6 @@ export default function InfluencerDashboard() {
           },
         ];
 
-        setStats(mockStats);
         setCampaigns(mockCampaigns);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -170,7 +154,8 @@ export default function InfluencerDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-green-600">${stats.totalEarnings.toFixed(2)}</p>
+            <p className="text-2xl font-bold text-green-600">${metrics ? (metrics.totalEarnings / 100).toFixed(2) : '0.00'}</p>
+            <p className="text-xs text-muted-foreground">+${metrics ? (metrics.weeklyEarnings / 100).toFixed(2) : '0.00'} this week</p>
           </CardContent>
         </Card>
 
@@ -182,7 +167,7 @@ export default function InfluencerDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-blue-600">{stats.activeCampaigns}</p>
+            <p className="text-2xl font-bold text-blue-600">{metrics?.activeCampaigns || 0}</p>
           </CardContent>
         </Card>
 
@@ -190,11 +175,11 @@ export default function InfluencerDashboard() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-gray-500 flex items-center gap-2">
               <TrendingUp className="w-4 h-4" />
-              Completed
+              Total Redemptions
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-purple-600">{stats.completedCampaigns}</p>
+            <p className="text-2xl font-bold text-purple-600">{metrics?.totalRedemptions || 0}</p>
           </CardContent>
         </Card>
 
@@ -202,11 +187,11 @@ export default function InfluencerDashboard() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-gray-500 flex items-center gap-2">
               <Clock className="w-4 h-4" />
-              Pending Payout
+              Conversion Rate
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-orange-600">${stats.pendingPayout.toFixed(2)}</p>
+            <p className="text-2xl font-bold text-orange-600">{metrics?.conversionRate || 0}%</p>
           </CardContent>
         </Card>
       </div>

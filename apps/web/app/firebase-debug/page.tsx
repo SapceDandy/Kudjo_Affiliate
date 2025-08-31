@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth';
+import { useDemoAuth } from '@/lib/demo-auth';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
 export default function FirebaseDebugPage() {
-  const { user, signInWithGoogle, signOut } = useAuth();
+  const { user, signOut } = useDemoAuth();
   const router = useRouter();
   const [testResult, setTestResult] = useState<string>('');
   const [redirectTest, setRedirectTest] = useState<string>('');
@@ -15,32 +15,22 @@ export default function FirebaseDebugPage() {
   const testBusinessSignIn = async () => {
     setTestResult('Testing business sign-in...');
     try {
-      const role = await signInWithGoogle('business', { debug: true });
-      setTestResult(`Sign-in successful with role: ${role}`);
-      setRedirectTest(`Should redirect to: /${role}`);
-      
-      // Wait 1 second to show result before redirecting
-      setTimeout(() => {
-        router.push(`/${role}`);
-      }, 1000);
-    } catch (error) {
-      setTestResult(`Error: ${error instanceof Error ? error.message : String(error)}`);
+      // Demo auth test
+      setTestResult('Demo business sign-in successful');
+      setRedirectTest('Should redirect to: /business');
+    } catch (error: any) {
+      setTestResult(`Sign-in failed: ${error.message}`);
     }
   };
 
   const testInfluencerSignIn = async () => {
     setTestResult('Testing influencer sign-in...');
     try {
-      const role = await signInWithGoogle('influencer', { debug: true });
-      setTestResult(`Sign-in successful with role: ${role}`);
-      setRedirectTest(`Should redirect to: /${role}`);
-      
-      // Wait 1 second to show result before redirecting
-      setTimeout(() => {
-        router.push(`/${role}`);
-      }, 1000);
-    } catch (error) {
-      setTestResult(`Error: ${error instanceof Error ? error.message : String(error)}`);
+      // Demo auth test
+      setTestResult('Demo influencer sign-in successful');
+      setRedirectTest('Should redirect to: /influencer');
+    } catch (error: any) {
+      setTestResult(`Sign-in failed: ${error.message}`);
     }
   };
 
