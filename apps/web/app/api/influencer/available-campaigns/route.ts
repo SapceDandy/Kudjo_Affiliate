@@ -152,21 +152,19 @@ export async function GET(request: NextRequest) {
     }
 
     // Format response
-    const campaigns = eligibleOffers.map(offer => {
-      const business = businessMap.get(offer.bizId) || { name: 'Unknown Business' };
-      
+    const campaigns = paginatedOffers.map(offer => {
       return {
         id: offer.id,
         title: offer.title || 'Untitled Campaign',
         description: offer.description,
-        businessName: business.name,
+        businessName: offer.businessName,
         businessId: offer.bizId,
         splitPct: offer.splitPct || 20,
         discountType: offer.discountType || 'percentage',
         userDiscountPct: offer.userDiscountPct,
         userDiscountCents: offer.userDiscountCents,
         minSpendCents: offer.minSpendCents,
-        eligibleTiers: offer.eligibility?.tiers || ['S', 'M', 'L', 'XL', 'Huge'],
+        eligibleTiers: offer.eligibleTiers || ['S', 'M', 'L', 'XL', 'Huge'],
         maxInfluencers: offer.maxInfluencers,
         currentInfluencers: 0, // Would need to calculate
         maxRedemptions: offer.maxRedemptions,
