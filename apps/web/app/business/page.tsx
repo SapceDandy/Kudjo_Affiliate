@@ -14,6 +14,7 @@ import { useBusinessRequests } from '@/lib/hooks/use-business-requests';
 import { useBusinessPrograms } from '@/lib/hooks/use-business-programs';
 import { SearchFilter } from '@/components/search-filter';
 import { useSearchFilter } from '@/lib/hooks/use-search-filter';
+import { FindInfluencersDialog } from '@/components/find-influencers-dialog';
 import { doc, setDoc, updateDoc, deleteDoc, collection, getDocs, getDoc, orderBy as fsOrderBy, query as fsQuery, startAt, endAt, limit as fsLimit } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 
@@ -622,21 +623,33 @@ export default function BusinessHome() {
       )}
 
       {findDialogOpen && (
-        <Dialog open={findDialogOpen} onOpenChange={setFindDialogOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Find Influencers</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Feature coming soon! You'll be able to search and invite influencers directly.
-              </p>
-              <Button onClick={() => setFindDialogOpen(false)} className="w-full">
-                Close
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <FindInfluencersDialog 
+          open={findDialogOpen} 
+          onClose={() => setFindDialogOpen(false)}
+          onSendRequest={async (req) => {
+            try {
+              const requestId = `req_${Date.now()}_${req.influencerId || 'unknown'}`;
+              await setDoc(doc(db, 'influencerRequests', requestId), {
+                id: requestId,
+                businessId: user?.uid || 'demo_business_user',
+                influencer: req.influencer,
+                followers: req.followers,
+                tier: req.tier,
+                proposedSplitPct: req.proposedSplitPct,
+                discountType: req.discountType,
+                userDiscountPct: req.userDiscountPct,
+                userDiscountCents: req.userDiscountCents,
+                minSpendCents: req.minSpendCents,
+                createdAt: new Date(),
+                status: 'pending'
+              });
+              refetchRequests();
+            } catch (error) {
+              console.error('Error sending request:', error);
+              throw error;
+            }
+          }}
+        />
       )}
 
       {tierDialogOpen && (
@@ -851,197 +864,6 @@ function CreateOfferDialog({ open, onClose, onCreate, defaultSettings }: { open:
   );
 }
 
-function FindInfluencersDialog({ open, onClose, onSendRequest }: { open: boolean; onClose: () => void; onSendRequest: (req: Omit<RequestItem, 'id' | 'createdAt' | 'status'> & { influencerId?: string }) => void }) {
-  const [queryText, setQueryText] = useState('');
-  const [minFollowers, setMinFollowers] = useState<number>(0);
-  const [tier, setTier] = useState<string>('');
-  const [tags, setTags] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<Array<{ id: string; handle: string; followers: number; tier?: string; tags?: string[] }>>([]);
-  const [selected, setSelected] = useState<{ id: string; handle: string; followers: number; tier?: string } | null>(null);
-  const [splitPct, setSplitPct] = useState(20);
-  const [discountType, setDiscountType] = useState<DiscountType>('percentage');
-  const [userDiscountPct, setUserDiscountPct] = useState(20);
-  const [userDiscountCents, setUserDiscountCents] = useState(500);
-  const [minSpendCents, setMinSpendCents] = useState(0);
-  const [sent, setSent] = useState(false);
-
-  const suggestionChips = ['Austin', 'Food', 'Drinks', 'BBQ'];
-
-  useEffect(() => {
-    let cancelled = false;
-    const run = async () => {
-      setLoading(true);
-      try {
-        const col = collection(db, 'influencers');
-        const qLower = queryText.trim().toLowerCase();
-        let snap;
-        if (qLower) {
-          const q = fsQuery(col, fsOrderBy('handleLower'), startAt(qLower), endAt(qLower + '\uf8ff'), fsLimit(50));
-          snap = await getDocs(q);
-        } else {
-          const q = fsQuery(col, fsOrderBy('followers', 'desc'), fsLimit(50));
-          snap = await getDocs(q);
-        }
-        if (cancelled) return;
-        let rows = snap.docs.map(d => ({ id: d.id, handle: (d.data() as any).handle || '', followers: (d.data() as any).followers || 0, tier: (d.data() as any).tier, tags: (d.data() as any).tags || [] }));
-        // Client-side filters
-        if (minFollowers > 0) rows = rows.filter(r => r.followers >= minFollowers);
-        if (tier) rows = rows.filter(r => (r.tier || '').toLowerCase() === tier.toLowerCase());
-        if (tags.length > 0) rows = rows.filter(r => tags.every(t => (r.tags || []).map((x: any) => x.toLowerCase()).includes(t.toLowerCase())));
-        // Exact match prioritization
-        if (qLower) {
-          rows.sort((a, b) => {
-            const aExact = a.handle.toLowerCase() === qLower ? 1 : 0;
-            const bExact = b.handle.toLowerCase() === qLower ? 1 : 0;
-            if (aExact !== bExact) return bExact - aExact;
-            return b.followers - a.followers;
-          });
-        } else {
-          rows.sort((a, b) => b.followers - a.followers);
-        }
-        setResults(rows.slice(0, 10));
-      } catch {
-        setResults([]);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-    run();
-    return () => { cancelled = true; };
-  }, [queryText, minFollowers, tier, tags]);
-
-  const canSend = Boolean(selected);
-
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Find Influencers</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          {sent && (
-            <div className="bg-green-50 border border-green-200 text-green-800 px-3 py-2 rounded-md text-sm">Request sent.</div>
-          )}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <input 
-              placeholder="Search by handle..." 
-              className="w-full px-3 py-2 border rounded-md md:col-span-2" 
-              value={queryText} 
-              onChange={(e) => setQueryText(e.target.value)}
-            />
-            <input 
-              type="number"
-              placeholder="Min followers"
-              className="w-full px-3 py-2 border rounded-md"
-              value={minFollowers}
-              onChange={(e) => setMinFollowers(Number(e.target.value) || 0)}
-            />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
-            <div>
-              <label className="text-sm text-muted-foreground">Tier</label>
-              <select className="w-full mt-1 px-3 py-2 border rounded-md" value={tier} onChange={(e) => setTier(e.target.value)}>
-                <option value="">Any</option>
-                <option value="Small">Small</option>
-                <option value="Medium">Medium</option>
-                <option value="Large">Large</option>
-                <option value="Extra Large">Extra Large</option>
-              </select>
-            </div>
-            <div className="md:col-span-2">
-              <label className="text-sm text-muted-foreground">Suggested filters</label>
-              <div className="flex flex-wrap gap-2 mt-1">
-                {suggestionChips.map(chip => (
-                  <Button 
-                    key={chip}
-                    type="button"
-                    variant={tags.includes(chip) ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setTags(prev => prev.includes(chip) ? prev.filter(t => t !== chip) : [...prev, chip])}
-                  >
-                    {chip}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="text-sm text-muted-foreground">{loading ? 'Searching…' : `${results.length} results`}</div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-64 overflow-auto">
-            {results.map(r => {
-              const isSel = selected?.id === r.id;
-              return (
-                <Card key={r.id} className={`cursor-pointer ${isSel ? 'ring-2 ring-brand' : ''}`} onClick={() => setSelected({ id: r.id, handle: r.handle, followers: r.followers, tier: r.tier })}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-semibold">{r.handle}</p>
-                        <p className="text-sm text-muted-foreground">{r.followers.toLocaleString()} followers{r.tier ? ` • ${r.tier}` : ''}</p>
-                      </div>
-                      {isSel && <Badge>Selected</Badge>}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium">Split (%)</label>
-              <input type="number" className="w-full mt-1 px-3 py-2 border rounded-md" value={splitPct} min={10} max={60} onChange={(e) => setSplitPct(Number(e.target.value))} />
-            </div>
-            <div>
-              <label className="text-sm font-medium">Discount Type</label>
-              <select className="w-full mt-1 px-3 py-2 border rounded-md" value={discountType} onChange={(e) => setDiscountType(e.target.value as DiscountType)}>
-                <option value="percentage">Percentage Off</option>
-                <option value="dollar">Dollar Off</option>
-                <option value="bogo">Buy One Get One Free</option>
-                <option value="student">Student Discount</option>
-                <option value="happy_hour">Happy Hour</option>
-                <option value="free_appetizer">Free Appetizer</option>
-                <option value="first_time">First-Time Customer</option>
-              </select>
-            </div>
-          </div>
-          {discountType === 'percentage' && (
-            <div>
-              <label className="text-sm font-medium">Customer Discount (%)</label>
-              <input type="number" className="w-full mt-1 px-3 py-2 border rounded-md" value={userDiscountPct} min={5} max={60} onChange={(e) => setUserDiscountPct(Number(e.target.value))} />
-            </div>
-          )}
-          {discountType === 'dollar' && (
-            <div>
-              <label className="text-sm font-medium">Dollar Amount Off ($)</label>
-              <input type="number" className="w-full mt-1 px-3 py-2 border rounded-md" value={userDiscountCents/100} min={1} step={0.01} onChange={(e) => setUserDiscountCents(Number(e.target.value)*100)} />
-            </div>
-          )}
-          {(discountType === 'dollar' || discountType === 'free_appetizer') && (
-            <div>
-              <label className="text-sm font-medium">Minimum Spend ($)</label>
-              <input type="number" className="w-full mt-1 px-3 py-2 border rounded-md" value={minSpendCents/100} min={0} step={0.01} onChange={(e) => setMinSpendCents(Number(e.target.value)*100)} />
-            </div>
-          )}
-
-          <div className="flex gap-2">
-            <Button variant="outline" className="flex-1" onClick={onClose}>Close</Button>
-            <Button 
-              className="flex-1" 
-              disabled={!canSend}
-              onClick={() => {
-                if (!selected) return;
-                onSendRequest({ influencer: selected.handle, influencerId: selected.id, followers: selected.followers, tier: selected.tier, proposedSplitPct: splitPct, discountType, userDiscountPct, userDiscountCents, minSpendCents });
-                setSent(true);
-              }}
-            >
-              Send Request
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 function PerformanceDialog({ offerId, open, onClose }: { offerId: string; open: boolean; onClose: () => void }) {
   const [loading, setLoading] = useState(true);

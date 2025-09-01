@@ -135,7 +135,7 @@ export default function InfluencerPage() {
     businessName: '',
     minSplitPct: '',
     maxSplitPct: '',
-    discountType: ''
+    discountType: 'all'
   });
   
   const { 
@@ -206,7 +206,7 @@ export default function InfluencerPage() {
       businessName: '',
       minSplitPct: '',
       maxSplitPct: '',
-      discountType: ''
+      discountType: 'all'
     });
     clearCampaignFilters();
   };
@@ -417,7 +417,7 @@ export default function InfluencerPage() {
                         <SelectValue placeholder="Any type" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Any type</SelectItem>
+                        <SelectItem value="all">Any type</SelectItem>
                         <SelectItem value="percentage">Percentage</SelectItem>
                         <SelectItem value="fixed">Fixed Amount</SelectItem>
                       </SelectContent>
@@ -547,7 +547,7 @@ export default function InfluencerPage() {
                         <SelectValue placeholder="Any type" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Any type</SelectItem>
+                        <SelectItem value="all">Any type</SelectItem>
                         <SelectItem value="percentage">Percentage</SelectItem>
                         <SelectItem value="fixed">Fixed Amount</SelectItem>
                       </SelectContent>

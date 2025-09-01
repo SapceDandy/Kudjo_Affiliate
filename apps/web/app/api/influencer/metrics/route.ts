@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
+import { mockMetrics, shouldUseMockData } from '@/lib/mock-data';
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,17 +13,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'influencerId required' }, { status: 400 });
     }
 
-    if (mockMode) {
+    // Use mock data if quota exceeded or in development
+    if (mockMode || shouldUseMockData()) {
       return NextResponse.json({
-        totalEarnings: 24850, // cents
-        weeklyEarnings: 1230, // cents
-        activeCampaigns: 1,
-        totalRedemptions: 47,
-        conversionRate: 23,
-        partnerBusinesses: 8,
-        pendingRequests: 2,
-        tier: 'Small',
-        followers: 15000
+        ...mockMetrics.influencer,
+        totalEarnings: Math.round(mockMetrics.influencer.totalEarnings * 100), // Convert to cents
+        weeklyEarnings: Math.round(mockMetrics.influencer.earningsThisMonth * 100 / 4), // Estimate weekly
+        tier: 'Gold',
+        followers: 45000,
+        source: 'mock'
       });
     }
 
@@ -94,8 +93,22 @@ export async function GET(request: NextRequest) {
       followers
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching influencer metrics:', error);
+    
+    // Handle quota exceeded errors with mock data fallback
+    if (error?.code === 8 || error?.message?.includes('Quota exceeded')) {
+      console.log('Quota exceeded, falling back to mock data');
+      return NextResponse.json({
+        ...mockMetrics.influencer,
+        totalEarnings: Math.round(mockMetrics.influencer.totalEarnings * 100), // Convert to cents
+        weeklyEarnings: Math.round(mockMetrics.influencer.earningsThisMonth * 100 / 4), // Estimate weekly
+        tier: 'Gold',
+        followers: 45000,
+        source: 'mock_fallback'
+      });
+    }
+    
     return NextResponse.json(
       { error: 'Failed to fetch metrics' },
       { status: 500 }

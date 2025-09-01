@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
 
     // Get unique influencer IDs from redemptions
     const influencerIds = new Set<string>();
-    redemptionsSnapshot.docs.forEach(doc => {
+    redemptionsSnapshot.docs.forEach((doc: any) => {
       const influencerId = doc.data().influencerId;
       if (influencerId) {
         influencerIds.add(influencerId);
@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
         .where('__name__', 'in', batch)
         .get();
 
-      influencersSnapshot.docs.forEach(doc => {
+      influencersSnapshot.docs.forEach((doc: any) => {
         const influencer = doc.data();
         const tier = influencer.tier || 'S';
         const influencerId = doc.id;
@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
           tierData.count += 1;
 
           // Calculate revenue and conversions for this influencer
-          redemptionsSnapshot.docs.forEach(redemptionDoc => {
+          redemptionsSnapshot.docs.forEach((redemptionDoc: any) => {
             const redemption = redemptionDoc.data();
             if (redemption.influencerId === influencerId) {
               tierData.revenue += redemption.amountCents || 0;

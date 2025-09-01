@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
       date: string;
     }>();
 
-    redemptionsSnapshot.docs.forEach(doc => {
+    redemptionsSnapshot.docs.forEach((doc: any) => {
       const redemption = doc.data();
       const redemptionDate = redemption.redeemedAt?.toDate() || new Date();
       

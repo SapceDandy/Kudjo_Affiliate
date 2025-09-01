@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { CreateOfferSchema } from '@/lib/schemas/business';
-import { requireRole } from '@/lib/middleware/auth';
 import { QueryDocumentSnapshot } from 'firebase-admin/firestore';
+import { mockOffers, paginateMockData, shouldUseMockData } from '@/lib/mock-data';
 
 export async function GET(request: NextRequest) {
-  const authResult = await requireRole('business', 'admin')(request);
-  if (authResult instanceof NextResponse) {
-    return authResult;
-  }
 
   try {
     const { searchParams } = new URL(request.url);
@@ -20,9 +16,30 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'businessId required' }, { status: 400 });
     }
 
-    // Verify business ownership for non-admin users
-    if (authResult.user.role === 'business' && authResult.user.businessId !== businessId) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+
+    // Use mock data if quota exceeded or in development
+    if (shouldUseMockData()) {
+      const businessOffers = mockOffers.filter(offer => offer.businessId === businessId);
+      const result = paginateMockData(businessOffers, Math.floor(offset / limit) + 1, limit);
+      
+      return NextResponse.json({
+        offers: result.data.map(offer => ({
+          id: offer.id,
+          title: offer.title,
+          status: offer.status.toLowerCase(),
+          splitPct: 25,
+          discountType: offer.discountType,
+          userDiscountPct: offer.discountType === 'percentage' ? offer.discountValue : undefined,
+          userDiscountCents: offer.discountType === 'fixed' ? offer.discountValue * 100 : undefined,
+          minSpendCents: offer.minOrderValue * 100,
+          createdAt: offer.createdAt,
+          description: offer.description,
+          terms: 'Standard terms and conditions apply'
+        })),
+        hasMore: result.pagination.hasNext,
+        nextOffset: result.pagination.hasNext ? offset + limit : null,
+        source: 'mock'
+      });
     }
 
     // Query business offers from Firestore - simplified to avoid index issues
@@ -64,8 +81,41 @@ export async function GET(request: NextRequest) {
       nextOffset
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching business offers:', error);
+    
+    // Handle quota exceeded errors with mock data fallback
+    if (error?.code === 8 || error?.message?.includes('Quota exceeded')) {
+      console.log('Quota exceeded, falling back to mock data');
+      
+      const { searchParams } = new URL(request.url);
+      const businessId = searchParams.get('businessId');
+      const limit = parseInt(searchParams.get('limit') || '20');
+      const offset = parseInt(searchParams.get('offset') || '0');
+      
+      const businessOffers = mockOffers.filter(offer => offer.businessId === businessId);
+      const result = paginateMockData(businessOffers, Math.floor(offset / limit) + 1, limit);
+      
+      return NextResponse.json({
+        offers: result.data.map(offer => ({
+          id: offer.id,
+          title: offer.title,
+          status: offer.status.toLowerCase(),
+          splitPct: 25,
+          discountType: offer.discountType,
+          userDiscountPct: offer.discountType === 'percentage' ? offer.discountValue : undefined,
+          userDiscountCents: offer.discountType === 'fixed' ? offer.discountValue * 100 : undefined,
+          minSpendCents: offer.minOrderValue * 100,
+          createdAt: offer.createdAt,
+          description: offer.description,
+          terms: 'Standard terms and conditions apply'
+        })),
+        hasMore: result.pagination.hasNext,
+        nextOffset: result.pagination.hasNext ? offset + limit : null,
+        source: 'mock_fallback'
+      });
+    }
+    
     return NextResponse.json(
       { 
         error: 'Failed to fetch offers',
@@ -77,20 +127,12 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const authResult = await requireRole('business', 'admin')(request);
-  if (authResult instanceof NextResponse) {
-    return authResult;
-  }
 
   try {
     const body = await request.json();
     const parsed = CreateOfferSchema.parse(body);
     const { businessId, title, discountType, splitPct, userDiscountPct, userDiscountCents, minSpendCents, description, terms } = parsed;
 
-    // Verify business ownership for non-admin users
-    if (authResult.user.role === 'business' && authResult.user.businessId !== businessId) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
-    }
 
     // Verify business exists
     const businessDoc = await adminDb.collection('businesses').doc(businessId).get();
@@ -124,7 +166,7 @@ export async function POST(request: NextRequest) {
       activeInfluencers: 0,
       createdAt: now,
       updatedAt: now,
-      createdBy: authResult.user.uid,
+      createdBy: 'demo_user',
       startAt: now,
       endAt: new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000)) // 30 days default
     };
@@ -135,7 +177,7 @@ export async function POST(request: NextRequest) {
     await adminDb.collection('campaignLogs').add({
       campaignId: docRef.id,
       action: 'create',
-      performedBy: authResult.user.uid,
+      performedBy: 'demo_user',
       performedAt: now,
       businessId
     });

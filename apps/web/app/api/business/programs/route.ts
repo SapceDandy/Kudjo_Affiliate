@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { QueryDocumentSnapshot } from 'firebase-admin/firestore';
+import { mockCampaigns, paginateMockData, shouldUseMockData } from '@/lib/mock-data';
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,6 +12,28 @@ export async function GET(request: NextRequest) {
     
     if (!businessId) {
       return NextResponse.json({ error: 'businessId required' }, { status: 400 });
+    }
+
+    // Use mock data if quota exceeded or in development
+    if (shouldUseMockData()) {
+      const businessPrograms = mockCampaigns.filter(campaign => campaign.businessId === businessId);
+      const result = paginateMockData(businessPrograms, Math.floor(offset / limit) + 1, limit);
+      
+      return NextResponse.json({
+        programs: result.data.map(campaign => ({
+          id: campaign.id,
+          influencer: `Influencer ${campaign.id.slice(-4)}`,
+          offerTitle: campaign.title,
+          redemptions: campaign.totalRedemptions,
+          payoutCents: Math.round(campaign.spent * 100),
+          since: campaign.startDate,
+          infId: `inf-${campaign.id}`,
+          offerId: `offer-${campaign.id}`
+        })),
+        hasMore: result.pagination.hasNext,
+        nextOffset: result.pagination.hasNext ? offset + limit : null,
+        source: 'mock'
+      });
     }
 
     // Query active programs (redemptions grouped by influencer + offer)
@@ -66,8 +89,38 @@ export async function GET(request: NextRequest) {
       nextOffset
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching business programs:', error);
+    
+    // Handle quota exceeded errors with mock data fallback
+    if (error?.code === 8 || error?.message?.includes('Quota exceeded')) {
+      console.log('Quota exceeded, falling back to mock data');
+      
+      const { searchParams } = new URL(request.url);
+      const businessId = searchParams.get('businessId');
+      const limit = parseInt(searchParams.get('limit') || '20');
+      const offset = parseInt(searchParams.get('offset') || '0');
+      
+      const businessPrograms = mockCampaigns.filter(campaign => campaign.businessId === businessId);
+      const result = paginateMockData(businessPrograms, Math.floor(offset / limit) + 1, limit);
+      
+      return NextResponse.json({
+        programs: result.data.map(campaign => ({
+          id: campaign.id,
+          influencer: `Influencer ${campaign.id.slice(-4)}`,
+          offerTitle: campaign.title,
+          redemptions: campaign.totalRedemptions,
+          payoutCents: Math.round(campaign.spent * 100),
+          since: campaign.startDate,
+          infId: `inf-${campaign.id}`,
+          offerId: `offer-${campaign.id}`
+        })),
+        hasMore: result.pagination.hasNext,
+        nextOffset: result.pagination.hasNext ? offset + limit : null,
+        source: 'mock_fallback'
+      });
+    }
+    
     return NextResponse.json(
       { error: 'Failed to fetch programs' },
       { status: 500 }

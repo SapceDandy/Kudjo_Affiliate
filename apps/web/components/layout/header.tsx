@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Button } from '@/components/ui/button';
+import { OptimizedButton } from '@/components/optimized-button';
 import { useDemoAuth } from '@/lib/demo-auth';
 
 export function Header() {
@@ -35,18 +35,21 @@ export function Header() {
         <nav className="ml-auto flex items-center space-x-4">
           {user ? (
             <>
-              <Button 
+              <OptimizedButton 
                 variant="outline" 
                 onClick={() => signOut()}
                 className="border-brand text-brand hover:bg-brand-dark"
               >
                 Sign Out
-              </Button>
+              </OptimizedButton>
             </>
           ) : (
-            <Button asChild className="bg-brand hover:bg-brand-light">
-              <Link href="/auth/signin">Sign In</Link>
-            </Button>
+            <OptimizedButton 
+              href="/auth/signin"
+              className="bg-brand hover:bg-brand-light"
+            >
+              Sign In
+            </OptimizedButton>
           )}
         </nav>
       </div>

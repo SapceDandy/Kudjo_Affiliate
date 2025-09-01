@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
 
     // Get unique influencer IDs
     const influencerIds = new Set<string>();
-    redemptionsSnapshot.docs.forEach(doc => {
+    redemptionsSnapshot.docs.forEach((doc: any) => {
       const influencerId = doc.data().influencerId;
       if (influencerId) {
         influencerIds.add(influencerId);
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
         .where('__name__', 'in', batch)
         .get();
 
-      influencersSnapshot.docs.forEach(doc => {
+        influencersSnapshot.docs.forEach((doc: any) => {
         influencerData.set(doc.id, doc.data());
       });
     }
@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
       lastActivity: Date;
     }>();
 
-    redemptionsSnapshot.docs.forEach(doc => {
+    redemptionsSnapshot.docs.forEach((doc: any) => {
       const redemption = doc.data();
       const influencerId = redemption.influencerId;
       

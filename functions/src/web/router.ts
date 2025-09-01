@@ -44,7 +44,9 @@ router.post('/post.submit', requireRole('influencer'), asyncHandler(handlePostSu
 router.get('/earnings.summary', requireRole('influencer'), asyncHandler(handleEarningsSummary));
 router.get('/payout.summary', requireRole('influencer'), asyncHandler(handlePayoutSummary));
 router.get('/influencer.oauth.start', asyncHandler(handleInfluencerOAuthStart));
-router.get('/offer.suggest', requireRole('business'), asyncHandler(handleOfferSuggest));
+router.get('/offer.suggest', requireRole('business'), asyncHandler(async (req, res) => {
+  await handleOfferSuggest(req, res);
+}));
 
 // Affiliate click router: /a/:token -> logs event and redirects to app landing
 router.get('/a/:token', async (req, res, next) => {

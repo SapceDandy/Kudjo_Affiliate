@@ -51,7 +51,7 @@ export async function GET(request: Request) {
         redemptionsSnapshot
       ] = await Promise.all([
         adminDb.collection('businesses').get(),
-        adminDb.collection('influencers').get(),
+        adminDb.collection('influencers').limit(10).get(),
         adminDb.collection('coupons').get(),
         adminDb.collection('redemptions').get()
       ]);

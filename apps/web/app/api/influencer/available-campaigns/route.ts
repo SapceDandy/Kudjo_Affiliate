@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
+import { firebaseCache } from '@/lib/firebase-cache';
+import { safeFirestoreQuery } from '@/lib/quota-manager';
 import { QueryDocumentSnapshot } from 'firebase-admin/firestore';
 
 export async function GET(request: NextRequest) {
@@ -24,6 +26,7 @@ export async function GET(request: NextRequest) {
     if (!adminDb) {
       return NextResponse.json({ error: 'Database not available' }, { status: 500 });
     }
+
 
     // Get influencer tier - create if doesn't exist for demo
     let influencerDoc = await adminDb.collection('influencers').doc(infId).get();
@@ -142,6 +145,13 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Sort by expiration date (soonest to expire first)
+    allEligibleOffers.sort((a, b) => {
+      const aEndDate = a.endAt ? (a.endAt.toDate ? a.endAt.toDate() : new Date(a.endAt)) : new Date('2099-12-31');
+      const bEndDate = b.endAt ? (b.endAt.toDate ? b.endAt.toDate() : new Date(b.endAt)) : new Date('2099-12-31');
+      return aEndDate.getTime() - bEndDate.getTime();
+    });
+
     // Apply pagination to eligible offers
     const paginatedOffers = allEligibleOffers.slice(offset, offset + limit);
     
@@ -185,8 +195,10 @@ export async function GET(request: NextRequest) {
       influencerTier,
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching available campaigns:', error);
+    
+    
     return NextResponse.json(
       { 
         error: 'Failed to fetch campaigns',

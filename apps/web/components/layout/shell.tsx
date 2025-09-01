@@ -2,6 +2,10 @@
 
 import { Header } from './header';
 import { useDemoAuth } from '@/lib/demo-auth';
+import { LoadingSpinner } from '@/components/loading-spinner';
+import { useLoading } from '@/components/global-loading-overlay';
+import { useRouter } from 'next/navigation';
+import { useTransition, startTransition } from 'react';
 
 interface ShellProps {
   children: React.ReactNode;
@@ -9,6 +13,9 @@ interface ShellProps {
 
 export function Shell({ children }: ShellProps) {
   const { user, switchToInfluencer, switchToBusiness } = useDemoAuth();
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const { showLoadingOverlay, hideLoadingOverlay } = useLoading();
   
   return (
     <div className="min-h-screen bg-background">
@@ -23,23 +30,37 @@ export function Shell({ children }: ShellProps) {
           </div>
           <div className="flex gap-2">
             <button
-              onClick={switchToInfluencer}
-              className={`px-3 py-1 rounded text-xs font-medium ${
+              onClick={() => {
+                showLoadingOverlay('Switching to Influencer...');
+                startTransition(() => {
+                  switchToInfluencer();
+                });
+              }}
+              disabled={isPending}
+              className={`px-3 py-1 rounded text-xs font-medium flex items-center gap-1 ${
                 user?.role === 'influencer'
                   ? 'bg-blue-600 text-white'
                   : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
+              } ${isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
+              {isPending && <LoadingSpinner size="sm" />}
               Switch to Influencer
             </button>
             <button
-              onClick={switchToBusiness}
-              className={`px-3 py-1 rounded text-xs font-medium ${
+              onClick={() => {
+                showLoadingOverlay('Switching to Business...');
+                startTransition(() => {
+                  switchToBusiness();
+                });
+              }}
+              disabled={isPending}
+              className={`px-3 py-1 rounded text-xs font-medium flex items-center gap-1 ${
                 user?.role === 'business'
                   ? 'bg-green-600 text-white'
                   : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
+              } ${isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
+              {isPending && <LoadingSpinner size="sm" />}
               Switch to Business
             </button>
           </div>

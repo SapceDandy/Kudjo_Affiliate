@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { CouponCreateSchema, CouponCreateResponse } from '@/lib/schemas/coupon';
+import { shouldUseMockData } from '@/lib/mock-data';
 
 // Inline type definitions to avoid import issues
 type CouponType = 'AFFILIATE' | 'CONTENT_MEAL';
@@ -41,6 +42,25 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const parsed = CouponCreateSchema.parse(body);
     let { type, bizId, infId, offerId, override } = parsed;
+
+    // Return mock coupon if quota exceeded or in development
+    if (shouldUseMockData()) {
+      const mockCouponId = makeDocumentId();
+      const mockCode = makePOSCode(type);
+      
+      const response: CouponCreateResponse = {
+        couponId: mockCouponId,
+        code: mockCode,
+        qrUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/qr/${mockCouponId}`,
+        ...(type === 'AFFILIATE' ? { link: {
+          linkId: makeDocumentId(),
+          url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/r/${makeDocumentId(8)}`,
+          qrUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/qr/${makeDocumentId()}`,
+        } } : {}),
+      };
+      
+      return NextResponse.json(response);
+    }
 
     // Initialize Firebase Admin directly to avoid null adminDb issues
     const admin = await import('firebase-admin');
@@ -231,8 +251,31 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(response);
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Coupon creation error:', error);
+    
+    // Handle quota exceeded errors with mock data fallback
+    if (error?.code === 8 || error?.message?.includes('Quota exceeded')) {
+      console.log('Quota exceeded, returning mock coupon');
+      
+      const body = await request.json();
+      const { type } = body;
+      const mockCouponId = makeDocumentId();
+      const mockCode = makePOSCode(type);
+      
+      const response: CouponCreateResponse = {
+        couponId: mockCouponId,
+        code: mockCode,
+        qrUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/qr/${mockCouponId}`,
+        ...(type === 'AFFILIATE' ? { link: {
+          linkId: makeDocumentId(),
+          url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/r/${makeDocumentId(8)}`,
+          qrUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/qr/${makeDocumentId()}`,
+        } } : {}),
+      };
+      
+      return NextResponse.json(response);
+    }
     
     if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json(

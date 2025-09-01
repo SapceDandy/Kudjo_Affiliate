@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface GlobalMetrics {
   totalUsers: number;
@@ -42,28 +42,28 @@ export function useGlobalMetrics() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchMetrics() {
-      try {
-        setLoading(true);
-        const response = await fetch('/api/control-center/metrics');
-        if (!response.ok) {
-          throw new Error('Failed to fetch metrics');
-        }
-        const data = await response.json();
-        setMetrics(data);
-        setError(null);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
-      } finally {
-        setLoading(false);
+  const fetchMetrics = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/control-center/metrics');
+      if (!response.ok) {
+        throw new Error('Failed to fetch metrics');
       }
+      const data = await response.json();
+      setMetrics(data);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+    } finally {
+      setLoading(false);
     }
-
-    fetchMetrics();
   }, []);
 
-  return { metrics, loading, error, refetch: () => fetchMetrics() };
+  useEffect(() => {
+    fetchMetrics();
+  }, [fetchMetrics]);
+
+  return { metrics, loading, error, refetch: fetchMetrics };
 }
 
 export function useInfluencerMetrics(infId?: string) {

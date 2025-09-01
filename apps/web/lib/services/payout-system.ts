@@ -100,7 +100,7 @@ export class PayoutSystem {
     let totalPayouts = 0;
     let runningBalance = 0;
 
-    ledgerSnapshot.docs.forEach(doc => {
+    ledgerSnapshot.docs.forEach((doc: any) => {
       const entry = doc.data() as LedgerEntry;
       
       switch (entry.type) {
@@ -130,7 +130,7 @@ export class PayoutSystem {
       .where('status', 'in', ['pending', 'processing'])
       .get();
 
-    const pendingPayouts = pendingPayoutsSnapshot.docs.reduce((sum, doc) => {
+    const pendingPayouts = pendingPayoutsSnapshot.docs.reduce((sum: number, doc: any) => {
       return sum + (doc.data().amountCents || 0);
     }, 0);
 
@@ -403,7 +403,7 @@ export class PayoutSystem {
 
     const snapshot = await query.limit(limit).offset(offset).get();
 
-    return snapshot.docs.map(doc => ({
+    return snapshot.docs.map((doc: any) => ({
       id: doc.id,
       ...doc.data()
     } as PayoutRequest));
@@ -423,7 +423,7 @@ export class PayoutSystem {
       .offset(offset)
       .get();
 
-    return snapshot.docs.map(doc => ({
+    return snapshot.docs.map((doc: any) => ({
       id: doc.id,
       ...doc.data()
     } as LedgerEntry));
@@ -448,10 +448,10 @@ export class PayoutSystem {
       .where('requestedAt', '<=', endDate);
 
     const snapshot = await query.get();
-    const payouts = snapshot.docs.map(doc => doc.data() as PayoutRequest);
+    const payouts = snapshot.docs.map((doc: any) => doc.data() as PayoutRequest);
 
-    const totalPayouts = payouts.reduce((sum, p) => sum + p.amountCents, 0);
-    const totalFees = payouts.reduce((sum, p) => sum + (p.processingFee || 0), 0);
+    const totalPayouts = payouts.reduce((sum: number, p: any) => sum + p.amountCents, 0);
+    const totalFees = payouts.reduce((sum: number, p: any) => sum + (p.processingFee || 0), 0);
     const payoutCount = payouts.length;
     const averagePayoutAmount = payoutCount > 0 ? totalPayouts / payoutCount : 0;
 
@@ -470,9 +470,9 @@ export class PayoutSystem {
       check: 0
     };
 
-    payouts.forEach(payout => {
-      payoutsByStatus[payout.status]++;
-      payoutsByMethod[payout.method]++;
+    payouts.forEach((payout: any) => {
+      payoutsByStatus[payout.status as keyof typeof payoutsByStatus]++;
+      payoutsByMethod[payout.method as keyof typeof payoutsByMethod]++;
     });
 
     return {

@@ -1,5 +1,6 @@
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
 import fs from 'fs';
 import path from 'path';
 
@@ -127,4 +128,12 @@ const generateMockCoupons = (count = 10) => {
   });
 };
 
-export { adminDb, generateMockUsers, generateMockCoupons }; 
+// Initialize adminAuth
+let adminAuth: any;
+try {
+  adminAuth = getAuth();
+} catch (error) {
+  console.warn('Firebase Auth not initialized:', error);
+}
+
+export { adminDb, adminAuth, generateMockUsers, generateMockCoupons }; 

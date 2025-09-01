@@ -1,46 +1,40 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { AddressAutocomplete } from '@/components/ui/google-places-autocomplete';
+import { MapPin, CheckCircle } from 'lucide-react';
 
 interface BasicInfoFormProps {
-  onNext: (data: { name: string; address: string; defaultSplitPct: number }) => void;
-  initialData: { name: string; address: string; defaultSplitPct: number };
+  onNext: (data: { name: string; address: string; website: string; overview: string; defaultSplitPct: number }) => void;
+  initialData: { name: string; address: string; website: string; overview: string; defaultSplitPct: number };
 }
 
 export function BasicInfoForm({ onNext, initialData }: BasicInfoFormProps) {
   const [name, setName] = useState(initialData.name);
   const [address, setAddress] = useState(initialData.address);
+  const [website, setWebsite] = useState(initialData.website);
+  const [overview, setOverview] = useState(initialData.overview);
   const [defaultSplitPct, setDefaultSplitPct] = useState(initialData.defaultSplitPct);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [addressVerified, setAddressVerified] = useState(false);
+  const [selectedPlaceData, setSelectedPlaceData] = useState<any>(null);
 
-  const validateAddress = (address: string): string | null => {
-    if (!address.trim()) {
-      return 'Address is required';
+  const handleAddressChange = (newAddress: string, placeData?: any) => {
+    setAddress(newAddress);
+    setSelectedPlaceData(placeData);
+    setErrors(prev => ({ ...prev, address: '' }));
+  };
+
+  const handleAddressVerified = (verified: boolean, placeData?: any) => {
+    setAddressVerified(verified);
+    setSelectedPlaceData(placeData);
+    if (verified) {
+      setErrors(prev => ({ ...prev, address: '' }));
     }
-    
-    // Basic address validation - must contain street number, street name, and city/state
-    const addressPattern = /^[\d\w\s]+[\s,]+[\w\s]+[\s,]+[\w\s]+/;
-    const hasCommaOrSpace = address.includes(',') || address.split(' ').length >= 3;
-    const hasNumbers = /\d/.test(address);
-    const hasLetters = /[a-zA-Z]/.test(address);
-    
-    if (!hasCommaOrSpace || !hasNumbers || !hasLetters) {
-      return 'Please enter a complete address with street number, street name, and city';
-    }
-    
-    if (address.length < 10) {
-      return 'Address appears too short. Please provide a complete address';
-    }
-    
-    // Check for common fake addresses
-    const fakeAddresses = ['123 main st', 'test address', 'fake address', '123 test'];
-    if (fakeAddresses.some(fake => address.toLowerCase().includes(fake))) {
-      return 'Please enter a real business address';
-    }
-    
-    return null;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -51,9 +45,12 @@ export function BasicInfoForm({ onNext, initialData }: BasicInfoFormProps) {
       newErrors.name = 'Business Name is required';
     }
     
-    const addressError = validateAddress(address);
-    if (addressError) {
-      newErrors.address = addressError;
+    if (!address.trim()) {
+      newErrors.address = 'Business address is required';
+    }
+    
+    if (!overview.trim()) {
+      newErrors.overview = 'Business overview is required';
     }
     
     if (defaultSplitPct < 1 || defaultSplitPct > 100) {
@@ -63,7 +60,18 @@ export function BasicInfoForm({ onNext, initialData }: BasicInfoFormProps) {
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
-      onNext({ name, address, defaultSplitPct });
+      if (!addressVerified) {
+        newErrors.address = 'Please select an address from the dropdown suggestions';
+        setErrors(newErrors);
+        return;
+      }
+      onNext({
+        name,
+        address,
+        website,
+        overview,
+        defaultSplitPct
+      });
     }
   };
 
@@ -92,23 +100,63 @@ export function BasicInfoForm({ onNext, initialData }: BasicInfoFormProps) {
       </div>
 
       <div>
-        <Label htmlFor="address">Address</Label>
-        <Input
-          id="address"
-          type="text"
+        <Label htmlFor="address">Business Address</Label>
+        <AddressAutocomplete
           value={address}
-          onChange={(e) => {
-            setAddress(e.target.value);
-            setErrors((prev) => ({ ...prev, address: '' }));
-          }}
+          onChange={handleAddressChange}
+          onVerified={handleAddressVerified}
+          placeholder="Start typing your business address..."
           className={errors.address ? 'border-red-500' : ''}
-          aria-invalid={!!errors.address}
-          aria-describedby={errors.address ? 'address-error' : undefined}
-          required
+          error={errors.address}
         />
         {errors.address && (
           <p id="address-error" className="text-sm text-red-500 mt-1">
             {errors.address}
+          </p>
+        )}
+      </div>
+
+      <div>
+        <Label htmlFor="website">Business Website (Optional)</Label>
+        <Input
+          id="website"
+          type="url"
+          value={website}
+          onChange={(e) => {
+            setWebsite(e.target.value);
+            setErrors((prev) => ({ ...prev, website: '' }));
+          }}
+          placeholder="https://www.yourbusiness.com"
+          className={errors.website ? 'border-red-500' : ''}
+          aria-invalid={!!errors.website}
+          aria-describedby={errors.website ? 'website-error' : undefined}
+        />
+        {errors.website && (
+          <p id="website-error" className="text-sm text-red-500 mt-1">
+            {errors.website}
+          </p>
+        )}
+      </div>
+
+      <div>
+        <Label htmlFor="overview">Business Overview</Label>
+        <Textarea
+          id="overview"
+          value={overview}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+            setOverview(e.target.value);
+            setErrors((prev) => ({ ...prev, overview: '' }));
+          }}
+          placeholder="Tell us about your business, what you offer, and what makes you unique..."
+          className={errors.overview ? 'border-red-500' : ''}
+          aria-invalid={!!errors.overview}
+          aria-describedby={errors.overview ? 'overview-error' : undefined}
+          rows={4}
+          required
+        />
+        {errors.overview && (
+          <p id="overview-error" className="text-sm text-red-500 mt-1">
+            {errors.overview}
           </p>
         )}
       </div>

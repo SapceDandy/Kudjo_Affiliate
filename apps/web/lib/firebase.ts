@@ -44,18 +44,18 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// Connect to emulator in development
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-  try {
-    // Connect to Firestore emulator
-    const { connectFirestoreEmulator } = require('firebase/firestore');
-    connectFirestoreEmulator(db, 'localhost', 8080);
-    console.log('Connected to Firestore emulator');
-  } catch (error: any) {
-    // Emulator already connected or not available
-    console.log('Firestore emulator connection:', error?.message || 'Connection attempt failed');
-  }
-}
+// Connect to emulator in development (disabled to use production data)
+// if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+//   try {
+//     // Connect to Firestore emulator
+//     const { connectFirestoreEmulator } = require('firebase/firestore');
+//     connectFirestoreEmulator(db, 'localhost', 8080);
+//     console.log('Connected to Firestore emulator');
+//   } catch (error: any) {
+//     // Emulator already connected or not available
+//     console.log('Firestore emulator connection:', error?.message || 'Connection attempt failed');
+//   }
+// }
 
 // Google provider
 const googleProvider = new GoogleAuthProvider();

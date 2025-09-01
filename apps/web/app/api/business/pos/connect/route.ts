@@ -15,14 +15,23 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = ConnectPosSchema.parse(body);
 
-    // Verify business exists
-    const businessDoc = await adminDb
+    // Verify business exists or create demo business
+    let businessDoc = await adminDb
       .collection('businesses')
       .doc(validatedData.businessId)
       .get();
 
     if (!businessDoc.exists) {
-      return NextResponse.json({ error: 'Business not found' }, { status: 404 });
+      // Create demo business for onboarding flow
+      await adminDb.collection('businesses').doc(validatedData.businessId).set({
+        id: validatedData.businessId,
+        name: 'Demo Business',
+        status: 'pending_approval',
+        createdAt: new Date(),
+        posProvider: null,
+        posStatus: 'not_connected'
+      });
+      businessDoc = await adminDb.collection('businesses').doc(validatedData.businessId).get();
     }
 
     const businessId = validatedData.businessId;

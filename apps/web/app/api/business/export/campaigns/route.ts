@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
 
     // Get redemption data for each offer
     const campaignData = await Promise.all(
-      offersSnapshot.docs.map(async (offerDoc) => {
+      offersSnapshot.docs.map(async (offerDoc: any) => {
         const offer = offerDoc.data();
         const offerId = offerDoc.id;
 
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
         let conversions = 0;
         const uniqueInfluencers = new Set<string>();
 
-        redemptionsSnapshot.docs.forEach(doc => {
+        redemptionsSnapshot.docs.forEach((doc: any) => {
           const redemption = doc.data();
           const amount = redemption.amountCents || 0;
           const splitPct = redemption.splitPct || offer.splitPct || 20;

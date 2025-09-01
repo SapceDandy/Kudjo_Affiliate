@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
     let totalAdSpend = 0;
     const offerBudgets = new Map<string, number>();
     
-    offersSnapshot.docs.forEach(doc => {
+    offersSnapshot.docs.forEach((doc: any) => {
       const offer = doc.data();
       const budget = offer.budgetCents || 0;
       offerBudgets.set(doc.id, budget);
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
       date: string;
     }>();
 
-    redemptionsSnapshot.docs.forEach(doc => {
+    redemptionsSnapshot.docs.forEach((doc: any) => {
       const redemption = doc.data();
       const redemptionDate = redemption.redeemedAt?.toDate() || new Date();
       

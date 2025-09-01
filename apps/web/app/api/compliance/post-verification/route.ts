@@ -192,9 +192,9 @@ export async function PUT(request: NextRequest) {
       .where('type', '==', 'post_verification_required')
       .where('status', '==', 'pending')
       .get()
-      .then(snapshot => {
+      .then((snapshot: any) => {
         const batch = adminDb.batch();
-        snapshot.docs.forEach(doc => {
+        snapshot.docs.forEach((doc: any) => {
           batch.update(doc.ref, {
             status: 'completed',
             reviewedAt: now,
@@ -298,7 +298,7 @@ export async function GET(request: NextRequest) {
 
     const now = new Date();
     const couponsWithCompliance = couponsSnapshot.docs
-      .map(doc => {
+      .map((doc: any) => {
         const coupon = doc.data();
         const complianceStatus = UnifiedCouponService.getComplianceStatus(coupon);
         
@@ -308,7 +308,7 @@ export async function GET(request: NextRequest) {
           complianceStatus
         };
       })
-      .filter(coupon => {
+      .filter((coupon: any) => {
         if (status === 'pending') {
           return coupon.complianceStatus.overall === 'pending';
         } else if (status === 'overdue') {
@@ -322,10 +322,10 @@ export async function GET(request: NextRequest) {
       coupons: couponsWithCompliance,
       summary: {
         total: couponsWithCompliance.length,
-        pending: couponsWithCompliance.filter(c => c.complianceStatus.overall === 'pending').length,
-        overdue: couponsWithCompliance.filter(c => c.complianceStatus.overall === 'overdue').length,
-        failed: couponsWithCompliance.filter(c => c.complianceStatus.overall === 'failed').length,
-        compliant: couponsWithCompliance.filter(c => c.complianceStatus.overall === 'compliant').length
+        pending: couponsWithCompliance.filter((c: any) => c.complianceStatus.overall === 'pending').length,
+        overdue: couponsWithCompliance.filter((c: any) => c.complianceStatus.overall === 'overdue').length,
+        failed: couponsWithCompliance.filter((c: any) => c.complianceStatus.overall === 'failed').length,
+        compliant: couponsWithCompliance.filter((c: any) => c.complianceStatus.overall === 'compliant').length
       }
     });
 

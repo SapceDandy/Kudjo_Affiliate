@@ -94,7 +94,7 @@ export class AnalyticsAggregator {
 
     // Get business names in batches
     const businessIds = new Set<string>();
-    redemptionsSnapshot.docs.forEach(doc => {
+    redemptionsSnapshot.docs.forEach((doc: any) => {
       const data = doc.data();
       if (data.businessId) businessIds.add(data.businessId);
     });
@@ -107,14 +107,14 @@ export class AnalyticsAggregator {
         .where('__name__', 'in', batch)
         .get();
       
-      businessesSnapshot.docs.forEach(doc => {
+      businessesSnapshot.docs.forEach((doc: any) => {
         const data = doc.data();
         businessNames.set(doc.id, data.name || data.businessName || 'Unknown Business');
       });
     }
 
     // Process redemptions
-    redemptionsSnapshot.docs.forEach(doc => {
+    redemptionsSnapshot.docs.forEach((doc: any) => {
       const data = doc.data();
       const businessId = data.businessId;
       if (!businessId) return;
@@ -183,7 +183,7 @@ export class AnalyticsAggregator {
       campaigns: Set<string>;
     }>();
 
-    redemptionsSnapshot.docs.forEach(doc => {
+    redemptionsSnapshot.docs.forEach((doc: any) => {
       const data = doc.data();
       const influencerId = data.influencerId;
       if (!influencerId) return;
@@ -219,7 +219,7 @@ export class AnalyticsAggregator {
         .where('__name__', 'in', batch)
         .get();
       
-      influencersSnapshot.docs.forEach(doc => {
+      influencersSnapshot.docs.forEach((doc: any) => {
         const data = doc.data();
         influencerDetails.set(doc.id, {
           name: data.name || data.displayName || 'Unknown Influencer',
@@ -278,7 +278,7 @@ export class AnalyticsAggregator {
       adSpend: number;
     }>();
 
-    redemptionsSnapshot.docs.forEach(doc => {
+    redemptionsSnapshot.docs.forEach((doc: any) => {
       const data = doc.data();
       const campaignId = data.offerId;
       if (!campaignId) return;
@@ -318,7 +318,7 @@ export class AnalyticsAggregator {
         .where('__name__', 'in', batch)
         .get();
       
-      campaignsSnapshot.docs.forEach(doc => {
+      campaignsSnapshot.docs.forEach((doc: any) => {
         const data = doc.data();
         campaignDetails.set(doc.id, {
           name: data.title || 'Untitled Campaign',
@@ -369,7 +369,7 @@ export class AnalyticsAggregator {
     const influencerIds = new Set<string>();
     const influencerRevenue = new Map<string, number>();
 
-    redemptionsSnapshot.docs.forEach(doc => {
+    redemptionsSnapshot.docs.forEach((doc: any) => {
       const data = doc.data();
       if (data.influencerId) {
         influencerIds.add(data.influencerId);
@@ -388,7 +388,7 @@ export class AnalyticsAggregator {
         .where('__name__', 'in', batch)
         .get();
 
-      influencersSnapshot.docs.forEach(doc => {
+      influencersSnapshot.docs.forEach((doc: any) => {
         const data = doc.data();
         const tier = data.tier || 'S';
         const revenue = influencerRevenue.get(doc.id) || 0;

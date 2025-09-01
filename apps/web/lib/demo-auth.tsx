@@ -12,7 +12,9 @@ interface DemoUser {
 interface DemoAuthContextType {
   user: DemoUser | null;
   loading: boolean;
-  switchUser: (userId: string) => void;
+  switchUser: (role: 'influencer' | 'business' | 'admin') => void;
+  switchToInfluencer: () => void;
+  switchToBusiness: () => void;
   signOut: () => void;
 }
 
@@ -38,6 +40,15 @@ export function DemoAuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Check if user was explicitly logged out
+    const wasLoggedOut = localStorage.getItem('demo-logged-out');
+    if (wasLoggedOut) {
+      // Don't auto-login if user was logged out
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+
     // Check for persisted user in localStorage
     const persistedUser = localStorage.getItem('demo-user');
     if (persistedUser) {
@@ -45,35 +56,36 @@ export function DemoAuthProvider({ children }: { children: ReactNode }) {
         const userData = JSON.parse(persistedUser);
         setUser(userData);
       } catch {
-        // If parsing fails, default to influencer
-        setUser(DEMO_USERS.influencer);
-        localStorage.setItem('demo-user', JSON.stringify(DEMO_USERS.influencer));
+        // If parsing fails, don't auto-login
+        setUser(null);
       }
     } else {
-      // Initialize with influencer user by default
-      setUser(DEMO_USERS.influencer);
-      localStorage.setItem('demo-user', JSON.stringify(DEMO_USERS.influencer));
+      // Don't auto-login by default
+      setUser(null);
     }
     setLoading(false);
   }, []);
 
-  const switchUser = (userId: string) => {
-    let newUser = null;
-    if (userId === 'influencer') {
-      newUser = DEMO_USERS.influencer;
-    } else if (userId === 'business') {
-      newUser = DEMO_USERS.business;
-    }
+  const switchUser = (role: 'influencer' | 'business' | 'admin') => {
+    const newUser = role === 'admin' ? null : DEMO_USERS[role];
     
     if (newUser) {
       setUser(newUser);
       localStorage.setItem('demo-user', JSON.stringify(newUser));
+      localStorage.removeItem('demo-logged-out'); // Clear logout flag
+      
+      // Navigate to appropriate dashboard immediately
+      const dashboardPath = role === 'admin' ? '/control-center' : `/${role}`;
+      window.location.href = dashboardPath;
     }
   };
 
   const signOut = () => {
     setUser(null);
     localStorage.removeItem('demo-user');
+    localStorage.setItem('demo-logged-out', 'true'); // Set logout flag
+    // Use window.location for immediate redirect
+    window.location.href = '/auth/signin';
   };
 
   const switchToInfluencer = () => switchUser('influencer');
@@ -84,7 +96,9 @@ export function DemoAuthProvider({ children }: { children: ReactNode }) {
       user, 
       loading, 
       switchUser,
-      signOut
+      switchToInfluencer,
+      switchToBusiness,
+      signOut 
     }}>
       {children}
     </DemoAuthContext.Provider>

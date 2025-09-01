@@ -28,8 +28,9 @@ export function PosSetupForm({ onNext, initialData }: PosSetupFormProps) {
   const handleManualEnable = async () => {
     try {
       setLoading(true);
-      // Get businessId from localStorage or session - for now use mock
-      const businessId = localStorage.getItem('businessId') || 'mock-business-id';
+      // Get businessId from demo auth context
+      const demoUser = JSON.parse(localStorage.getItem('demo-user') || '{}');
+      const businessId = demoUser.uid || 'demo_business_user';
       
       const res = await fetch('/api/business/pos/connect', {
         method: 'POST',

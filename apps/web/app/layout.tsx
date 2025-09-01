@@ -1,13 +1,17 @@
 import './globals.css';
 import { Inter } from 'next/font/google';
-import { Shell } from '@/components/layout/shell';
 import { DemoAuthProvider } from '@/lib/demo-auth';
-import { Analytics } from '@/components/analytics';
-import { Toaster } from '@/components/ui/toaster';
-import { ToastProvider } from '@/components/providers/toast-provider';
+import { Toaster } from 'react-hot-toast';
+import { RoutePrefetcher } from '@/components/route-prefetcher';
+import { PerformanceProvider } from '@/components/providers/performance-provider';
+import { LoadingProvider } from '@/components/global-loading-overlay';
+import { Shell } from '@/components/layout/shell';
 import { Metadata } from 'next';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ 
+  subsets: ['latin'],
+  display: 'swap'
+});
 
 export const metadata: Metadata = {
   title: {
@@ -18,20 +22,6 @@ export const metadata: Metadata = {
   icons: {
     icon: '/favicon.ico'
   },
-  manifest: '/site.webmanifest',
-  openGraph: {
-    type: 'website',
-    locale: 'en_US',
-    url: 'https://kudjo.app',
-    title: 'Kudjo - Connect & Earn',
-    description: 'Generate and track content coupons effortlessly',
-    siteName: 'Kudjo'
-  },
-  twitter: {
-    card: 'summary',
-    title: 'Kudjo - Connect & Earn',
-    description: 'Generate and track content coupons effortlessly'
-  }
 };
 
 export default function RootLayout({
@@ -40,16 +30,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en">
       <body className={inter.className}>
         <DemoAuthProvider>
-          <ToastProvider>
-            <Shell>{children}</Shell>
-            <Analytics />
-            <Toaster />
-          </ToastProvider>
+          <LoadingProvider>
+            <PerformanceProvider>
+              <RoutePrefetcher />
+              <Shell>
+                {children}
+              </Shell>
+              <Toaster />
+            </PerformanceProvider>
+          </LoadingProvider>
         </DemoAuthProvider>
       </body>
     </html>
   );
-} 
+}

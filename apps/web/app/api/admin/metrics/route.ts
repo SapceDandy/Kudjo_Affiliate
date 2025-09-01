@@ -131,7 +131,7 @@ export async function GET(request: Request) {
       // Get just one document from each collection to check if it exists
       const [bizSnap, infSnap] = await Promise.all([
         db.collection('businesses').limit(batchSize).get(),
-        db.collection('influencers').limit(batchSize).get(),
+        db.collection('influencers').limit(5).get(),
       ]);
       
       // If we have real data, update the mock values

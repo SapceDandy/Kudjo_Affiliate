@@ -53,7 +53,7 @@ export default function SignUpPage() {
     try {
       // Demo signup - switch user based on role
       switchUser(activeTab);
-      router.push(activeTab === 'business' ? '/business/onboard' : '/influencer/dashboard');
+      router.push('/business/onboard');
     } catch (err: any) {
       setError(err.message || 'Failed to create account');
     } finally {

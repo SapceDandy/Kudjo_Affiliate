@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
+import { safeFirestoreQuery } from '@/lib/quota-manager';
 import { QueryDocumentSnapshot } from 'firebase-admin/firestore';
 
 export async function GET(request: NextRequest) {
@@ -7,25 +8,15 @@ export async function GET(request: NextRequest) {
     // Get business ID from query params for now (in production, use session)
     const { searchParams } = new URL(request.url);
     const businessId = searchParams.get('businessId');
-    const mockMode = searchParams.get('mock') === 'true';
     
     if (!businessId) {
       return NextResponse.json({ error: 'businessId required' }, { status: 400 });
     }
 
-    if (mockMode) {
-      return NextResponse.json({
-        totalPayoutOwed: 19450, // cents
-        totalRedemptions: 52,
-        activeOffers: 2,
-        pendingRequests: 2,
-        totalRevenue: 78200, // cents
-        avgOrderValue: 1504, // cents
-        topInfluencers: [
-          { name: 'AustinEats', redemptions: 34, payout: 12250 },
-          { name: 'BBQQuest', redemptions: 18, payout: 7200 }
-        ]
-      });
+    if (!adminDb) {
+      return NextResponse.json({ 
+        error: 'Firebase Admin not configured. Please check your environment variables.' 
+      }, { status: 500 });
     }
 
     // Query business's offers
@@ -108,10 +99,11 @@ export async function GET(request: NextRequest) {
       topInfluencers: topInfluencersData
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching business metrics:', error);
+    
     return NextResponse.json(
-      { error: 'Failed to fetch metrics' },
+      { error: 'Failed to fetch metrics', details: error.message },
       { status: 500 }
     );
   }

@@ -164,12 +164,12 @@ export class FraudDetectionService {
       .where('redeemedAt', '>=', oneDayAgo)
       .get();
 
-    const hourlyRedemptions = recentRedemptions.docs.filter(doc => {
+    const hourlyRedemptions = recentRedemptions.docs.filter((doc: any) => {
       const redemptionTime = doc.data().redeemedAt?.toDate() || new Date(0);
       return redemptionTime >= oneHourAgo;
     });
 
-    const recentRedemptions5min = recentRedemptions.docs.filter(doc => {
+    const recentRedemptions5min = recentRedemptions.docs.filter((doc: any) => {
       const redemptionTime = doc.data().redeemedAt?.toDate() || new Date(0);
       return redemptionTime >= fiveMinutesAgo;
     });
@@ -230,7 +230,7 @@ export class FraudDetectionService {
       .where('redeemedAt', '>=', oneDayAgo)
       .get();
 
-    const dailyTotal = dailyRedemptions.docs.reduce((sum, doc) => {
+    const dailyTotal = dailyRedemptions.docs.reduce((sum: number, doc: any) => {
       return sum + (doc.data().amountCents || 0);
     }, 0);
 
@@ -240,8 +240,8 @@ export class FraudDetectionService {
     }
 
     // Check for unusual patterns (same amounts, same times)
-    const amounts = dailyRedemptions.docs.map(doc => doc.data().amountCents);
-    const sameAmountCount = amounts.filter(amount => amount === context.amountCents).length;
+    const amounts = dailyRedemptions.docs.map((doc: any) => doc.data().amountCents);
+    const sameAmountCount = amounts.filter((amount: number) => amount === context.amountCents).length;
 
     if (sameAmountCount >= 3) {
       flags.push('REPEATED_AMOUNTS');

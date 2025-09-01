@@ -105,7 +105,7 @@ export class ToastAdapter {
 
   private async getAccessToken(): Promise<string> {
     if (this.accessToken && this.tokenExpiry && new Date() < this.tokenExpiry) {
-      return this.accessToken;
+      return this.accessToken || '';
     }
 
     const response = await fetch(`${this.baseUrl}/authentication/v1/authentication/login`, {
@@ -128,7 +128,7 @@ export class ToastAdapter {
     this.accessToken = data.token.accessToken;
     this.tokenExpiry = new Date(Date.now() + (data.token.expiresIn * 1000));
     
-    return this.accessToken;
+    return this.accessToken || '';
   }
 
   private async makeRequest(endpoint: string, options: RequestInit = {}): Promise<any> {

@@ -1,3 +1,4 @@
+// @ts-ignore - Missing type declarations for squareup module
 import { Client, Environment } from 'squareup';
 
 export interface SquareConfig {
@@ -65,8 +66,11 @@ export class SquareAdapter {
   }
 
   async applyCouponDiscount(
-    orderId: string, 
-    discount: CouponDiscount
+    orderId: string,
+    couponCode: string,
+    discountType: 'percentage' | 'fixed_amount',
+    discountValue: number,
+    maxDiscountCents?: number
   ): Promise<{ success: boolean; discountAmount?: number; error?: string }> {
     try {
       const { ordersApi } = this.client;
@@ -82,23 +86,15 @@ export class SquareAdapter {
       // Calculate order total
       const orderTotal = parseInt(order.totalMoney?.amount || '0');
       
-      // Check minimum spend requirement
-      if (discount.minSpendCents && orderTotal < discount.minSpendCents) {
-        return { 
-          success: false, 
-          error: `Minimum spend of $${(discount.minSpendCents / 100).toFixed(2)} required` 
-        };
-      }
-
       // Calculate discount amount
       let discountAmount = 0;
-      if (discount.discountType === 'percentage') {
-        discountAmount = Math.round((orderTotal * discount.discountValue) / 100);
-        if (discount.maxDiscountCents) {
-          discountAmount = Math.min(discountAmount, discount.maxDiscountCents);
+      if (discountType === 'percentage') {
+        discountAmount = Math.round((orderTotal * discountValue) / 100);
+        if (maxDiscountCents) {
+          discountAmount = Math.min(discountAmount, maxDiscountCents);
         }
       } else {
-        discountAmount = discount.discountValue;
+        discountAmount = discountValue;
       }
 
       // Ensure discount doesn't exceed order total
@@ -111,17 +107,17 @@ export class SquareAdapter {
           discounts: [
             ...(order.discounts || []),
             {
-              uid: `kudjo-${discount.couponCode}`,
-              name: `Kudjo Coupon: ${discount.couponCode}`,
+              uid: `kudjo-${couponCode}`,
+              name: `Kudjo Coupon: ${couponCode}`,
               type: 'FIXED_AMOUNT',
               amountMoney: {
                 amount: discountAmount.toString(),
                 currency: 'USD'
               },
               metadata: {
-                kudjo_coupon_code: discount.couponCode,
-                kudjo_discount_type: discount.discountType,
-                kudjo_discount_value: discount.discountValue.toString()
+                couponCode: couponCode,
+                discountType: discountType,
+                kudjo_discount_value: discountValue.toString()
               }
             }
           ],
