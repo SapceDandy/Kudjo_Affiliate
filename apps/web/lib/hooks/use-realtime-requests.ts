@@ -1,5 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { collection, query, where, onSnapshot, orderBy, Unsubscribe } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth';
 import { toast } from 'react-hot-toast';
 
@@ -17,63 +19,89 @@ interface BusinessRequest {
   status: 'pending' | 'countered' | 'approved' | 'declined' | 'closed';
   discountAmount?: number;
   commissionSplit?: number;
+  updatedAt?: Date;
 }
 
-export function useBusinessRequests() {
+export function useRealtimeRequests() {
   const [requests, setRequests] = useState<BusinessRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [nextOffset, setNextOffset] = useState<number | null>(null);
   const { user } = useAuth();
 
-  const fetchRequests = async (offset = 0, append = false, silent = false) => {
+  useEffect(() => {
     if (!user) {
       setError('Please sign in to view requests.');
       setLoading(false);
       return;
     }
 
+    let unsubscribe: Unsubscribe;
+
     try {
       setError(null);
-      if (!append && !silent) setLoading(true);
       
-      const params = new URLSearchParams();
-      params.set('businessId', user.uid);
-      params.set('limit', '100'); // Preload up to 100 items
-      params.set('offset', offset.toString());
-      
-      const res = await fetch(`/api/business/requests?${params.toString()}`);
-      if (!res.ok) {
-        throw new Error('Failed to fetch requests');
-      }
-      
-      const data = await res.json();
-      
-      if (append) {
-        setRequests(prev => [...prev, ...data.requests]);
-      } else {
-        setRequests(data.requests);
-      }
-      
-      setHasMore(data.hasMore);
-      setNextOffset(data.nextOffset);
-    } catch (err) {
-      console.error('Error fetching business requests:', err);
-      if (!silent) {
-        setError('Failed to load requests. Please try again.');
-        toast.error('Failed to load requests. Please try again.');
-      }
-    } finally {
-      if (!silent) setLoading(false);
-    }
-  };
+      // Create real-time query for business requests
+      const requestsRef = collection(db, 'influencerRequests');
+      const requestsQuery = query(
+        requestsRef,
+        where('bizId', '==', user.uid),
+        orderBy('createdAt', 'desc')
+      );
 
-  const loadMore = () => {
-    if (nextOffset !== null && !loading) {
-      fetchRequests(nextOffset, true);
+      // Set up real-time listener
+      unsubscribe = onSnapshot(
+        requestsQuery,
+        (snapshot) => {
+          const updatedRequests: BusinessRequest[] = [];
+          
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            updatedRequests.push({
+              id: doc.id,
+              influencer: data.influencerName || `Influencer ${data.infId?.slice(-4) || 'Unknown'}`,
+              followers: data.followers || 0,
+              tier: data.tier || 'Small',
+              proposedSplitPct: data.proposedSplitPct || 20,
+              discountType: data.discountType || 'percentage',
+              userDiscountPct: data.userDiscountPct,
+              userDiscountCents: data.userDiscountCents,
+              minSpendCents: data.minSpendCents,
+              createdAt: data.createdAt?.toDate?.() || new Date(),
+              status: data.status || 'pending',
+              discountAmount: data.discountAmount,
+              commissionSplit: data.commissionSplit,
+              updatedAt: data.updatedAt?.toDate?.()
+            });
+          });
+
+          // Filter out closed/declined requests for UI display
+          const activeRequests = updatedRequests.filter(req => 
+            req.status !== 'closed' && req.status !== 'declined'
+          );
+
+          setRequests(activeRequests);
+          setLoading(false);
+        },
+        (err) => {
+          console.error('Error in real-time requests listener:', err);
+          setError('Failed to load requests. Please try again.');
+          setLoading(false);
+        }
+      );
+
+    } catch (err) {
+      console.error('Error setting up real-time requests listener:', err);
+      setError('Failed to set up real-time updates.');
+      setLoading(false);
     }
-  };
+
+    // Cleanup listener on unmount
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [user]);
 
   const updateRequest = async (requestId: string, status: string, counterOffer?: any) => {
     try {
@@ -94,12 +122,7 @@ export function useBusinessRequests() {
         throw new Error(errorMessage);
       }
 
-      // Update local state
-      setRequests(prev => prev.map(req => 
-        req.id === requestId ? { ...req, status: status as any } : req
-      ));
-
-      // Show success toast
+      // Show success toast - real-time listener will update UI automatically
       const statusMessages = {
         closed: 'Request closed successfully',
         approved: 'Request approved successfully',
@@ -112,18 +135,6 @@ export function useBusinessRequests() {
       throw error;
     }
   };
-
-  useEffect(() => {
-    fetchRequests();
-  }, [user]);
-
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      fetchRequests(0, false, true);
-    }, 60000); // poll every 60 seconds
-
-    return () => clearInterval(intervalId);
-  }, [user]);
 
   const updateOfferTerms = async (requestId: string, discountAmount: number, commissionSplit: number) => {
     try {
@@ -141,13 +152,7 @@ export function useBusinessRequests() {
         throw new Error(errorData.error || 'Failed to update offer');
       }
 
-      // Update local state immediately
-      setRequests(prev => prev.map(req => 
-        req.id === requestId 
-          ? { ...req, discountAmount, commissionSplit, updatedAt: new Date() }
-          : req
-      ));
-
+      // Real-time listener will update UI automatically
       return true;
     } catch (error) {
       console.error('Error updating offer terms:', error);
@@ -159,10 +164,7 @@ export function useBusinessRequests() {
     requests, 
     loading, 
     error, 
-    hasMore, 
-    loadMore, 
     updateRequest,
-    updateOfferTerms,
-    refetch: () => fetchRequests()
+    updateOfferTerms
   };
 }

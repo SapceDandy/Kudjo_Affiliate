@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { useDemoAuth } from '@/lib/demo-auth';
+import { useAuth } from '@/lib/auth';
 
 interface Offer {
   id: string;
@@ -24,7 +24,7 @@ export function useOffers() {
   const [error, setError] = useState<string | null>(null);
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const { user } = useDemoAuth();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (!user) {

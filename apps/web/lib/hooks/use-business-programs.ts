@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useDemoAuth } from '@/lib/demo-auth';
+import { useAuth } from '@/lib/auth';
 
 interface BusinessProgram {
   id: string;
@@ -19,7 +19,7 @@ export function useBusinessPrograms() {
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [nextOffset, setNextOffset] = useState<number | null>(null);
-  const { user } = useDemoAuth();
+  const { user } = useAuth();
 
   const fetchPrograms = async (offset = 0, append = false) => {
     if (!user) {
@@ -34,7 +34,7 @@ export function useBusinessPrograms() {
       
       const params = new URLSearchParams();
       params.set('businessId', user.uid);
-      params.set('limit', '20');
+      params.set('limit', '100'); // Preload up to 100 items
       params.set('offset', offset.toString());
       
       const res = await fetch(`/api/business/programs?${params.toString()}`);

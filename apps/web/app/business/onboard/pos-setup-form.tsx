@@ -1,20 +1,9 @@
 'use client';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { OnboardingStepProps } from './types';
 
-interface OnboardingData {
-  name: string;
-  address: string;
-  defaultSplitPct: number;
-  posProvider: 'square' | 'manual' | 'clover';
-}
-
-interface PosSetupFormProps {
-  onNext: (data?: Partial<OnboardingData>) => void;
-  initialData: OnboardingData;
-}
-
-export function PosSetupForm({ onNext, initialData }: PosSetupFormProps) {
+export function PosSetupForm({ onNext, initialData }: OnboardingStepProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 

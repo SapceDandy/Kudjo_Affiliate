@@ -1,21 +1,10 @@
 'use client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { OnboardingStepProps, PosProvider } from './types';
 
-interface OnboardingData {
-  name: string;
-  address: string;
-  defaultSplitPct: number;
-  posProvider: 'square' | 'manual' | 'clover';
-}
-
-interface PosSelectionFormProps {
-  onNext: (data: Partial<OnboardingData>) => void;
-  initialData: OnboardingData;
-}
-
-export function PosSelectionForm({ onNext, initialData }: PosSelectionFormProps) {
-  const handleSelect = (provider: 'square' | 'manual' | 'clover') => {
+export function PosSelectionForm({ onNext, initialData }: OnboardingStepProps) {
+  const handleSelect = (provider: PosProvider) => {
     onNext({ posProvider: provider });
   };
 

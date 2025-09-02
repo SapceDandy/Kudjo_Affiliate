@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Loading } from '@/components/ui/loading';
 import { MapPin, DollarSign, Clock, Users, Search, Filter, X } from 'lucide-react';
 import { useAvailableCampaigns } from '@/lib/hooks/use-available-campaigns';
+import { useRealtimeInfluencerRequests } from '@/lib/hooks/use-realtime-influencer-requests';
 import { ClaimOfferDialog } from './claim-offer-dialog';
 import toast from 'react-hot-toast';
 
@@ -120,7 +121,6 @@ export default function InfluencerPage() {
   const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
   const [showClaimDialog, setShowClaimDialog] = useState(false);
   const [activeCampaigns, setActiveCampaigns] = useState<any[]>([]);
-  const [requests, setRequests] = useState<any[]>([]);
   const [metrics, setMetrics] = useState<any>(null);
   const [negotiatingRequest, setNegotiatingRequest] = useState<string | null>(null);
   const [showNegotiationDialog, setShowNegotiationDialog] = useState(false);
@@ -150,11 +150,16 @@ export default function InfluencerPage() {
     clearFilters: clearCampaignFilters
   } = useAvailableCampaigns();
   
+  // Real-time requests data
+  const { 
+    requests, 
+    loading: reqLoading, 
+    error: reqError,
+    respondToRequest 
+  } = useRealtimeInfluencerRequests();
+  
   // Real active campaigns data
   const [activeCampaignsLoading, setActiveCampaignsLoading] = useState(true);
-  
-  // Real requests data  
-  const [reqLoading, setReqLoading] = useState(true);
   
   // Load active campaigns and requests
   useEffect(() => {
@@ -167,17 +172,10 @@ export default function InfluencerPage() {
           setActiveCampaigns(campaignsData.campaigns || []);
         }
         
-        // Load requests
-        const requestsRes = await fetch('/api/influencer/requests');
-        if (requestsRes.ok) {
-          const requestsData = await requestsRes.json();
-          setRequests(requestsData.requests || []);
-        }
       } catch (error) {
         console.error('Error loading data:', error);
       } finally {
         setActiveCampaignsLoading(false);
-        setReqLoading(false);
       }
     };
     
@@ -288,12 +286,7 @@ export default function InfluencerPage() {
       
       if (response.ok) {
         toast.success('Counter-offer sent successfully!');
-        // Refresh requests
-        const requestsRes = await fetch('/api/influencer/requests');
-        if (requestsRes.ok) {
-          const requestsData = await requestsRes.json();
-          setRequests(requestsData.requests || []);
-        }
+        // Real-time hook will update automatically
       } else {
         toast.error('Failed to send counter-offer');
       }
@@ -631,7 +624,7 @@ export default function InfluencerPage() {
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-muted-foreground">{getTimeAgo(r.createdAt)}</p>
-                        {r.status === 'counter_offered' && (
+                        {r.status === 'countered' && (
                           <Badge variant="secondary" className="mt-1">Response</Badge>
                         )}
                         {r.status === 'pending' && (
@@ -682,12 +675,12 @@ export default function InfluencerPage() {
                             </Button>
                           </div>
                         )}
-                        {r.status === 'counter_offered' && (
+                        {r.status === 'countered' && (
                           <div className="flex gap-2">
                             <Button 
                               className="flex-1" 
                               onClick={() => {
-                                toast.success(`Counter-offer accepted! Campaign will begin shortly.`);
+                                respondToRequest(r.id, 'accept');
                               }}
                             >
                               Accept Counter-Offer
@@ -701,7 +694,7 @@ export default function InfluencerPage() {
                             </Button>
                           </div>
                         )}
-                        {r.status === 'accepted' && (
+                        {r.status === 'approved' && (
                           <div className="text-center py-2">
                             <Badge variant="default" className="bg-green-100 text-green-800">
                               ✓ Accepted - Campaign Active
@@ -1017,11 +1010,11 @@ export default function InfluencerPage() {
                       <div className="flex justify-between items-start">
                         <div>
                           <CardTitle className="text-lg">{r.title}</CardTitle>
-                          <p className="text-sm text-muted-foreground">{r.bizId}</p>
+                          <p className="text-sm text-muted-foreground">{r.businessId}</p>
                         </div>
                         <div className="text-right">
                           <p className="text-xs text-muted-foreground">{getTimeAgo(r.createdAt)}</p>
-                          {r.status === 'counter_offered' && (
+                          {r.status === 'countered' && (
                             <Badge variant="secondary" className="mt-1">Response</Badge>
                           )}
                         </div>

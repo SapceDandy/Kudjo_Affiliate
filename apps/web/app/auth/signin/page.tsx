@@ -41,7 +41,7 @@ export default function SignInPage() {
           // User exists, proceed with demo sign-in
           console.log('Existing user found, signing in directly');
           switchUser(activeTab);
-          router.push(activeTab === 'business' ? '/business/dashboard' : '/influencer/dashboard');
+          router.push(activeTab === 'business' ? '/business' : '/influencer');
           return;
         }
       }
@@ -66,7 +66,7 @@ export default function SignInPage() {
       console.log('Starting demo Google sign-in with role:', role);
       switchUser(role);
       console.log('Demo Google sign-in successful, role:', role);
-      router.push(role === 'business' ? '/business/dashboard' : '/influencer/dashboard');
+      router.push(role === 'business' ? '/business' : '/influencer');
     } catch (err: any) {
       console.error('Google sign-in error:', err);
       setError(err.message || 'Google sign-in failed');

@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useDemoAuth } from '@/lib/demo-auth';
+import { useAuth } from '@/lib/auth';
+import { toast } from 'react-hot-toast';
 
 interface BusinessOffer {
   id: string;
@@ -22,7 +23,7 @@ export function useBusinessOffers() {
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [nextOffset, setNextOffset] = useState<number | null>(null);
-  const { user } = useDemoAuth();
+  const { user } = useAuth();
 
   const fetchOffers = async (offset = 0, append = false) => {
     if (!user) {
@@ -37,7 +38,7 @@ export function useBusinessOffers() {
       
       const params = new URLSearchParams();
       params.set('businessId', user.uid);
-      params.set('limit', '20');
+      params.set('limit', '100'); // Preload up to 100 items
       params.set('offset', offset.toString());
       
       const res = await fetch(`/api/business/offers?${params.toString()}`);
@@ -89,8 +90,71 @@ export function useBusinessOffers() {
     return newOffer;
   };
 
+  const pauseOffer = async (offerId: string) => {
+    if (!user) throw new Error('Please sign in to pause offers.');
+
+    // Optimistic UI update: pause the offer immediately
+    setOffers(prev => prev.map(offer => offer.id === offerId ? { ...offer, status: 'paused' } : offer));
+
+    try {
+      const res = await fetch(`/api/business/offers/${offerId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'paused' })
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to pause offer');
+      }
+
+      toast.success('Offer paused successfully!');
+    } catch (err) {
+      console.error('Error pausing offer:', err);
+      // Revert the optimistic UI update if the request fails
+      setOffers(prev => prev.map(offer => offer.id === offerId ? { ...offer, status: 'active' } : offer));
+      toast.error('Failed to pause offer. Please try again.');
+    }
+  };
+
+  const resumeOffer = async (offerId: string) => {
+    if (!user) throw new Error('Please sign in to resume offers.');
+
+    // Optimistic UI update: resume the offer immediately
+    setOffers(prev => prev.map(offer => offer.id === offerId ? { ...offer, status: 'active' } : offer));
+
+    try {
+      const res = await fetch(`/api/business/offers/${offerId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'active' })
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to resume offer');
+      }
+
+      toast.success('Offer resumed successfully!');
+    } catch (err) {
+      console.error('Error resuming offer:', err);
+      // Revert the optimistic UI update if the request fails
+      setOffers(prev => prev.map(offer => offer.id === offerId ? { ...offer, status: 'paused' } : offer));
+      toast.error('Failed to resume offer. Please try again.');
+    }
+  };
+
   useEffect(() => {
     fetchOffers();
+  }, [user]);
+
+  // Add periodic polling for real-time updates
+  useEffect(() => {
+    if (!user) return;
+    
+    const intervalId = setInterval(() => {
+      fetchOffers(0, false); // Silent refresh every 60 seconds
+    }, 60000);
+
+    return () => clearInterval(intervalId);
   }, [user]);
 
   return { 
@@ -100,6 +164,8 @@ export function useBusinessOffers() {
     hasMore, 
     loadMore, 
     createOffer,
+    pauseOffer,
+    resumeOffer,
     refetch: () => fetchOffers()
   };
 }

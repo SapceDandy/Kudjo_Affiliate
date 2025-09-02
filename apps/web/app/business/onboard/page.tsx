@@ -8,16 +8,8 @@ import { PosSelectionForm } from './pos-selection-form';
 import { PosSetupForm } from './pos-setup-form';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useDemoAuth } from '@/lib/demo-auth';
+import { OnboardingData } from './types';
 import toast from 'react-hot-toast';
-
-interface OnboardingData {
-  name: string;
-  address: string;
-  website: string;
-  overview: string;
-  defaultSplitPct: number;
-  posProvider: 'square' | 'manual' | 'clover';
-}
 
 const STEPS = ['Basic Info', 'POS Selection', 'POS Setup'];
 

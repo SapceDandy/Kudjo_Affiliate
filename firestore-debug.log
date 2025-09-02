@@ -175,3 +175,7 @@ Multiple projectIds are not recommended in single project mode. Requested projec
 Multiple projectIds are not recommended in single project mode. Requested project ID kudjo-affiliate-dev, but the emulator is configured for kudjo-affiliate. To opt-out of single project mode add/set the '"singleProjectMode": false' property in the firebase.json emulators config.
 Multiple projectIds are not recommended in single project mode. Requested project ID kudjo-affiliate-dev, but the emulator is configured for kudjo-affiliate. To opt-out of single project mode add/set the '"singleProjectMode": false' property in the firebase.json emulators config.
 Multiple projectIds are not recommended in single project mode. Requested project ID kudjo-affiliate-dev, but the emulator is configured for kudjo-affiliate. To opt-out of single project mode add/set the '"singleProjectMode": false' property in the firebase.json emulators config.
+Sep 02, 2025 10:38:51 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected non-HTTP/2 connection.
+Sep 02, 2025 10:38:51 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected HTTP/2 connection.

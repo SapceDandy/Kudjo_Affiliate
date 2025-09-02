@@ -43,10 +43,15 @@ export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: 
   
   // New program fields
   const [newProgramTitle, setNewProgramTitle] = useState('');
+  const [newProgramDescription, setNewProgramDescription] = useState('');
   const [discountType, setDiscountType] = useState<'percentage' | 'dollar' | 'bogo' | 'student' | 'happy_hour' | 'free_appetizer' | 'first_time'>('percentage');
   const [userDiscountPct, setUserDiscountPct] = useState(15);
   const [userDiscountCents, setUserDiscountCents] = useState(500);
   const [minSpendCents, setMinSpendCents] = useState(0);
+  const [maxRedemptions, setMaxRedemptions] = useState(100);
+  const [validDays, setValidDays] = useState(30);
+  const [terms, setTerms] = useState('Standard terms and conditions apply. Valid for new customers only. Cannot be combined with other offers.');
+  const [conditions, setConditions] = useState(`Must mention influencer code at time of purchase and the post must stay up for at least 30 days. This offer is valid for ${validDays} days from issue date.`);
 
   useEffect(() => {
     if (open) {
@@ -82,20 +87,54 @@ export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: 
     setLoading(true);
     try {
       let programData;
+      let offerId = selectedProgram;
       
       if (createNewProgram) {
-        // Create new program first
-        const newProgram = {
+        // Create new offer first
+        const newOfferData = {
+          businessId: 'demo_business_user',
           title: newProgramTitle,
+          description: newProgramDescription || `Special offer for ${influencer.displayName}`,
           discountType,
-          userDiscountPct,
-          userDiscountCents,
+          userDiscountPct: discountType === 'percentage' ? userDiscountPct : 0,
+          userDiscountCents: discountType === 'dollar' ? userDiscountCents : 0,
           splitPct: customSplitPct,
           minSpendCents,
-          status: 'active'
+          status: 'active',
+          terms,
+          conditions,
+          maxRedemptions,
+          validUntil: new Date(Date.now() + validDays * 24 * 60 * 60 * 1000).toISOString()
+        };
+
+        console.log('Creating new offer:', newOfferData);
+        
+        const offerResponse = await fetch('/api/business/offers', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(newOfferData),
+        });
+
+        if (!offerResponse.ok) {
+          const errorData = await offerResponse.json();
+          throw new Error(errorData.error || 'Failed to create offer');
+        }
+
+        const offerResult = await offerResponse.json();
+        offerId = offerResult.offerId;
+        
+        programData = {
+          title: newProgramTitle,
+          discountType,
+          userDiscountPct: discountType === 'percentage' ? userDiscountPct : 0,
+          userDiscountCents: discountType === 'dollar' ? userDiscountCents : 0,
+          splitPct: customSplitPct,
+          minSpendCents
         };
         
-        programData = newProgram;
+        console.log('Created offer with ID:', offerId);
       } else if (selectedProgram) {
         // Use existing program
         const program = programs.find(p => p.id === selectedProgram);
@@ -127,7 +166,8 @@ export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: 
         userDiscountCents: programData.userDiscountCents || 0,
         minSpendCents: programData.minSpendCents || 0,
         message,
-        programTitle: programData.title
+        programTitle: programData.title,
+        offerId: offerId
       };
 
       onSendRequest(requestData);
@@ -217,6 +257,17 @@ export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: 
                     />
                   </div>
                   
+                  <div>
+                    <label className="text-sm font-medium">Description</label>
+                    <Textarea
+                      value={newProgramDescription}
+                      onChange={(e) => setNewProgramDescription(e.target.value)}
+                      placeholder="Describe the offer details..."
+                      className="mt-1"
+                      rows={2}
+                    />
+                  </div>
+                  
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium">Discount Type</label>
@@ -278,6 +329,52 @@ export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: 
                       />
                     </div>
                   )}
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium">Max Redemptions</label>
+                      <Input
+                        type="number"
+                        value={maxRedemptions}
+                        onChange={(e) => setMaxRedemptions(Number(e.target.value))}
+                        min={1}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Valid for (days)</label>
+                      <Input
+                        type="number"
+                        value={validDays}
+                        onChange={(e) => {setValidDays(Number(e.target.value)); setConditions(`Must mention influencer code at time of purchase and the post must stay up for at least 30 days. This offer is valid for ${e.target.value} days from issue date.`)}}
+                        min={1}
+                        max={365}
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* <div>
+                    <label className="text-sm font-medium">Terms & Conditions</label>
+                    <Textarea
+                      value={terms}
+                      onChange={(e) => setTerms(e.target.value)}
+                      placeholder="Enter terms and conditions..."
+                      className="mt-1"
+                      rows={2}
+                    />
+                  </div> */}
+                  
+                  <div>
+                    <label className="text-sm font-medium">Usage Conditions</label>
+                    <Textarea
+                      value={conditions}
+                      onChange={(e) => setConditions(e.target.value)}
+                      placeholder="Enter usage conditions..."
+                      className="mt-1"
+                      rows={2}
+                    />
+                  </div>
                 </div>
               )}
             </div>

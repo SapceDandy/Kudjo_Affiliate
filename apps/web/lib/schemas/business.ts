@@ -16,7 +16,7 @@ export type CreateOfferRequest = z.infer<typeof CreateOfferSchema>;
 
 export const UpdateRequestSchema = z.object({
   requestId: z.string().min(1, 'Request ID is required'),
-  status: z.enum(['pending', 'countered', 'approved', 'declined']),
+  status: z.enum(['pending', 'countered', 'approved', 'declined', 'closed']),
   counterOffer: z.object({
     splitPct: z.number().min(1).max(100).optional(),
     discountType: z.string().optional(),

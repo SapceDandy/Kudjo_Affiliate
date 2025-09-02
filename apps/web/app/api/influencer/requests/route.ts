@@ -1,65 +1,92 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth-server';
-import { adminDb } from '@/lib/firebase-admin';
+import { getFirestore } from 'firebase-admin/firestore';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+
+// Initialize Firebase Admin
+function getAdminDb() {
+  try {
+    if (getApps().length === 0) {
+      const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+      const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+      const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID;
+      
+      if (privateKey && clientEmail && projectId) {
+        const app = initializeApp({
+          credential: cert({
+            projectId,
+            clientEmail,
+            privateKey
+          })
+        });
+        return getFirestore(app);
+      }
+    }
+    
+    return getFirestore();
+  } catch (error) {
+    console.error('Firebase Admin initialization error:', error);
+    return null;
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser(request);
-    const url = new URL(request.url);
-    const infId = url.searchParams.get('infId') || user?.uid;
+    const { searchParams } = new URL(request.url);
+    const infId = searchParams.get('infId') || searchParams.get('influencerId');
     
     if (!infId) {
       return NextResponse.json({ error: 'Influencer ID required' }, { status: 400 });
     }
-    const limit = parseInt(url.searchParams.get('limit') || '20');
-    const offset = parseInt(url.searchParams.get('offset') || '0');
 
-    // Get influencer requests from Firestore - simplified to avoid index issues
-    let requestsQuery = adminDb
-      .collection('influencerRequests')
-      .where('infId', '==', infId);
+    const adminDb = getAdminDb();
+    if (!adminDb) {
+      return NextResponse.json({ 
+        error: 'Firebase Admin not configured' 
+      }, { status: 500 });
+    }
 
-    // Try with ordering, fall back to simple query if index not ready
+    // Query influencer requests
+    const requestsRef = adminDb.collection('influencerRequests');
     let requestsSnapshot;
+    
     try {
-      requestsSnapshot = await requestsQuery.orderBy('createdAt', 'desc').limit(limit).get();
-    } catch (indexError) {
-      console.log('Index not ready, using simple query:', indexError);
-      requestsSnapshot = await requestsQuery.limit(limit).get();
+      // Try with ordering first
+      const requestsQuery = requestsRef
+        .where('infId', '==', infId)
+        .orderBy('createdAt', 'desc');
+      requestsSnapshot = await requestsQuery.get();
+    } catch (indexError: any) {
+      console.log('Index not ready, using simple query:', indexError?.message || 'Index error');
+      // Fallback to simple query without ordering
+      const simpleQuery = requestsRef.where('infId', '==', infId);
+      requestsSnapshot = await simpleQuery.get();
     }
-    const requests = [];
-
-    for (const requestDoc of requestsSnapshot.docs) {
-      const requestData = requestDoc.data();
-      
-      // Get business details
-      let businessName = 'Unknown Business';
-      try {
-        const businessDoc = await adminDb.collection('businesses').doc(requestData.bizId).get();
-        if (businessDoc.exists) {
-          businessName = businessDoc.data()?.name || businessName;
-        }
-      } catch (error) {
-        console.log('Business not found:', requestData.bizId);
-      }
-
-      requests.push({
-        id: requestDoc.id,
-        ...requestData,
-        businessName,
-        createdAt: requestData.createdAt?.toDate() || new Date()
-      });
-    }
-
-    return NextResponse.json({
-      requests,
-      hasMore: requestsSnapshot.size === limit
+    
+    const requests = requestsSnapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        title: data.title || 'Business Request',
+        description: data.description,
+        businessName: data.businessName || 'Unknown Business',
+        businessId: data.bizId,
+        splitPct: data.proposedSplitPct || 20,
+        userDiscountPct: data.userDiscountPct,
+        userDiscountCents: data.userDiscountCents,
+        minSpendCents: data.minSpendCents,
+        status: data.status || 'pending',
+        createdAt: data.createdAt?.toDate?.() || new Date(),
+        updatedAt: data.updatedAt?.toDate?.(),
+        businessResponse: data.businessResponse
+      };
     });
 
-  } catch (error) {
-    console.error('Error fetching requests:', error);
+    return NextResponse.json({ requests });
+
+  } catch (error: any) {
+    console.error('Error fetching influencer requests:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch requests' },
+      { error: 'Failed to fetch requests', details: error.message },
       { status: 500 }
     );
   }
@@ -67,64 +94,47 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const user = await getCurrentUser(request);
     const body = await request.json();
-    const { requestId, action, counterOffer, infId } = body;
+    const { requestId, action, counterOffer } = body;
     
-    const actualInfId = infId || user?.uid;
-    if (!actualInfId) {
-      return NextResponse.json({ error: 'Influencer ID required' }, { status: 400 });
-    }
-
-
     if (!requestId || !action) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const requestRef = adminDb.collection('influencerRequests').doc(requestId);
-    const requestDoc = await requestRef.get();
-
-    if (!requestDoc.exists) {
-      return NextResponse.json({ error: 'Request not found' }, { status: 404 });
+    if (!['accept', 'decline', 'counter'].includes(action)) {
+      return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
 
-    const requestData = requestDoc.data();
-    if (requestData?.infId !== actualInfId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    const adminDb = getAdminDb();
+    if (!adminDb) {
+      return NextResponse.json({ error: 'Firebase not configured' }, { status: 500 });
     }
 
-    const now = new Date();
-    let updateData: any = {
-      updatedAt: now
+    const updateData: any = {
+      updatedAt: new Date()
     };
 
     switch (action) {
       case 'accept':
-        updateData.status = 'accepted';
-        updateData.respondedAt = now;
+        updateData.status = 'approved';
         break;
       case 'decline':
         updateData.status = 'declined';
-        updateData.respondedAt = now;
         break;
       case 'counter':
-        if (!counterOffer) {
-          return NextResponse.json({ error: 'Counter offer data required' }, { status: 400 });
+        updateData.status = 'countered';
+        if (counterOffer) {
+          updateData.counterOffer = counterOffer;
         }
-        updateData.status = 'counter_offered';
-        updateData.counterOffer = counterOffer;
-        updateData.respondedAt = now;
         break;
-      default:
-        return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
 
-    await requestRef.update(updateData);
-
+    await adminDb.collection('influencerRequests').doc(requestId).update(updateData);
+    
     return NextResponse.json({ success: true });
 
   } catch (error) {
-    console.error('Error updating request:', error);
+    console.error('Error updating influencer request:', error);
     return NextResponse.json(
       { error: 'Failed to update request' },
       { status: 500 }

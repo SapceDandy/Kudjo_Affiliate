@@ -18,7 +18,7 @@ service cloud.firestore {
     }
 
     function isSeedingUser() {
-      return request.auth != null && request.auth.token.email == 'devon@getkudjo.com';
+      return request.auth != null && request.auth.token.role == 'admin';
     }
 
     match /users/{userId} {

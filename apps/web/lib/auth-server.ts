@@ -13,7 +13,7 @@ export async function getCurrentUser(request?: NextRequest): Promise<ServerUser 
     const userRole = request?.headers.get('x-user-role') as 'admin' | 'business' | 'influencer' | undefined;
     const userEmail = request?.headers.get('x-user-email');
     
-    if (userId) {
+    if (userId && userId !== 'mock-user-id') {
       return {
         uid: userId,
         email: userEmail || undefined,
@@ -21,12 +21,17 @@ export async function getCurrentUser(request?: NextRequest): Promise<ServerUser 
       };
     }
     
-    // Fallback to mock for development
-    if (process.env.NODE_ENV === 'development') {
+    // Check for user ID in query parameters as fallback
+    const url = new URL(request?.url || '');
+    const queryUserId = url.searchParams.get('userId');
+    const queryUserRole = url.searchParams.get('userRole') as 'admin' | 'business' | 'influencer' | undefined;
+    const queryUserEmail = url.searchParams.get('userEmail');
+    
+    if (queryUserId && queryUserId !== 'mock-user-id') {
       return {
-        uid: 'mock-user-id',
-        email: 'user@example.com',
-        role: 'business'
+        uid: queryUserId,
+        email: queryUserEmail || undefined,
+        role: queryUserRole || 'business'
       };
     }
     

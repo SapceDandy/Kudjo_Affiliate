@@ -7,13 +7,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { AddressAutocomplete } from '@/components/ui/google-places-autocomplete';
 import { MapPin, CheckCircle } from 'lucide-react';
+import { OnboardingStepProps } from './types';
 
-interface BasicInfoFormProps {
-  onNext: (data: { name: string; address: string; website: string; overview: string; defaultSplitPct: number }) => void;
-  initialData: { name: string; address: string; website: string; overview: string; defaultSplitPct: number };
-}
-
-export function BasicInfoForm({ onNext, initialData }: BasicInfoFormProps) {
+export function BasicInfoForm({ onNext, initialData }: OnboardingStepProps) {
   const [name, setName] = useState(initialData.name);
   const [address, setAddress] = useState(initialData.address);
   const [website, setWebsite] = useState(initialData.website);

@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useDemoAuth } from '@/lib/demo-auth';
+import { useAuth } from '@/lib/auth';
 
 interface BusinessMetrics {
   totalPayoutOwed: number; // cents
@@ -20,7 +20,7 @@ export function useBusinessMetrics() {
   const [metrics, setMetrics] = useState<BusinessMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useDemoAuth();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (!user) {

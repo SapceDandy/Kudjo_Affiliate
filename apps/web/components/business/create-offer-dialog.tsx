@@ -210,7 +210,7 @@ export function CreateOfferDialog({ open, onClose, onOfferCreated }: CreateOffer
           </div>
 
           {/* Terms */}
-          <div>
+          {/* <div>
             <Label htmlFor="terms">Terms & Conditions</Label>
             <Textarea
               id="terms"
@@ -220,7 +220,7 @@ export function CreateOfferDialog({ open, onClose, onOfferCreated }: CreateOffer
               className="mt-1"
               rows={3}
             />
-          </div>
+          </div> */}
 
           {/* Actions */}
           <div className="flex gap-3">

@@ -27,6 +27,13 @@ function RequireBusinessSetup({ children }: { children: React.ReactNode }) {
     (async () => {
       try {
         if (!user?.uid) return;
+        
+        // Skip onboarding for demo users
+        if (user.uid === 'demo_business_user') {
+          if (isMounted) setChecking(false);
+          return;
+        }
+        
         const ref = doc(db, 'businesses', user.uid);
         const snap = await getDoc(ref);
         const data = snap.data();
@@ -36,6 +43,11 @@ function RequireBusinessSetup({ children }: { children: React.ReactNode }) {
           return;
         }
       } catch (e) {
+        // Skip onboarding for demo users even on error
+        if (user?.uid === 'demo_business_user') {
+          if (isMounted) setChecking(false);
+          return;
+        }
         // If error, be safe and force onboarding
         router.replace('/business/onboard');
         return;

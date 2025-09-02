@@ -1,8 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
+import { getFirestore } from 'firebase-admin/firestore';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { UpdateRequestSchema } from '@/lib/schemas/business';
 import { QueryDocumentSnapshot } from 'firebase-admin/firestore';
-import { mockRequests, paginateMockData, shouldUseMockData } from '@/lib/mock-data';
+
+// Initialize Firebase Admin
+function getAdminDb() {
+  try {
+    if (getApps().length === 0) {
+      const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+      const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+      const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID;
+      
+      if (privateKey && clientEmail && projectId) {
+        const app = initializeApp({
+          credential: cert({
+            projectId,
+            clientEmail,
+            privateKey
+          })
+        });
+        return getFirestore(app);
+      }
+    }
+    
+    return getFirestore();
+  } catch (error) {
+    console.error('Firebase Admin initialization error:', error);
+    return null;
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,29 +42,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'businessId required' }, { status: 400 });
     }
 
-    // Use mock data if quota exceeded or in development
-    if (shouldUseMockData()) {
-      const businessRequests = mockRequests.filter(req => req.businessId === businessId);
-      const result = paginateMockData(businessRequests, Math.floor(offset / limit) + 1, limit);
-      
-      return NextResponse.json({
-        requests: result.data.map(req => ({
-          id: req.id,
-          influencer: req.influencerName,
-          followers: 25000,
-          tier: 'Gold',
-          proposedSplitPct: 25,
-          discountType: 'percentage',
-          userDiscountPct: 30,
-          userDiscountCents: undefined,
-          minSpendCents: 2500,
-          createdAt: req.requestedAt,
-          status: req.status.toLowerCase()
-        })),
-        hasMore: result.pagination.hasNext,
-        nextOffset: result.pagination.hasNext ? offset + limit : null,
-        source: 'mock'
-      });
+    const adminDb = getAdminDb();
+    if (!adminDb) {
+      return NextResponse.json({ 
+        error: 'Firebase Admin not configured' 
+      }, { status: 500 });
     }
 
     // Query influencer requests for this business
@@ -78,41 +87,8 @@ export async function GET(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Error fetching business requests:', error);
-    
-    // Handle quota exceeded errors with mock data fallback
-    if (error?.code === 8 || error?.message?.includes('Quota exceeded')) {
-      console.log('Quota exceeded, falling back to mock data');
-      
-      const { searchParams } = new URL(request.url);
-      const businessId = searchParams.get('businessId');
-      const limit = parseInt(searchParams.get('limit') || '20');
-      const offset = parseInt(searchParams.get('offset') || '0');
-      
-      const businessRequests = mockRequests.filter(req => req.businessId === businessId);
-      const result = paginateMockData(businessRequests, Math.floor(offset / limit) + 1, limit);
-      
-      return NextResponse.json({
-        requests: result.data.map(req => ({
-          id: req.id,
-          influencer: req.influencerName,
-          followers: 25000,
-          tier: 'Gold',
-          proposedSplitPct: 25,
-          discountType: 'percentage',
-          userDiscountPct: 30,
-          userDiscountCents: undefined,
-          minSpendCents: 2500,
-          createdAt: req.requestedAt,
-          status: req.status.toLowerCase()
-        })),
-        hasMore: result.pagination.hasNext,
-        nextOffset: result.pagination.hasNext ? offset + limit : null,
-        source: 'mock_fallback'
-      });
-    }
-    
     return NextResponse.json(
-      { error: 'Failed to fetch requests' },
+      { error: 'Failed to fetch requests', details: error.message },
       { status: 500 }
     );
   }
@@ -137,6 +113,11 @@ export async function PUT(request: NextRequest) {
       updateData.counterOffer = counterOffer;
     }
 
+    const adminDb = getAdminDb();
+    if (!adminDb) {
+      return NextResponse.json({ error: 'Firebase not configured' }, { status: 500 });
+    }
+
     await adminDb.collection('influencerRequests').doc(requestId).update(updateData);
     
     return NextResponse.json({ success: true });
@@ -155,23 +136,80 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log('POST /api/business/requests - Request body:', body);
     
-    const { businessId, influencer, followers, tier, proposedSplitPct, discountType, userDiscountPct, userDiscountCents, minSpendCents } = body;
+    const { businessId, influencerId, influencer, followers, tier, proposedSplitPct, discountType, userDiscountPct, userDiscountCents, minSpendCents, title, description } = body;
     
-    if (!businessId || !influencer) {
-      console.log('Missing required fields:', { businessId, influencer });
-      return NextResponse.json({ error: 'Missing required fields: businessId and influencer are required' }, { status: 400 });
+    if (!businessId || (!influencerId && !influencer)) {
+      console.log('Missing required fields:', { businessId, influencerId, influencer });
+      return NextResponse.json({ error: 'Missing required fields: businessId and either influencerId or influencer name are required' }, { status: 400 });
     }
 
-    // Check if Firebase is configured
+    const adminDb = getAdminDb();
     if (!adminDb) {
       console.log('Firebase not configured, adminDb is null');
       return NextResponse.json({ error: 'Firebase not configured' }, { status: 500 });
     }
 
+    let finalInfluencerId = influencerId;
+    let finalInfluencerName = influencer;
+    let businessName = 'Unknown Business';
+
+    // If influencerId is provided, get influencer details
+    if (influencerId) {
+      try {
+        const influencerDoc = await adminDb.collection('influencers').doc(influencerId).get();
+        if (influencerDoc.exists) {
+          const influencerData = influencerDoc.data();
+          finalInfluencerName = influencerData?.name || influencerData?.displayName || influencer || 'Unknown Influencer';
+        }
+      } catch (error) {
+        console.warn('Could not fetch influencer details:', error);
+      }
+    } else {
+      // If only influencer name provided, try to find by name (fallback for existing functionality)
+      try {
+        const influencerQuery = adminDb.collection('influencers')
+          .where('name', '==', influencer)
+          .limit(1);
+        const influencerSnapshot = await influencerQuery.get();
+        
+        if (!influencerSnapshot.empty) {
+          const influencerDoc = influencerSnapshot.docs[0];
+          finalInfluencerId = influencerDoc.id;
+          finalInfluencerName = influencerDoc.data().name;
+        } else {
+          // Create a placeholder influencer record for name-only requests
+          const placeholderInfluencer = {
+            name: influencer,
+            followers: followers || 0,
+            tier: tier || 'Nano',
+            verified: false,
+            platforms: ['instagram'],
+            createdAt: new Date(),
+            isPlaceholder: true
+          };
+          const newInfluencerRef = await adminDb.collection('influencers').add(placeholderInfluencer);
+          finalInfluencerId = newInfluencerRef.id;
+        }
+      } catch (error) {
+        console.warn('Could not find or create influencer:', error);
+        finalInfluencerId = 'placeholder_' + Date.now();
+      }
+    }
+
+    // Get business name
+    try {
+      const businessDoc = await adminDb.collection('businesses').doc(businessId).get();
+      if (businessDoc.exists) {
+        businessName = businessDoc.data()?.name || businessName;
+      }
+    } catch (error) {
+      console.warn('Could not fetch business details:', error);
+    }
+
     // Check for existing active requests to this influencer
     const existingRequestsQuery = adminDb.collection('influencerRequests')
       .where('bizId', '==', businessId)
-      .where('influencerName', '==', influencer)
+      .where('infId', '==', finalInfluencerId)
       .where('status', 'in', ['pending', 'countered']);
 
     const existingRequestsSnapshot = await existingRequestsQuery.get();
@@ -187,9 +225,13 @@ export async function POST(request: NextRequest) {
     // Create new influencer request
     const requestData = {
       bizId: businessId,
-      influencerName: influencer,
+      infId: finalInfluencerId,
+      influencerName: finalInfluencerName,
+      businessName: businessName,
+      title: title || `Collaboration Request from ${businessName}`,
+      description: description || `${businessName} would like to collaborate with you on a campaign.`,
       followers: followers || 0,
-      tier: tier || 'Small',
+      tier: tier || 'Nano',
       proposedSplitPct: proposedSplitPct || 20,
       discountType: discountType || 'percentage',
       userDiscountPct: userDiscountPct,
@@ -207,7 +249,7 @@ export async function POST(request: NextRequest) {
     try {
       const metricsRef = adminDb.collection('businessMetrics').doc(businessId);
       await metricsRef.set({
-        activeRequests: adminDb.FieldValue.increment(1),
+        activeRequests: 1, // Simple increment since FieldValue may not be available
         updatedAt: new Date()
       }, { merge: true });
     } catch (metricsError) {

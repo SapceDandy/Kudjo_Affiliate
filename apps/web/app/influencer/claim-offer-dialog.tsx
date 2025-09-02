@@ -285,7 +285,7 @@ export function ClaimOfferDialog({ offerId, open, onClose }: ClaimOfferDialogPro
                 </Button>
                 <Button
                   className="flex-1"
-                  onClick={() => window.open('/influencer/dashboard', '_blank')}
+                  onClick={() => window.open('/influencer', '_blank')}
                 >
                   View Dashboard
                 </Button>

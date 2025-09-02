@@ -56,13 +56,22 @@ export function MessageCenter({ open, onClose, userId, userType, userName }: Mes
     try {
       setLoading(true);
       const response = await fetch(`/api/messages/conversations?userId=${userId}&userType=${userType}`);
-      if (!response.ok) throw new Error('Failed to fetch conversations');
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error response:', errorData);
+        throw new Error(errorData.error || 'Failed to fetch conversations');
+      }
       
       const data = await response.json();
       setConversations(data.conversations || []);
     } catch (error) {
       console.error('Error fetching conversations:', error);
-      toast.error('Failed to load conversations');
+      // Don't show error toast for empty conversations - just show empty state
+      if (error instanceof Error && !error.message.includes('not found')) {
+        toast.error('Failed to load conversations');
+      }
+      setConversations([]); // Set empty array to show "No conversations yet" state
     } finally {
       setLoading(false);
     }

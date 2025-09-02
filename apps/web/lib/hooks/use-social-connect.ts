@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useDemoAuth } from '@/lib/demo-auth';
+import { useAuth } from '@/lib/auth';
 import toast from 'react-hot-toast';
 
 interface SocialConnectResult {
@@ -15,7 +15,7 @@ interface SocialConnectResult {
 }
 
 export function useSocialConnect() {
-  const { user } = useDemoAuth();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
 
   const connectInstagram = async (accessToken: string, userId: string): Promise<SocialConnectResult | null> => {

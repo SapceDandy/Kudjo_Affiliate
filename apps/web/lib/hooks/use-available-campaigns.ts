@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useDemoAuth } from '@/lib/demo-auth';
+import { useAuth } from '@/lib/auth';
 import { AvailableCampaignsResponse } from '@/lib/schemas/coupon';
 
 interface UseAvailableCampaignsResult {
@@ -24,7 +24,7 @@ interface CampaignFilters {
 }
 
 export function useAvailableCampaigns(): UseAvailableCampaignsResult {
-  const { user } = useDemoAuth();
+  const { user } = useAuth();
   const [campaigns, setCampaigns] = useState<AvailableCampaignsResponse['campaigns']>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
