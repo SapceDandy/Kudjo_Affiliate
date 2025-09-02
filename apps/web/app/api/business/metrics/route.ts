@@ -1,7 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
-import { safeFirestoreQuery } from '@/lib/quota-manager';
+import { getFirestore } from 'firebase-admin/firestore';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { QueryDocumentSnapshot } from 'firebase-admin/firestore';
+
+// Initialize Firebase Admin
+function getAdminDb() {
+  try {
+    if (getApps().length === 0) {
+      // Try environment variables first
+      const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+      const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+      const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID;
+      
+      if (privateKey && clientEmail && projectId) {
+        const app = initializeApp({
+          credential: cert({
+            projectId,
+            clientEmail,
+            privateKey
+          })
+        });
+        return getFirestore(app);
+      }
+    }
+    
+    return getFirestore();
+  } catch (error) {
+    console.error('Firebase Admin initialization error:', error);
+    return null;
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,6 +41,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'businessId required' }, { status: 400 });
     }
 
+    const adminDb = getAdminDb();
     if (!adminDb) {
       return NextResponse.json({ 
         error: 'Firebase Admin not configured. Please check your environment variables.' 
@@ -59,9 +88,9 @@ export async function GET(request: NextRequest) {
     const totalRedemptions = redemptionsSnapshot.size;
     const avgOrderValue = totalRedemptions > 0 ? Math.round(totalRevenue / totalRedemptions) : 0;
 
-    // Query pending requests for this business
+    // Query influencer requests for this business
     const requestsRef = adminDb.collection('influencerRequests');
-    const requestsQuery = requestsRef.where('bizId', '==', businessId).where('status', '==', 'pending');
+    const requestsQuery = requestsRef.where('bizId', '==', businessId);
     const requestsSnapshot = await requestsQuery.get();
     const pendingRequests = requestsSnapshot.size;
 

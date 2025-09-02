@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Trash2, Edit, Plus } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { 
   Table, 
   TableBody, 
@@ -22,15 +24,7 @@ import {
   DialogFooter,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Plus,
-  Edit,
-  Trash,
-  Save,
-  DollarSign,
-  Users,
-  Percent,
-} from 'lucide-react';
+import { Label } from '@/components/ui/label';
 
 interface PricingTier {
   id: string;
@@ -120,15 +114,16 @@ export function PricingTiers({ businessId, isAdmin = false, onUpdate }: PricingT
   };
 
   // Save tier
-  const handleSaveTier = () => {
+  const handleSaveTier = async () => {
     const minFollowersNum = parseInt(minFollowers);
     const maxFollowersNum = maxFollowers ? parseInt(maxFollowers) : null;
     const commissionNum = useCommission ? parseFloat(commission) : 0;
     const flatFeeNum = !useCommission && flatFee ? Math.round(parseFloat(flatFee) * 100) : null;
 
+    let updatedTiers;
     if (editingTier) {
       // Update existing tier
-      const updatedTiers = tiers.map(tier => {
+      updatedTiers = tiers.map(tier => {
         if (tier.id === editingTier.id) {
           return {
             ...tier,
@@ -140,10 +135,6 @@ export function PricingTiers({ businessId, isAdmin = false, onUpdate }: PricingT
         }
         return tier;
       });
-      setTiers(updatedTiers);
-      if (onUpdate) {
-        onUpdate(updatedTiers);
-      }
     } else {
       // Add new tier
       const newTier: PricingTier = {
@@ -153,21 +144,61 @@ export function PricingTiers({ businessId, isAdmin = false, onUpdate }: PricingT
         commission: commissionNum,
         flatFee: flatFeeNum,
       };
-      const updatedTiers = [...tiers, newTier].sort((a, b) => a.minFollowers - b.minFollowers);
+      updatedTiers = [...tiers, newTier].sort((a, b) => a.minFollowers - b.minFollowers);
+    }
+
+    try {
+      // Save to API
+      const response = await fetch('/api/business/tier-settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          businessId,
+          tiers: updatedTiers,
+          defaultCommission,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save tier settings');
+      }
+
+      // Update local state only after successful API call
       setTiers(updatedTiers);
       if (onUpdate) {
         onUpdate(updatedTiers);
       }
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error saving tier settings:', error);
+      toast.error('Failed to save tier settings');
     }
-
-    setIsEditing(false);
   };
 
   // Update default commission
-  const handleUpdateDefaultCommission = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUpdateDefaultCommission = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value);
     if (!isNaN(value)) {
       setDefaultCommission(value);
+      
+      try {
+        // Save to API
+        await fetch('/api/business/tier-settings', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            businessId,
+            tiers,
+            defaultCommission: value,
+          }),
+        });
+      } catch (error) {
+        console.error('Error updating default commission:', error);
+      }
     }
   };
 

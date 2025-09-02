@@ -57,10 +57,19 @@ export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: 
 
   const fetchPrograms = async () => {
     try {
-      const response = await fetch('/api/business/programs?businessId=demo_business_user');
+      const response = await fetch('/api/business/offers?businessId=demo_business_user');
       if (response.ok) {
         const data = await response.json();
-        setPrograms(data.programs || []);
+        const offers = data.offers || [];
+        setPrograms(offers.map((offer: any) => ({
+          id: offer.id,
+          title: offer.title,
+          discountType: offer.discountType,
+          userDiscountPct: offer.userDiscountPct,
+          userDiscountCents: offer.userDiscountCents,
+          splitPct: offer.splitPct,
+          minSpendCents: offer.minSpendCents
+        })));
       }
     } catch (error) {
       console.error('Error fetching programs:', error);

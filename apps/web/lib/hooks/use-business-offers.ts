@@ -84,7 +84,8 @@ export function useBusinessOffers() {
     }
 
     const newOffer = await res.json();
-    setOffers(prev => [newOffer, ...prev]);
+    // Refresh the offers list to get the latest data
+    await fetchOffers();
     return newOffer;
   };
 

@@ -151,6 +151,46 @@ async function testConnection(): Promise<boolean> {
   }
 }
 
+// Get Firebase Admin DB with health check
+async function getFirebaseDb(): Promise<Firestore | null> {
+  // Check if we need to initialize
+  if (!isInitialized) {
+    const success = await initializeFirebase();
+    if (!success) return null;
+  }
+
+  // Check connection health
+  const now = Date.now();
+  if (now - lastHealthCheck > HEALTH_CHECK_INTERVAL) {
+    await testConnection();
+  }
+
+  return isHealthy ? firebaseDb : null;
+}
+
+// Get Firebase Admin Auth
+async function getFirebaseAuth(): Promise<Auth | null> {
+  if (!isInitialized) {
+    const success = await initializeFirebase();
+    if (!success) return null;
+  }
+  return firebaseAuth;
+}
+
+// Synchronous getters for backward compatibility
+const adminDb = firebaseDb;
+const adminAuth = firebaseAuth;
+
+// Get initialization status
+function getFirebaseStatus() {
+  return {
+    initialized: isInitialized,
+    healthy: isHealthy,
+    error: initError,
+    lastHealthCheck: new Date(lastHealthCheck).toISOString()
+  };
+}
+
 // Initialize on module load
 initializeFirebase().catch(console.error);
 
@@ -210,24 +250,12 @@ const generateMockCoupons = (count = 10) => {
   });
 };
 
-// Synchronous exports for backward compatibility
-const adminDb: Firestore | null = firebaseDb;
-const adminAuth: Auth | null = firebaseAuth;
-
-// Get initialization status
-function getFirebaseStatus() {
-  return {
-    initialized: isInitialized,
-    healthy: isHealthy,
-    error: initError,
-    lastHealthCheck: new Date(lastHealthCheck).toISOString()
-  };
-}
-
 export { 
   adminDb,
   adminAuth,
+  getFirebaseDb,
+  getFirebaseAuth,
   getFirebaseStatus,
   generateMockUsers, 
   generateMockCoupons 
-}; 
+};

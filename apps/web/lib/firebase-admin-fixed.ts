@@ -5,20 +5,15 @@ import fs from 'fs';
 import path from 'path';
 
 // Firebase Admin instances
-let firebaseApp: App | null = null;
-let firebaseDb: Firestore | null = null;
-let firebaseAuth: Auth | null = null;
-let isInitialized = false;
+let app: App | null = null;
+let db: Firestore | null = null;
+let auth: Auth | null = null;
+let initialized = false;
 let initError: string | null = null;
 
-// Connection health tracking
-let lastHealthCheck = 0;
-let isHealthy = false;
-const HEALTH_CHECK_INTERVAL = 30000; // 30 seconds
-
-// Initialize Firebase Admin
-async function initializeFirebase(): Promise<boolean> {
-  if (isInitialized && firebaseApp && firebaseDb) {
+// Initialize Firebase Admin with comprehensive error handling
+function initializeFirebaseAdmin(): boolean {
+  if (initialized && app && db) {
     return true;
   }
 
@@ -34,7 +29,7 @@ async function initializeFirebase(): Promise<boolean> {
       
       if (envPrivateKey && envClientEmail && envProjectId) {
         try {
-          firebaseApp = initializeApp({
+          app = initializeApp({
             credential: cert({
               projectId: envProjectId,
               clientEmail: envClientEmail,
@@ -54,7 +49,7 @@ async function initializeFirebase(): Promise<boolean> {
         if (gacPath && fs.existsSync(gacPath)) {
           try {
             const serviceAccount = JSON.parse(fs.readFileSync(gacPath, 'utf-8'));
-            firebaseApp = initializeApp({ credential: cert(serviceAccount) });
+            app = initializeApp({ credential: cert(serviceAccount) });
             credentialsFound = true;
             console.log('✅ Firebase Admin initialized from GOOGLE_APPLICATION_CREDENTIALS');
           } catch (error) {
@@ -82,7 +77,7 @@ async function initializeFirebase(): Promise<boolean> {
                   serviceAccount.project_id &&
                   !serviceAccount.private_key.includes('REPLACE_THIS')) {
                 
-                firebaseApp = initializeApp({ credential: cert(serviceAccount) });
+                app = initializeApp({ credential: cert(serviceAccount) });
                 credentialsFound = true;
                 console.log('✅ Firebase Admin initialized from:', path.basename(filePath));
                 break;
@@ -106,53 +101,33 @@ async function initializeFirebase(): Promise<boolean> {
         return false;
       }
     } else {
-      firebaseApp = getApps()[0];
+      app = getApps()[0];
       console.log('✅ Firebase Admin already initialized');
     }
 
     // Initialize Firestore and Auth
-    if (firebaseApp) {
-      firebaseDb = getFirestore(firebaseApp);
-      firebaseAuth = getAuth(firebaseApp);
-      isInitialized = true;
+    if (app) {
+      db = getFirestore(app);
+      auth = getAuth(app);
+      initialized = true;
       initError = null;
-      
-      // Test connection
-      await testConnection();
       return true;
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     initError = errorMessage;
     console.error('❌ Firebase Admin initialization failed:', errorMessage);
-    firebaseApp = null;
-    firebaseDb = null;
-    firebaseAuth = null;
-    isInitialized = false;
+    app = null;
+    db = null;
+    auth = null;
+    initialized = false;
   }
 
   return false;
 }
 
-// Test Firebase connection health
-async function testConnection(): Promise<boolean> {
-  if (!firebaseDb) return false;
-
-  try {
-    // Simple test query to verify connection
-    await firebaseDb.collection('_health_check').limit(1).get();
-    isHealthy = true;
-    lastHealthCheck = Date.now();
-    return true;
-  } catch (error) {
-    console.error('❌ Firebase connection test failed:', error);
-    isHealthy = false;
-    return false;
-  }
-}
-
 // Initialize on module load
-initializeFirebase().catch(console.error);
+const isInitialized = initializeFirebaseAdmin();
 
 // Generate mock data for development
 const generateMockUsers = (count = 20) => {
@@ -210,24 +185,7 @@ const generateMockCoupons = (count = 10) => {
   });
 };
 
-// Synchronous exports for backward compatibility
-const adminDb: Firestore | null = firebaseDb;
-const adminAuth: Auth | null = firebaseAuth;
-
-// Get initialization status
-function getFirebaseStatus() {
-  return {
-    initialized: isInitialized,
-    healthy: isHealthy,
-    error: initError,
-    lastHealthCheck: new Date(lastHealthCheck).toISOString()
-  };
-}
-
-export { 
-  adminDb,
-  adminAuth,
-  getFirebaseStatus,
-  generateMockUsers, 
-  generateMockCoupons 
-}; 
+// Export the instances directly
+export const adminDb = db;
+export const adminAuth = auth;
+export { generateMockUsers, generateMockCoupons };

@@ -2,26 +2,47 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { FloatingMascot } from '@/components/ui/floating-mascot';
 import { useDemoAuth } from '@/lib/demo-auth';
 
 export default function Home() {
-  const { user } = useDemoAuth();
+  const { user, loading } = useDemoAuth();
   const router = useRouter();
+  const [shouldRender, setShouldRender] = useState(false);
 
-  // Redirect authenticated users to their dashboard
+  // Redirect authenticated users to their dashboard immediately
   useEffect(() => {
+    if (loading) return; // Wait for auth to load
+    
     if (user) {
       const dashboardPath = 
         user.role === 'influencer' ? '/influencer' :
         user.role === 'business' ? '/business' :
         user.role === 'admin' ? '/control-center' :
         '/auth/signin';
-      router.push(dashboardPath);
+      router.replace(dashboardPath); // Use replace instead of push
+      return;
     }
-  }, [user, router]);
+    
+    // Only render if no user is logged in
+    setShouldRender(true);
+  }, [user, loading, router]);
+
+  // Show loading or nothing while redirecting
+  if (loading || user) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
+
+  // Only render home page content if no user is logged in
+  if (!shouldRender) {
+    return null;
+  }
   return (
     <div className="h-[calc(100vh-7rem)] overflow-hidden bg-white relative">
       <div className="absolute inset-0 flex items-center justify-center">
