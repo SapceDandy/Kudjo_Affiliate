@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/lib/auth';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,6 +35,7 @@ interface SendRequestDialogProps {
 }
 
 export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: SendRequestDialogProps) {
+  const { user } = useAuth();
   const [programs, setPrograms] = useState<Program[]>([]);
   const [selectedProgram, setSelectedProgram] = useState<string>('');
   const [customSplitPct, setCustomSplitPct] = useState(20);
@@ -64,14 +66,25 @@ export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: 
 
   useEffect(() => {
     // Set default split based on influencer tier when tier defaults are loaded
-    if (influencer?.tier && tierDefaults[influencer.tier]) {
-      setCustomSplitPct(tierDefaults[influencer.tier].defaultSplit);
+    if (influencer?.tier && tierDefaults) {
+      // Map new tier names to old API keys for backward compatibility
+      const tierMapping: Record<string, string> = {
+        'Bronze': 'S',
+        'Silver': 'S', 
+        'Gold': 'M',
+        'Platinum': 'L'
+      };
+      
+      const apiKey = tierMapping[influencer.tier];
+      if (apiKey && tierDefaults[apiKey]) {
+        setCustomSplitPct(tierDefaults[apiKey].defaultSplit);
+      }
     }
   }, [influencer?.tier, tierDefaults]);
 
   const fetchPrograms = async () => {
     try {
-      const response = await fetch('/api/business/offers?businessId=demo_business_user');
+      const response = await fetch(`/api/business/offers?businessId=${user?.uid || 'demo_business_user'}`);
       if (response.ok) {
         const data = await response.json();
         const offers = data.offers || [];
@@ -92,7 +105,7 @@ export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: 
 
   const fetchTierDefaults = async () => {
     try {
-      const response = await fetch('/api/business/tier-defaults?businessId=demo_business_user');
+      const response = await fetch(`/api/business/tier-defaults?businessId=${user?.uid || 'demo_business_user'}`);
       if (response.ok) {
         const data = await response.json();
         setTierDefaults(data.tierDefaults || {});
@@ -113,7 +126,7 @@ export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: 
       if (createNewProgram) {
         // Create new offer first
         const newOfferData = {
-          businessId: 'demo_business_user',
+          businessId: user?.uid || 'demo_business_user',
           title: newProgramTitle,
           description: newProgramDescription || `Special offer for ${influencer.displayName}`,
           discountType,
@@ -177,19 +190,28 @@ export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: 
       }
 
       const requestData = {
-        influencer: influencer.displayName,
+        businessId: user?.uid || 'demo_business_user',
         influencerId: influencer.id,
-        followers: influencer.followers,
-        tier: influencer.tier,
+        influencerName: influencer.displayName,
         proposedSplitPct: customSplitPct,
-        discountType: programData.discountType,
-        userDiscountPct: programData.userDiscountPct || 0,
-        userDiscountCents: programData.userDiscountCents || 0,
-        minSpendCents: programData.minSpendCents || 0,
         message,
-        programTitle: programData.title,
-        offerId: offerId
+        offerId: offerId,
+        followers: influencer.followers,
+        tier: influencer.tier
       };
+
+      // Send request to API
+      const response = await fetch('/api/business/requests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send request');
+      }
 
       onSendRequest(requestData);
       toast.success(`Request sent to ${influencer.displayName}!`);
@@ -413,11 +435,20 @@ export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: 
               />
               <p className="text-xs text-gray-500 mt-1">
                 Influencer gets {customSplitPct}% of each sale they generate
-                {influencer?.tier && tierDefaults[influencer.tier] && (
-                  <span className="ml-2 text-blue-600">
-                    (Default for {influencer.tier}: {tierDefaults[influencer.tier].defaultSplit}%)
-                  </span>
-                )}
+                {influencer?.tier && tierDefaults && (() => {
+                  const tierMapping: Record<string, string> = {
+                    'Bronze': 'S',
+                    'Silver': 'S', 
+                    'Gold': 'M',
+                    'Platinum': 'L'
+                  };
+                  const apiKey = tierMapping[influencer.tier];
+                  return apiKey && tierDefaults[apiKey] ? (
+                    <span className="ml-2 text-blue-600">
+                      (Default for {influencer.tier}: {tierDefaults[apiKey].defaultSplit}%)
+                    </span>
+                  ) : null;
+                })()}
               </p>
             </div>
 

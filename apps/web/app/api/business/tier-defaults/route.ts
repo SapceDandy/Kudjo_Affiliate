@@ -95,7 +95,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Validate tier defaults structure
-    const validTiers = ['Bronze', 'Silver', 'Gold', 'Platinum'];
+    const validTiers = ['S', 'M', 'L', 'XL', 'Huge'];
     for (const tier of validTiers) {
       if (!tierDefaults[tier] || typeof tierDefaults[tier].defaultSplit !== 'number') {
         return NextResponse.json({ 

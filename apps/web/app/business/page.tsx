@@ -61,11 +61,10 @@ export default function BusinessHome() {
   const [updateOfferData, setUpdateOfferData] = useState({ discountAmount: '', commissionSplit: '' });
   const [isUpdatingOffer, setIsUpdatingOffer] = useState(false);
   const [tierDefaults, setTierDefaults] = useState({
-    S: { defaultSplit: 15, name: 'Silver', followers: '1K-10K' },
-    M: { defaultSplit: 20, name: 'Gold', followers: '10K-50K' },
-    L: { defaultSplit: 25, name: 'Platinum', followers: '50K-100K' },
-    XL: { defaultSplit: 30, name: 'Diamond', followers: '100K-500K' },
-    Huge: { defaultSplit: 35, name: 'Celebrity', followers: '500K+' }
+    Bronze: { defaultSplit: 15, name: 'Bronze', followers: '1K-5K' },
+    Silver: { defaultSplit: 20, name: 'Silver', followers: '5K-20K' },
+    Gold: { defaultSplit: 25, name: 'Gold', followers: '20K-50K' },
+    Platinum: { defaultSplit: 30, name: 'Platinum', followers: '50K+' }
   });
   const [tierLoading, setTierLoading] = useState(false);
 
@@ -97,7 +96,20 @@ export default function BusinessHome() {
         const response = await fetch(`/api/business/tier-defaults?businessId=${user.uid}`);
         if (response.ok) {
           const data = await response.json();
-          setTierDefaults(data.tierDefaults);
+          // Convert old API format to new format if needed
+          const apiDefaults = data.tierDefaults;
+          if (apiDefaults.S || apiDefaults.M || apiDefaults.L) {
+            // Old format - convert to new
+            setTierDefaults({
+              Bronze: { defaultSplit: apiDefaults.S?.defaultSplit || 15, name: 'Bronze', followers: '1K-5K' },
+              Silver: { defaultSplit: apiDefaults.S?.defaultSplit || 15, name: 'Silver', followers: '5K-20K' },
+              Gold: { defaultSplit: apiDefaults.M?.defaultSplit || 25, name: 'Gold', followers: '20K-50K' },
+              Platinum: { defaultSplit: apiDefaults.L?.defaultSplit || 30, name: 'Platinum', followers: '50K+' }
+            });
+          } else {
+            // New format
+            setTierDefaults(apiDefaults);
+          }
         }
       } catch (error) {
         console.error('Error loading tier defaults:', error);
@@ -111,15 +123,26 @@ export default function BusinessHome() {
     
     setTierLoading(true);
     try {
+      // Convert new format back to old API format for saving
+      const apiTierDefaults = {
+        S: { defaultSplit: tierDefaults.Silver?.defaultSplit || 20, name: 'Silver', followers: '5K-20K' },
+        M: { defaultSplit: tierDefaults.Gold?.defaultSplit || 25, name: 'Gold', followers: '20K-50K' },
+        L: { defaultSplit: tierDefaults.Platinum?.defaultSplit || 30, name: 'Platinum', followers: '50K+' },
+        XL: { defaultSplit: 30, name: 'Diamond', followers: '100K-500K' },
+        Huge: { defaultSplit: 35, name: 'Celebrity', followers: '500K+' }
+      };
+
       const response = await fetch(`/api/business/tier-defaults?businessId=${user.uid}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ tierDefaults }),
+        body: JSON.stringify({ tierDefaults: apiTierDefaults }),
       });
 
       if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Save error:', errorData);
         throw new Error('Failed to save tier defaults');
       }
 
