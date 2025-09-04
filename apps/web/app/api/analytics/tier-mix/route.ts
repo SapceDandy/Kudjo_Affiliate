@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build query for redemptions
-    let redemptionsQuery = adminDb.collection('redemptions')
+    let redemptionsQuery = adminDb!.collection('redemptions')
       .where('redeemedAt', '>=', startDate)
       .where('redeemedAt', '<=', endDate);
 
@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
     for (let i = 0; i < influencerIdsArray.length; i += 30) {
       const batch = influencerIdsArray.slice(i, i + 30);
       
-      const influencersSnapshot = await adminDb.collection('influencers')
+      const influencersSnapshot = await adminDb!.collection('influencers')
         .where('__name__', 'in', batch)
         .get();
 

@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Search businesses by name (simple approach for MVP)
-    const businessesRef = adminDb.collection('businesses');
+    const businessesRef = adminDb!.collection('businesses');
     const snapshot = await businessesRef.limit(50).get(); // Get more to filter client-side
 
     const allBusinesses = snapshot.docs.map(doc => {

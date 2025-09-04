@@ -64,7 +64,7 @@ export async function authenticateRequest(request: NextRequest): Promise<Authent
     }
 
     // Verify the Firebase Auth token
-    const decodedToken = await adminAuth.verifyIdToken(token);
+    const decodedToken = await adminAuth!.verifyIdToken(token);
     const { uid, email } = decodedToken;
 
     if (!adminDb) {
@@ -72,7 +72,7 @@ export async function authenticateRequest(request: NextRequest): Promise<Authent
     }
 
     // Get user role from Firestore
-    const userDoc = await adminDb.collection('users').doc(uid).get();
+    const userDoc = await adminDb!.collection('users').doc(uid).get();
     let role: UserRole = 'influencer'; // default
     let businessId: string | undefined;
     let influencerId: string | undefined;
@@ -82,8 +82,8 @@ export async function authenticateRequest(request: NextRequest): Promise<Authent
       role = userData?.role || 'influencer';
     } else {
       // Try to determine role from other collections
-      const businessDoc = await adminDb.collection('businesses').doc(uid).get();
-      const influencerDoc = await adminDb.collection('influencers').doc(uid).get();
+      const businessDoc = await adminDb!.collection('businesses').doc(uid).get();
+      const influencerDoc = await adminDb!.collection('influencers').doc(uid).get();
       
       if (businessDoc.exists) {
         role = 'business';

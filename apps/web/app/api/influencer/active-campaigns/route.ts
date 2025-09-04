@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(url.searchParams.get('offset') || '0');
 
     // Get active coupons for this influencer - simplified to avoid index issues
-    let couponsQuery = adminDb
+    let couponsQuery = adminDb!
       .collection('coupons')
       .where('infId', '==', infId)
       .where('status', '==', 'active');
@@ -36,44 +36,42 @@ export async function GET(request: NextRequest) {
       const couponData = couponDoc.data();
       
       // Get offer details
-      const offerDoc = await adminDb.collection('offers').doc(couponData.offerId).get();
+      const offerDoc = await adminDb!.collection('offers').doc(couponData.offerId).get();
       if (!offerDoc.exists) continue;
       
-      const offerData = offerDoc.data();
+      const offerData = offerDoc.exists ? offerDoc.data() : null;
       
-      // Get business details
       let businessName = 'Unknown Business';
       try {
-        const businessDoc = await adminDb.collection('businesses').doc(offerData.bizId).get();
+        const businessDoc = await adminDb!.collection('businesses').doc(offerData?.bizId || '').get();
         if (businessDoc.exists) {
           businessName = businessDoc.data()?.name || businessName;
         }
       } catch (error) {
-        console.log('Business not found:', offerData.bizId);
+        console.log('Business not found:', offerData?.bizId);
       }
 
       // Get redemption count
-      const redemptionsQuery = adminDb
+      const redemptionsQuery = adminDb!
         .collection('redemptions')
         .where('couponId', '==', couponDoc.id);
       const redemptionsSnapshot = await redemptionsQuery.get();
 
       campaigns.push({
         id: couponDoc.id,
-        offerId: couponData.offerId,
-        title: offerData.title,
-        description: offerData.description,
+        title: offerData?.title || 'Unknown Campaign',
+        description: offerData?.description || '',
         businessName,
-        businessId: offerData.bizId,
-        splitPct: offerData.splitPct,
-        minSpend: offerData.minSpend,
+        discount: offerData?.discount || 0,
+        type: offerData?.type || 'percentage',
+        status: offerData?.status || 'active',
+        minSpend: offerData?.minSpend || 0,
         couponCode: couponData.code,
         couponType: couponData.type,
         linkId: couponData.linkId,
         deadlineAt: couponData.deadlineAt,
         redemptions: redemptionsSnapshot.size,
         earnings: redemptionsSnapshot.docs.reduce((sum: number, doc: any) => sum + (doc.data().infEarnings || 0), 0),
-        status: 'active',
         createdAt: couponData.createdAt
       });
     }

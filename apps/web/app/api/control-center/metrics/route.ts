@@ -50,10 +50,10 @@ export async function GET(request: Request) {
         couponsSnapshot,
         redemptionsSnapshot
       ] = await Promise.all([
-        adminDb.collection('businesses').get(),
-        adminDb.collection('influencers').limit(10).get(),
-        adminDb.collection('coupons').get(),
-        adminDb.collection('redemptions').get()
+        adminDb!.collection('businesses').get(),
+        adminDb!.collection('influencers').limit(10).get(),
+        adminDb!.collection('coupons').get(),
+        adminDb!.collection('redemptions').get()
       ]);
 
       // Calculate active coupons

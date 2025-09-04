@@ -66,7 +66,7 @@ export async function PATCH(
       updatedAt: new Date()
     };
 
-    await adminDb.collection('influencerRequests').doc(requestId).update(updateData);
+    await adminDb!.collection('influencerRequests').doc(requestId).update(updateData);
     
     return NextResponse.json({ 
       success: true,

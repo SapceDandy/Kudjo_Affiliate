@@ -37,6 +37,7 @@ export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: 
   const [programs, setPrograms] = useState<Program[]>([]);
   const [selectedProgram, setSelectedProgram] = useState<string>('');
   const [customSplitPct, setCustomSplitPct] = useState(20);
+  const [tierDefaults, setTierDefaults] = useState<any>({});
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [createNewProgram, setCreateNewProgram] = useState(false);
@@ -56,9 +57,17 @@ export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: 
   useEffect(() => {
     if (open) {
       fetchPrograms();
+      fetchTierDefaults();
       setMessage(`Hi ${influencer?.displayName}, I'd love to collaborate with you on promoting our business. Let me know if you're interested!`);
     }
   }, [open, influencer]);
+
+  useEffect(() => {
+    // Set default split based on influencer tier when tier defaults are loaded
+    if (influencer?.tier && tierDefaults[influencer.tier]) {
+      setCustomSplitPct(tierDefaults[influencer.tier].defaultSplit);
+    }
+  }, [influencer?.tier, tierDefaults]);
 
   const fetchPrograms = async () => {
     try {
@@ -78,6 +87,18 @@ export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: 
       }
     } catch (error) {
       console.error('Error fetching programs:', error);
+    }
+  };
+
+  const fetchTierDefaults = async () => {
+    try {
+      const response = await fetch('/api/business/tier-defaults?businessId=demo_business_user');
+      if (response.ok) {
+        const data = await response.json();
+        setTierDefaults(data.tierDefaults || {});
+      }
+    } catch (error) {
+      console.error('Error fetching tier defaults:', error);
     }
   };
 
@@ -392,6 +413,11 @@ export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: 
               />
               <p className="text-xs text-gray-500 mt-1">
                 Influencer gets {customSplitPct}% of each sale they generate
+                {influencer?.tier && tierDefaults[influencer.tier] && (
+                  <span className="ml-2 text-blue-600">
+                    (Default for {influencer.tier}: {tierDefaults[influencer.tier].defaultSplit}%)
+                  </span>
+                )}
               </p>
             </div>
 

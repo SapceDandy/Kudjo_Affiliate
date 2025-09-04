@@ -11,7 +11,8 @@ const BusinessRegistrationSchema = z.object({
   status: z.enum(['pending_approval', 'approved', 'rejected']).default('pending_approval'),
   phone: z.string().optional(),
   email: z.string().email().optional(),
-  website: z.string().url().optional(),
+  website: z.string().optional(),
+  overview: z.string().optional(),
   coordinates: z.object({
     lat: z.number(),
     lng: z.number()
@@ -19,8 +20,10 @@ const BusinessRegistrationSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  let body: any;
   try {
-    const body = await request.json();
+    body = await request.json();
+    console.log('Received registration data:', body);
     const validatedData = BusinessRegistrationSchema.parse(body);
 
     if (!adminDb) {
@@ -28,7 +31,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create business registration request
-    const businessRef = adminDb.collection('business_registrations').doc(validatedData.businessId);
+    const businessRef = adminDb!.collection('business_registrations').doc(validatedData.businessId);
     
     await businessRef.set({
       ...validatedData,
@@ -40,7 +43,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Also create a basic business record for immediate use (pending approval)
-    const businessDoc = adminDb.collection('businesses').doc(validatedData.businessId);
+    const businessDoc = adminDb!.collection('businesses').doc(validatedData.businessId);
     await businessDoc.set({
       id: validatedData.businessId,
       name: validatedData.name,
@@ -52,7 +55,8 @@ export async function POST(request: NextRequest) {
       coordinates: validatedData.coordinates || null,
       phone: validatedData.phone || null,
       email: validatedData.email || null,
-      website: validatedData.website || null
+      website: validatedData.website || null,
+      overview: validatedData.overview || null
     });
 
     return NextResponse.json({
@@ -66,14 +70,17 @@ export async function POST(request: NextRequest) {
     console.error('Business registration error:', error);
     
     if (error instanceof z.ZodError) {
+      console.error('Validation errors:', error.errors);
       return NextResponse.json({
         error: 'Invalid registration data',
-        details: error.errors
+        details: error.errors,
+        receivedData: body
       }, { status: 400 });
     }
 
     return NextResponse.json({
-      error: 'Failed to register business'
+      error: 'Failed to register business',
+      details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
 }

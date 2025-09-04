@@ -26,7 +26,13 @@
     "seed": "ts-node scripts/seed.ts",
     "seed:test": "ts-node scripts/seed-test.ts",
     "seed:production": "./scripts/run-seed.sh",
-    "seed:simple": "ts-node scripts/seed-production.ts"
+    "seed:simple": "ts-node scripts/seed-production.ts",
+    "deploy": "./deployment/deploy.sh",
+    "deploy:vercel": "vercel --prod",
+    "deploy:firebase": "firebase deploy",
+    "deploy:functions": "firebase deploy --only functions",
+    "deploy:hosting": "firebase deploy --only hosting",
+    "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",

@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get redemptions within date range
-    const redemptionsSnapshot = await adminDb.collection('redemptions')
+    const redemptionsSnapshot = await adminDb!.collection('redemptions')
       .where('redeemedAt', '>=', startDate)
       .where('redeemedAt', '<=', endDate)
       .get();
@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
 
       if (!businessMetrics.has(businessId)) {
         // Get business name
-        const businessDoc = await adminDb.collection('businesses').doc(businessId).get();
+        const businessDoc = await adminDb!.collection('businesses').doc(businessId).get();
         const businessName = businessDoc.exists ? 
           (businessDoc.data()?.name || businessDoc.data()?.businessName || 'Unknown Business') : 
           'Unknown Business';

@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Query business offers from Firestore - simplified to avoid index issues
-    const offersRef = adminDb.collection('offers');
+    const offersRef = adminDb!.collection('offers');
     let offersQuery = offersRef.where('bizId', '==', businessId);
     
     // Try with ordering, fall back to simple query if index not ready
@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
 
 
     // Verify business exists
-    const businessDoc = await adminDb.collection('businesses').doc(businessId).get();
+    const businessDoc = await adminDb!.collection('businesses').doc(businessId).get();
     if (!businessDoc.exists) {
       return NextResponse.json({ error: 'Business not found' }, { status: 404 });
     }
@@ -171,10 +171,10 @@ export async function POST(request: NextRequest) {
       endAt: new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000)) // 30 days default
     };
 
-    const docRef = await adminDb.collection('offers').add(offerData);
+    const docRef = await adminDb!.collection('offers').add(offerData);
     
     // Log the creation
-    await adminDb.collection('campaignLogs').add({
+    await adminDb!.collection('campaignLogs').add({
       campaignId: docRef.id,
       action: 'create',
       performedBy: 'demo_user',

@@ -5,10 +5,10 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { FloatingMascot } from '@/components/ui/floating-mascot';
-import { useDemoAuth } from '@/lib/demo-auth';
+import { useAuth } from '@/lib/auth';
 
 export default function Home() {
-  const { user, loading } = useDemoAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
   const [shouldRender, setShouldRender] = useState(false);
 

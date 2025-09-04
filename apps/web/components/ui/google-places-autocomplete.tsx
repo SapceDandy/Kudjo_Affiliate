@@ -45,6 +45,7 @@ export function AddressAutocomplete({
   const [selectedPlace, setSelectedPlace] = useState<PlaceResult | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // Use OpenStreetMap Nominatim API for real geocoding
   const searchPlaces = async (query: string): Promise<PlaceResult[]> => {
@@ -64,27 +65,37 @@ export function AddressAutocomplete({
     }
   };
 
-  const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     onChange(newValue);
     setSelectedPlace(null);
     onVerified(false);
     
+    // Clear existing debounce timer
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    
     if (newValue.length >= 3) {
       setLoading(true);
-      try {
-        const places = await searchPlaces(newValue);
-        setSuggestions(places);
-        setShowSuggestions(true);
-      } catch (error) {
-        console.error('Error fetching places:', error);
-        setSuggestions([]);
-      } finally {
-        setLoading(false);
-      }
+      
+      // Debounce the API call by 300ms to reduce flickering
+      debounceRef.current = setTimeout(async () => {
+        try {
+          const places = await searchPlaces(newValue);
+          setSuggestions(places);
+          setShowSuggestions(true);
+        } catch (error) {
+          console.error('Error fetching places:', error);
+          setSuggestions([]);
+        } finally {
+          setLoading(false);
+        }
+      }, 300);
     } else {
       setSuggestions([]);
       setShowSuggestions(false);
+      setLoading(false);
     }
   };
 
@@ -154,7 +165,7 @@ export function AddressAutocomplete({
     return stateComponent?.short_name || stateComponent?.long_name || 'State';
   };
 
-  // Close suggestions when clicking outside
+  // Close suggestions when clicking outside and cleanup debounce
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -168,7 +179,13 @@ export function AddressAutocomplete({
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      // Cleanup debounce timer on unmount
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
   }, []);
 
   return (

@@ -1,6 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+// import { useAdminAuth } from '@/lib/hooks/use-admin-auth';
+import { ComplianceNotice } from '@/components/legal/compliance-notice';
 import { useEffect } from 'react';
 
 export default function ControlCenterPage() {

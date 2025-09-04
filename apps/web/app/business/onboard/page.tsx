@@ -7,7 +7,7 @@ import { BasicInfoForm } from './basic-info-form';
 import { PosSelectionForm } from './pos-selection-form';
 import { PosSetupForm } from './pos-setup-form';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { useDemoAuth } from '@/lib/demo-auth';
+import { useAuth } from '@/lib/auth';
 import { OnboardingData } from './types';
 import toast from 'react-hot-toast';
 
@@ -25,7 +25,7 @@ export default function OnboardPage() {
     posProvider: 'manual',
   });
   const router = useRouter();
-  const { user } = useDemoAuth();
+  const { user } = useAuth();
 
   const handleNext = async (data?: Partial<OnboardingData>) => {
     const nextData = data ? { ...formData, ...data } as OnboardingData : formData;

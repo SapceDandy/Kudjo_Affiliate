@@ -311,7 +311,7 @@ export default function AdminUsersPage() {
                           ) : (
                             <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
                               <span className="text-xs text-gray-600">
-                                {user.displayName.charAt(0)}
+                                {user.displayName?.charAt(0) || 'U'}
                               </span>
                             </div>
                           )}

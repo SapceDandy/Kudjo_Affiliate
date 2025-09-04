@@ -120,7 +120,7 @@ export function SearchFilter({
                       <SelectItem value="">All statuses</SelectItem>
                       {filterOptions.status.map((status) => (
                         <SelectItem key={status} value={status}>
-                          {status.charAt(0).toUpperCase() + status.slice(1)}
+                          {status?.charAt(0)?.toUpperCase() + status?.slice(1) || 'Unknown'}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -166,7 +166,7 @@ export function SearchFilter({
                       <SelectItem value="">All types</SelectItem>
                       {filterOptions.discountType.map((type) => (
                         <SelectItem key={type} value={type}>
-                          {type.replace('_', ' ').charAt(0).toUpperCase() + type.replace('_', ' ').slice(1)}
+                          {type?.replace('_', ' ')?.charAt(0)?.toUpperCase() + type?.replace('_', ' ')?.slice(1) || 'Unknown'}
                         </SelectItem>
                       ))}
                     </SelectContent>

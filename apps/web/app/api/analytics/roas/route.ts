@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get redemptions and offers data
-    let redemptionsQuery = adminDb.collection('redemptions')
+    let redemptionsQuery = adminDb!.collection('redemptions')
       .where('redeemedAt', '>=', startDate)
       .where('redeemedAt', '<=', endDate);
 
@@ -57,8 +57,8 @@ export async function GET(request: NextRequest) {
     const [redemptionsSnapshot, offersSnapshot] = await Promise.all([
       redemptionsQuery.get(),
       businessId 
-        ? adminDb.collection('offers').where('bizId', '==', businessId).get()
-        : adminDb.collection('offers').get()
+        ? adminDb!.collection('offers').where('bizId', '==', businessId).get()
+        : adminDb!.collection('offers').get()
     ]);
 
     // Calculate ad spend (estimated based on offer budgets)

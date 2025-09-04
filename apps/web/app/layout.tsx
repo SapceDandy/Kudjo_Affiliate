@@ -1,6 +1,6 @@
 import './globals.css';
 import { Inter } from 'next/font/google';
-import { DemoAuthProvider } from '@/lib/demo-auth';
+import { AuthProvider } from '@/lib/auth';
 import { Toaster } from 'react-hot-toast';
 import { RoutePrefetcher } from '@/components/route-prefetcher';
 import { PerformanceProvider } from '@/components/providers/performance-provider';
@@ -32,7 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <DemoAuthProvider>
+        <AuthProvider>
           <LoadingProvider>
             <PerformanceProvider>
               <RoutePrefetcher />
@@ -42,7 +42,7 @@ export default function RootLayout({
               <Toaster />
             </PerformanceProvider>
           </LoadingProvider>
-        </DemoAuthProvider>
+        </AuthProvider>
       </body>
     </html>
   );

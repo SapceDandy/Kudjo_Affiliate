@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get coupon details
-    const couponDoc = await adminDb.collection('coupons').doc(couponId).get();
+    const couponDoc = await adminDb!.collection('coupons').doc(couponId).get();
     if (!couponDoc.exists) {
       return NextResponse.json({ error: 'Coupon not found' }, { status: 404 });
     }
@@ -30,9 +30,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Get affiliate link if exists
-    let shareUrl = `${process.env.NEXTAUTH_URL}/r/${couponData.code}`;
-    if (couponData.linkId) {
-      const linkDoc = await adminDb.collection('affiliateLinks').doc(couponData.linkId).get();
+    let shareUrl = `${process.env.NEXTAUTH_URL}/r/${couponData?.code}`;
+    if (couponData?.linkId) {
+      const linkDoc = await adminDb!.collection('affiliateLinks').doc(couponData.linkId).get();
       if (linkDoc.exists) {
         shareUrl = linkDoc.data()?.url || shareUrl;
       }
@@ -42,12 +42,12 @@ export async function POST(request: NextRequest) {
     const shareId = nanoid();
     const now = new Date();
     
-    await adminDb.collection('shareActivities').doc(shareId).set({
+    await adminDb!.collection('shareActivities').doc(shareId).set({
       id: shareId,
       couponId,
       infId: actualInfId,
-      offerId: couponData.offerId,
-      bizId: couponData.bizId,
+      offerId: couponData?.offerId,
+      bizId: couponData?.bizId,
       platform,
       content: content || '',
       shareUrl,
@@ -57,9 +57,9 @@ export async function POST(request: NextRequest) {
     });
 
     // Update coupon with share activity
-    await adminDb.collection('coupons').doc(couponId).update({
+    await adminDb!.collection('coupons').doc(couponId).update({
       lastSharedAt: now,
-      shareCount: (couponData.shareCount || 0) + 1,
+      shareCount: couponData?.shareCount ? couponData.shareCount + 1 : 1,
       updatedAt: now
     });
 

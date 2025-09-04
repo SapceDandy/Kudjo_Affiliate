@@ -1,11 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useDemoAuth } from '@/lib/demo-auth';
+import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 
 export function Navigation() {
-  const { user, signOut } = useDemoAuth();
+  const { user, signOut } = useAuth();
 
   return (
     <nav className="bg-white border-b">

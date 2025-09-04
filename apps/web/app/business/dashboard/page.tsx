@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BlockedInfluencers } from '@/components/business/blocked-influencers';
-import { PricingTiers } from '@/components/business/pricing-tiers';
+// import { PricingTiers } from '@/components/business/pricing-tiers';
 import { 
   Building2,
   Plus,
@@ -117,7 +117,9 @@ export default function BusinessDashboard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {businessId && <PricingTiers businessId={businessId} />}
+          <div className="p-4 text-center text-muted-foreground">
+            Pricing Tiers component temporarily disabled
+          </div>
         </CardContent>
       </Card>
 

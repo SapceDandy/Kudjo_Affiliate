@@ -13,7 +13,7 @@ import {
   Tag,
   DollarSign,
 } from 'lucide-react';
-import { PricingTiers } from '@/components/business/pricing-tiers';
+// import { PricingTiers } from '@/components/business/pricing-tiers';
 
 interface Business {
   id: string;
@@ -111,7 +111,7 @@ export default function BusinessDetailPage({ params }: { params: { id: string } 
             {/* Business Logo */}
             <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
               <span className="text-4xl text-gray-600">
-                {business.name.charAt(0)}
+                {business.name?.charAt(0) || 'B'}
               </span>
             </div>
             
@@ -201,7 +201,10 @@ export default function BusinessDetailPage({ params }: { params: { id: string } 
           <CardTitle>Pricing Tiers</CardTitle>
         </CardHeader>
         <CardContent>
-          <PricingTiers businessId={params.id} isAdmin={true} />
+          {/* <PricingTiers businessId={params.id} isAdmin={true} /> */}
+          <div className="p-4 text-center text-muted-foreground">
+            Pricing Tiers component temporarily disabled
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -24,13 +24,13 @@ export async function POST(request: NextRequest) {
       read: false
     };
 
-    const docRef = await adminDb.collection('messages').add(messageData);
+    const docRef = await adminDb!.collection('messages').add(messageData);
 
     // Update conversation with last message
-    await adminDb.collection('conversations').doc(conversationId).update({
+    await adminDb!.collection('conversations').doc(conversationId).update({
       lastMessage: messageData,
       lastMessageAt: new Date(),
-      [`unreadCount_${senderType === 'business' ? 'influencer' : 'business'}`]: adminDb.FieldValue.increment(1)
+      [`unreadCount_${senderType === 'business' ? 'influencer' : 'business'}`]: 1
     });
 
     return NextResponse.json({ success: true, messageId: docRef.id });

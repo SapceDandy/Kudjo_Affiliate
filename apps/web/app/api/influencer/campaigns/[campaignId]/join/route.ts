@@ -29,7 +29,7 @@ export async function POST(
     }
 
     // Get the campaign
-    const campaignDoc = await adminDb.collection('offers').doc(campaignId).get();
+    const campaignDoc = await adminDb!.collection('offers').doc(campaignId).get();
     if (!campaignDoc.exists) {
       return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
     }
@@ -49,7 +49,7 @@ export async function POST(
     }
 
     // Get influencer data
-    const influencerDoc = await adminDb.collection('influencers').doc(influencerId).get();
+    const influencerDoc = await adminDb!.collection('influencers').doc(influencerId).get();
     if (!influencerDoc.exists) {
       return NextResponse.json({ error: 'Influencer not found' }, { status: 404 });
     }
@@ -63,7 +63,7 @@ export async function POST(
     }
 
     // Check if already joined
-    const existingCouponQuery = await adminDb.collection('coupons')
+    const existingCouponQuery = await adminDb!.collection('coupons')
       .where('offerId', '==', campaignId)
       .where('influencerId', '==', influencerId)
       .where('type', '==', 'AFFILIATE')
@@ -77,7 +77,7 @@ export async function POST(
     const cooldownHours = 24;
     const cooldownDate = new Date(now.getTime() - (cooldownHours * 60 * 60 * 1000));
     
-    const recentCouponsQuery = await adminDb.collection('coupons')
+    const recentCouponsQuery = await adminDb!.collection('coupons')
       .where('influencerId', '==', influencerId)
       .where('createdAt', '>=', cooldownDate)
       .get();
@@ -99,10 +99,10 @@ export async function POST(
     const contentCode = generateCouponCode('CONTENT');
 
     // Create both coupons atomically
-    const batch = adminDb.batch();
+    const batch = adminDb!.batch();
 
     // Affiliate coupon
-    const affiliateCouponRef = adminDb.collection('coupons').doc();
+    const affiliateCouponRef = adminDb!.collection('coupons').doc();
     batch.set(affiliateCouponRef, {
       id: affiliateCouponRef.id,
       code: affiliateCode,
@@ -122,7 +122,7 @@ export async function POST(
     });
 
     // Content meal coupon
-    const contentCouponRef = adminDb.collection('coupons').doc();
+    const contentCouponRef = adminDb!.collection('coupons').doc();
     batch.set(contentCouponRef, {
       id: contentCouponRef.id,
       code: contentCode,
@@ -143,7 +143,7 @@ export async function POST(
     });
 
     // Log the join action
-    const joinLogRef = adminDb.collection('campaignJoins').doc();
+    const joinLogRef = adminDb!.collection('campaignJoins').doc();
     batch.set(joinLogRef, {
       campaignId,
       influencerId,
@@ -155,7 +155,7 @@ export async function POST(
     });
 
     // Update campaign stats
-    const campaignRef = adminDb.collection('offers').doc(campaignId);
+    const campaignRef = adminDb!.collection('offers').doc(campaignId);
     batch.update(campaignRef, {
       activeInfluencers: (campaign.activeInfluencers || 0) + 1,
       updatedAt: now

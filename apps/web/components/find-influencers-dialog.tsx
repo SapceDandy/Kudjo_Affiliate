@@ -9,17 +9,18 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Search, Users, Instagram, MessageCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { collection, query, where, orderBy, limit, startAfter, getDocs, QueryDocumentSnapshot } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useAuth } from '@/lib/auth';
 import { SendRequestDialog } from '@/components/send-request-dialog';
 
 interface Influencer {
   id: string;
   displayName: string;
   email: string;
+  handle?: string;
   followers: number;
   tier: string;
   platform: 'instagram' | 'tiktok' | 'both';
+  platforms?: string[];
   verified: boolean;
   location?: string;
   bio?: string;
@@ -33,6 +34,7 @@ interface FindInfluencersDialogProps {
 }
 
 export function FindInfluencersDialog({ open, onClose, onSendRequest }: FindInfluencersDialogProps) {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [followerFilter, setFollowerFilter] = useState('all');
   const [tierFilter, setTierFilter] = useState('all');
@@ -42,7 +44,6 @@ export function FindInfluencersDialog({ open, onClose, onSendRequest }: FindInfl
   const [hasMore, setHasMore] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
   const [offset, setOffset] = useState(0);
-  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | null>(null);
   const [selectedInfluencer, setSelectedInfluencer] = useState<Influencer | null>(null);
   const [showRequestDialog, setShowRequestDialog] = useState(false);
 
@@ -56,15 +57,15 @@ export function FindInfluencersDialog({ open, onClose, onSendRequest }: FindInfl
   ];
 
   const searchInfluencers = async (reset = false) => {
-    if (loading) return;
+    if (loading || !user?.uid) return;
     
     setLoading(true);
     try {
       const currentOffset = reset ? 0 : offset;
       
-      // Use API endpoint instead of direct Firestore access
+      // Use API endpoint with businessId parameter
       const params = new URLSearchParams({
-        businessId: 'demo_business_user', // TODO: Get from auth context
+        businessId: user.uid,
         search: searchQuery,
         tier: tierFilter === 'all' ? '' : tierFilter,
         platform: platformFilter === 'all' ? '' : platformFilter,
@@ -81,7 +82,6 @@ export function FindInfluencersDialog({ open, onClose, onSendRequest }: FindInfl
             params.append('maxFollowers', range.max.toString());
           }
         }
-        setTotalCount(0);
       }
 
       const response = await fetch(`/api/business/influencers?${params}`);
@@ -155,13 +155,18 @@ export function FindInfluencersDialog({ open, onClose, onSendRequest }: FindInfl
   };
 
   const getTierColor = (tier: string) => {
-    switch (tier) {
-      case 'S': return 'bg-gray-100 text-gray-800';
-      case 'M': return 'bg-yellow-100 text-yellow-800';
-      case 'L': return 'bg-blue-100 text-blue-800';
-      case 'XL': return 'bg-purple-100 text-purple-800';
-      case 'Huge': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+    switch (tier?.toLowerCase()) {
+      case 'bronze': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'silver': return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'gold': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'platinum': return 'bg-purple-100 text-purple-800 border-purple-200';
+      // Legacy tier mappings
+      case 's': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'm': return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'l': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'xl': return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'huge': return 'bg-purple-100 text-purple-800 border-purple-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
@@ -220,11 +225,10 @@ export function FindInfluencersDialog({ open, onClose, onSendRequest }: FindInfl
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Tiers</SelectItem>
-                <SelectItem value="S">Silver (S)</SelectItem>
-                <SelectItem value="M">Gold (M)</SelectItem>
-                <SelectItem value="L">Platinum (L)</SelectItem>
-                <SelectItem value="XL">Diamond (XL)</SelectItem>
-                <SelectItem value="Huge">Celebrity (Huge)</SelectItem>
+                <SelectItem value="Bronze">Bronze</SelectItem>
+                <SelectItem value="Silver">Silver</SelectItem>
+                <SelectItem value="Gold">Gold</SelectItem>
+                <SelectItem value="Platinum">Platinum</SelectItem>
               </SelectContent>
             </Select>
 
@@ -277,7 +281,7 @@ export function FindInfluencersDialog({ open, onClose, onSendRequest }: FindInfl
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
-                              {influencer.displayName.charAt(0).toUpperCase()}
+                              {influencer.displayName?.charAt(0)?.toUpperCase() || 'U'}
                             </div>
                             <div>
                               <div className="flex items-center gap-2">
@@ -288,17 +292,33 @@ export function FindInfluencersDialog({ open, onClose, onSendRequest }: FindInfl
                                   </div>
                                 )}
                               </div>
+                              {influencer.handle && (
+                                <div className="text-sm text-muted-foreground mb-1">
+                                  {influencer.handle}
+                                </div>
+                              )}
                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <Users className="w-4 h-4" />
                                 <span>{formatFollowers(influencer.followers)} followers</span>
-                                {influencer.platform === 'instagram' && <Instagram className="w-4 h-4" />}
-                                {influencer.platform === 'tiktok' && <MessageCircle className="w-4 h-4" />}
-                                {influencer.platform === 'both' && (
-                                  <>
-                                    <Instagram className="w-4 h-4" />
-                                    <MessageCircle className="w-4 h-4" />
-                                  </>
-                                )}
+                                <div className="flex items-center gap-1 ml-2">
+                                  {influencer.platforms?.includes('instagram') && (
+                                    <div className="flex items-center gap-1 px-2 py-1 bg-pink-100 text-pink-700 rounded-full text-xs">
+                                      <Instagram className="w-3 h-3" />
+                                      <span>IG</span>
+                                    </div>
+                                  )}
+                                  {influencer.platforms?.includes('tiktok') && (
+                                    <div className="flex items-center gap-1 px-2 py-1 bg-black text-white rounded-full text-xs">
+                                      <MessageCircle className="w-3 h-3" />
+                                      <span>TT</span>
+                                    </div>
+                                  )}
+                                  {influencer.platforms?.includes('youtube') && (
+                                    <div className="flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">
+                                      <span>YT</span>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                               {influencer.bio && (
                                 <p className="text-sm text-muted-foreground mt-1 line-clamp-2">

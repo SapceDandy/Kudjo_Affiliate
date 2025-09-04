@@ -212,7 +212,7 @@ export default function UsersPage() {
                           <img src={user.photoURL} alt={user.displayName || 'User'} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-blue-500 text-white">
-                            {(user.displayName || user.email || 'U').charAt(0).toUpperCase()}
+                            {(user.displayName || user.email || 'U')?.charAt(0)?.toUpperCase() || 'U'}
                           </div>
                         )}
                       </div>
@@ -275,7 +275,7 @@ export default function UsersPage() {
                     <img src={selectedUser.photoURL} alt={selectedUser.displayName || 'User'} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-blue-500 text-white text-xl">
-                      {(selectedUser.displayName || selectedUser.email || 'U').charAt(0).toUpperCase()}
+                      {(selectedUser.displayName || selectedUser.email || 'U')?.charAt(0)?.toUpperCase() || 'U'}
                     </div>
                   )}
                 </div>

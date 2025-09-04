@@ -91,7 +91,7 @@ export class PayoutSystem {
     if (!adminDb) throw new Error('Database not available');
 
     // Get all ledger entries for this influencer
-    const ledgerSnapshot = await adminDb.collection('ledgerEntries')
+    const ledgerSnapshot = await adminDb!.collection('ledgerEntries')
       .where('influencerId', '==', influencerId)
       .orderBy('transactionDate', 'desc')
       .get();
@@ -125,7 +125,7 @@ export class PayoutSystem {
     });
 
     // Get pending payouts
-    const pendingPayoutsSnapshot = await adminDb.collection('payouts')
+    const pendingPayoutsSnapshot = await adminDb!.collection('payouts')
       .where('influencerId', '==', influencerId)
       .where('status', 'in', ['pending', 'processing'])
       .get();
@@ -176,7 +176,7 @@ export class PayoutSystem {
       createdBy
     };
 
-    const docRef = await adminDb.collection('ledgerEntries').add(ledgerEntry);
+    const docRef = await adminDb!.collection('ledgerEntries').add(ledgerEntry);
     return docRef.id;
   }
 
@@ -210,7 +210,7 @@ export class PayoutSystem {
       }
 
       // Get influencer details
-      const influencerDoc = await adminDb.collection('influencers').doc(influencerId).get();
+      const influencerDoc = await adminDb!.collection('influencers').doc(influencerId).get();
       if (!influencerDoc.exists) {
         return { success: false, error: 'Influencer not found' };
       }
@@ -232,7 +232,7 @@ export class PayoutSystem {
         updatedAt: now
       };
 
-      const payoutRef = await adminDb.collection('payouts').add(payoutRequest);
+      const payoutRef = await adminDb!.collection('payouts').add(payoutRequest);
       const payoutId = payoutRef.id;
 
       // Create ledger entry for pending payout
@@ -266,7 +266,7 @@ export class PayoutSystem {
     if (!adminDb) throw new Error('Database not available');
 
     try {
-      const payoutRef = adminDb.collection('payouts').doc(payoutId);
+      const payoutRef = adminDb!.collection('payouts').doc(payoutId);
       const payoutDoc = await payoutRef.get();
 
       if (!payoutDoc.exists) {
@@ -384,7 +384,7 @@ export class PayoutSystem {
   private async recordLedgerEntry(entry: Omit<LedgerEntry, 'id'>): Promise<string> {
     if (!adminDb) throw new Error('Database not available');
 
-    const docRef = await adminDb.collection('ledgerEntries').add(entry);
+    const docRef = await adminDb!.collection('ledgerEntries').add(entry);
     return docRef.id;
   }
 
@@ -395,7 +395,7 @@ export class PayoutSystem {
   ): Promise<PayoutRequest[]> {
     if (!adminDb) throw new Error('Database not available');
 
-    let query = adminDb.collection('payouts').orderBy('requestedAt', 'desc');
+    let query = adminDb!.collection('payouts').orderBy('requestedAt', 'desc');
 
     if (influencerId) {
       query = query.where('influencerId', '==', influencerId);
@@ -416,7 +416,7 @@ export class PayoutSystem {
   ): Promise<LedgerEntry[]> {
     if (!adminDb) throw new Error('Database not available');
 
-    const snapshot = await adminDb.collection('ledgerEntries')
+    const snapshot = await adminDb!.collection('ledgerEntries')
       .where('influencerId', '==', influencerId)
       .orderBy('transactionDate', 'desc')
       .limit(limit)
@@ -443,7 +443,7 @@ export class PayoutSystem {
   }> {
     if (!adminDb) throw new Error('Database not available');
 
-    let query = adminDb.collection('payouts')
+    let query = adminDb!.collection('payouts')
       .where('requestedAt', '>=', startDate)
       .where('requestedAt', '<=', endDate);
 

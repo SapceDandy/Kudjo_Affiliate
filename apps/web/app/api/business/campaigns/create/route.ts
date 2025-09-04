@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get business info
-    const businessRef = adminDb.collection('businesses').doc(user.uid);
+    const businessRef = adminDb!.collection('businesses').doc(user.uid);
     const businessDoc = await businessRef.get();
     
     if (!businessDoc.exists) {
@@ -122,10 +122,10 @@ export async function POST(request: NextRequest) {
     };
 
     // Save to Firestore
-    await adminDb.collection('offers').doc(offerId).set(offerData);
+    await adminDb!.collection('offers').doc(offerId).set(offerData);
 
     // Create campaign health record
-    await adminDb.collection('campaignHealth').doc(offerId).set({
+    await adminDb!.collection('campaignHealth').doc(offerId).set({
       offerId,
       bizId: user.uid,
       healthScore: 100,

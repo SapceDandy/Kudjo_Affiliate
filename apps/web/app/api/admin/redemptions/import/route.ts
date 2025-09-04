@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Check for duplicate redemption (idempotent)
-        const existingRedemption = await adminDb.collection('redemptions')
+        const existingRedemption = await adminDb!.collection('redemptions')
           .where('couponCode', '==', couponCode)
           .where('timestamp', '==', redemptionTimestamp)
           .where('orderValueCents', '==', amountCents)
@@ -66,63 +66,72 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        // Find the coupon
-        const couponsQuery = await adminDb.collection('coupons')
+        // Find the coupon to get business info
+        const couponDoc = await adminDb!.collection('coupons')
           .where('code', '==', couponCode)
           .limit(1)
           .get();
 
-        if (couponsQuery.empty) {
+        if (couponDoc.empty) {
           results.failed++;
           results.errors.push(`Row ${results.processed}: Coupon not found`);
           continue;
         }
 
-        const couponDoc = couponsQuery.docs[0];
-        const couponData = couponDoc.data();
+        const couponData = couponDoc.docs[0].data();
+        const couponId = couponDoc.docs[0].id;
 
-        // Get offer details for split calculation
-        const offerDoc = await adminDb.collection('offers').doc(couponData.offerId).get();
-        if (!offerDoc.exists) {
+        // Find affiliate link for earnings calculation
+        const affiliateLinkDoc = await adminDb!.collection('affiliateLinks')
+          .where('couponId', '==', couponId)
+          .limit(1)
+          .get();
+
+        if (affiliateLinkDoc.empty) {
           results.failed++;
-          results.errors.push(`Row ${results.processed}: Associated offer not found`);
+          results.errors.push(`Row ${results.processed}: Affiliate link not found`);
           continue;
         }
 
-        const offerData = offerDoc.data()!;
-        const splitPct = offerData.splitPct || 20;
-        const infEarnings = Math.round(amountCents * (splitPct / 100));
+        const affiliateLinkData = affiliateLinkDoc.docs[0].data();
+        const affiliateLinkId = affiliateLinkDoc.docs[0].id;
+
+        // Calculate earnings
+        const splitPct = affiliateLinkData.splitPct || 0;
+        const earningsCents = Math.round(amountCents * (splitPct / 100));
 
         const now = new Date();
 
         // Create redemption record
-        const redemptionData = {
+        const redemptionRef = adminDb!.collection('redemptions').doc();
+        const batch = adminDb!.batch();
+        batch.set(redemptionRef, {
           id: nanoid(),
-          couponId: couponDoc.id,
+          couponId,
           couponCode,
-          couponType: couponData.type,
-          bizId: couponData.bizId,
-          infId: couponData.infId,
-          offerId: couponData.offerId,
+          affiliateLinkId,
+          businessId: couponData.businessId,
+          influencerId: couponData.influencerId,
           orderValueCents: amountCents,
-          infEarnings,
-          splitPct,
+          earningsCents,
           timestamp: redemptionTimestamp,
           source: 'csv_import',
           createdAt: now,
           updatedAt: now,
-        };
+        });
 
-        // Use batch for atomic operations
-        const batch = adminDb.batch();
-
-        // Add redemption
-        const redemptionRef = adminDb.collection('redemptions').doc();
-        batch.set(redemptionRef, redemptionData);
+        // Update affiliate link stats
+        const affiliateLinkRef = adminDb!.collection('affiliateLinks').doc(affiliateLinkId);
+        batch.update(affiliateLinkRef, {
+          conversions: (affiliateLinkData.conversions || 0) + 1,
+          totalRedemptions: (affiliateLinkData.totalRedemptions || 0) + 1,
+          totalEarnings: (affiliateLinkData.totalEarnings || 0) + earningsCents,
+          updatedAt: now,
+        });
 
         // Mark coupon as used if not already
         if (couponData.status === 'active') {
-          batch.update(couponDoc.ref, {
+          batch.update(couponDoc.docs[0].ref, {
             status: 'used',
             usedAt: redemptionTimestamp,
             updatedAt: now,
@@ -131,10 +140,11 @@ export async function POST(request: NextRequest) {
 
         // Update affiliate link if it's an affiliate coupon
         if (couponData.type === 'AFFILIATE' && couponData.linkId) {
-          const linkRef = adminDb.collection('affiliateLinks').doc(couponData.linkId);
+          const linkRef = adminDb!.collection('affiliateLinks').doc(couponData.linkId);
           batch.update(linkRef, {
-            conversions: adminDb.FieldValue.increment(1),
-            updatedAt: now,
+            conversions: (affiliateLinkData.conversions || 0) + 1,
+            totalEarnings: (affiliateLinkData.totalEarnings || 0) + earningsCents,
+            updatedAt: now
           });
         }
 

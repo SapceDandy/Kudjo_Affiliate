@@ -49,7 +49,7 @@ export class FraudDetectionService {
     }
 
     // Get coupon details
-    const couponSnapshot = await adminDb.collection('coupons')
+    const couponSnapshot = await adminDb!.collection('coupons')
       .where('code', '==', context.couponCode)
       .limit(1)
       .get();
@@ -159,7 +159,7 @@ export class FraudDetectionService {
     const fiveMinutesAgo = new Date(now.getTime() - (5 * 60 * 1000));
 
     // Check recent redemptions for this coupon
-    const recentRedemptions = await adminDb.collection('redemptions')
+    const recentRedemptions = await adminDb!.collection('redemptions')
       .where('couponId', '==', couponId)
       .where('redeemedAt', '>=', oneDayAgo)
       .get();
@@ -225,7 +225,7 @@ export class FraudDetectionService {
     const oneDayAgo = new Date(context.timestamp.getTime() - (24 * 60 * 60 * 1000));
 
     // Check daily spending for this influencer
-    const dailyRedemptions = await adminDb.collection('redemptions')
+    const dailyRedemptions = await adminDb!.collection('redemptions')
       .where('influencerId', '==', influencerId)
       .where('redeemedAt', '>=', oneDayAgo)
       .get();
@@ -256,7 +256,7 @@ export class FraudDetectionService {
     let score = 0;
 
     // Verify location belongs to business
-    const locationDoc = await adminDb.collection('businesses')
+    const locationDoc = await adminDb!.collection('businesses')
       .doc(businessId)
       .collection('locations')
       .doc(locationId)
@@ -281,7 +281,7 @@ export class FraudDetectionService {
     let score = 0;
 
     // Check for blacklisted IPs
-    const blacklistDoc = await adminDb.collection('fraudBlacklist')
+    const blacklistDoc = await adminDb!.collection('fraudBlacklist')
       .doc('ips')
       .get();
 
@@ -362,7 +362,7 @@ export class FraudDetectionService {
   async logFraudAttempt(context: RedemptionContext, result: FraudCheckResult): Promise<void> {
     if (!adminDb) return;
 
-    await adminDb.collection('fraudLogs').add({
+    await adminDb!.collection('fraudLogs').add({
       couponCode: context.couponCode,
       businessId: context.businessId,
       amountCents: context.amountCents,

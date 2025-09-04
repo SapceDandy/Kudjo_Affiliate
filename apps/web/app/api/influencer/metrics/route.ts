@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Query user's redemptions for earnings
-    const redemptionsRef = adminDb.collection('redemptions');
+    const redemptionsRef = adminDb!.collection('redemptions');
     const redemptionsQuery = redemptionsRef.where('infId', '==', influencerId);
     const redemptionsSnapshot = await redemptionsQuery.get();
 
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Query active campaigns (content coupons with CONTENT_MEAL type)
-    const couponsRef = adminDb.collection('coupons');
+    const couponsRef = adminDb!.collection('coupons');
     const activeCouponsQuery = couponsRef
       .where('infId', '==', influencerId)
       .where('type', '==', 'CONTENT_MEAL')
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     const totalRedemptions = redemptionsSnapshot.size;
 
     // Calculate conversion rate (redemptions / affiliate links created)
-    const affiliateLinksRef = adminDb.collection('affiliateLinks');
+    const affiliateLinksRef = adminDb!.collection('affiliateLinks');
     const affiliateLinksQuery = affiliateLinksRef.where('infId', '==', influencerId);
     const affiliateLinksSnapshot = await affiliateLinksQuery.get();
     const totalLinks = affiliateLinksSnapshot.size;
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
     const partnerBusinesses = businessIds.size;
 
     // Get influencer profile for tier/followers
-    const influencerDoc = await adminDb.collection('influencers').doc(influencerId).get();
+    const influencerDoc = await adminDb!.collection('influencers').doc(influencerId).get();
     const influencerData = influencerDoc.data();
     const tier = influencerData?.tier || 'Small';
     const followers = influencerData?.followers || 0;

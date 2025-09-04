@@ -310,7 +310,7 @@ export default function AdminBusinessesPage() {
                           ) : (
                             <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
                               <span className="text-xs text-gray-600">
-                                {business.name.charAt(0)}
+                                {business.name?.charAt(0) || 'B'}
                               </span>
                             </div>
                           )}

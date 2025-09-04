@@ -5,27 +5,45 @@ const withBundleAnalyzer = require("@next/bundle-analyzer")({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ['@repo/shared'],
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'api.qrserver.com',
-      },
-    ],
-  },
+  // Performance optimizations
+  swcMinify: true,
+  compress: true,
+  poweredByHeader: false,
+  generateEtags: false,
+  
+  // Bundle optimization
   experimental: {
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-dialog', '@radix-ui/react-select'],
-    serverComponentsExternalPackages: ['firebase-admin'],
+    serverComponentsExternalPackages: ['@firebase/app-compat', '@firebase/firestore-compat'],
     optimizeCss: true,
-    webpackBuildWorker: true,
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+    esmExternals: 'loose',
   },
-  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-    // Optimize for faster builds and hot reloads
+  
+  // Image optimization
+  images: {
+    formats: ['image/webp', 'image/avif'],
+    minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
+  },
+  
+  // Webpack optimizations
+  webpack: (config, { isServer, dev }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
+    
+    // Fix 'self is not defined' error by providing fallback
+    if (isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        'self': false,
+      };
+    }
+    
     if (dev) {
       config.watchOptions = {
         poll: 1000,
@@ -38,70 +56,70 @@ const nextConfig = {
       };
     }
 
-    // Improve caching
-    config.cache = {
-      type: 'filesystem',
-      allowCollectingMemory: true,
-      buildDependencies: {
-        config: [__filename],
-      },
-    };
-
-    // Optimize bundle splitting for better performance
-    config.optimization = {
-      ...config.optimization,
-      splitChunks: {
-        chunks: 'all',
-        minSize: 20000,
-        maxSize: 244000,
-        cacheGroups: {
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            chunks: 'all',
-            priority: 10,
-          },
-          common: {
-            name: 'common',
-            minChunks: 2,
-            chunks: 'all',
-            priority: 5,
-            reuseExistingChunk: true,
-          },
-        },
-      },
-    };
-
-    // Reduce bundle size
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      '@': require('path').resolve(__dirname),
-    };
+    // Production optimizations - disable problematic vendor chunking
+    if (!dev) {
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          chunks: 'all',
+          cacheGroups: {
+            default: false,
+            vendors: false,
+            common: {
+              name: 'common',
+              minChunks: 2,
+              chunks: 'all',
+            }
+          }
+        }
+      };
+    }
 
     return config;
   },
+  
+  // Compiler optimizations
   compiler: {
-    // Remove console logs in production
     removeConsole: process.env.NODE_ENV === 'production',
   },
-  // Enable static optimization
-  poweredByHeader: false,
-  // Optimize page loading and reduce memory usage
-  onDemandEntries: {
-    // Period (in ms) where the server will keep pages in the buffer
-    maxInactiveAge: 25 * 1000,
-    // Number of pages that should be kept simultaneously without being disposed
-    pagesBufferLength: 2,
-  },
-  // Enable compression
-  compress: true,
-  // Optimize production builds
-  swcMinify: true,
-  // Reduce initial page load time
+  
+  // Modular imports for tree shaking
   modularizeImports: {
     'lucide-react': {
       transform: 'lucide-react/dist/esm/icons/{{kebabCase member}}',
     },
+  },
+  
+  // Headers for performance and security
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+        ],
+      },
+      {
+        source: '/static/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+    ];
   },
 };
 

@@ -1,0 +1,702 @@
+[
+  {
+    "id": "usr_admin_e01a17c5-3cc2-463f-80c0-0a8acef1faed",
+    "email": "admin1@getkudjo.com",
+    "role": "admin",
+    "status": "active",
+    "createdAt": "2025-03-15T21:44:09.161Z"
+  },
+  {
+    "id": "usr_admin_66dc430e-e190-4580-832c-b0d708a0bdd0",
+    "email": "admin2@getkudjo.com",
+    "role": "admin",
+    "status": "active",
+    "createdAt": "2025-07-16T21:44:09.162Z"
+  },
+  {
+    "id": "usr_admin_f2382829-36bb-491a-9176-389db341e7d2",
+    "email": "admin3@getkudjo.com",
+    "role": "admin",
+    "status": "active",
+    "createdAt": "2025-05-20T21:44:09.162Z"
+  },
+  {
+    "id": "usr_admin_667e4cdc-6f07-415b-a9a5-cfe733f6207d",
+    "email": "admin4@getkudjo.com",
+    "role": "admin",
+    "status": "active",
+    "createdAt": "2025-09-02T21:44:09.162Z"
+  },
+  {
+    "id": "usr_admin_1f069143-fdd0-4f33-af25-2970ff5665f1",
+    "email": "admin5@getkudjo.com",
+    "role": "admin",
+    "status": "active",
+    "createdAt": "2025-01-09T22:44:09.162Z"
+  },
+  {
+    "id": "usr_admin_94069678-ecc7-4ff0-b10f-ef7904441827",
+    "email": "admin6@getkudjo.com",
+    "role": "admin",
+    "status": "active",
+    "createdAt": "2025-02-06T22:44:09.162Z"
+  },
+  {
+    "id": "usr_admin_4748946b-9395-4cea-9ff5-544ab49e43ed",
+    "email": "admin7@getkudjo.com",
+    "role": "admin",
+    "status": "active",
+    "createdAt": "2025-02-26T22:44:09.162Z"
+  },
+  {
+    "id": "usr_admin_3e9ef411-266e-447d-bf2d-143050c090b6",
+    "email": "admin8@getkudjo.com",
+    "role": "admin",
+    "status": "active",
+    "createdAt": "2025-01-22T22:44:09.162Z"
+  },
+  {
+    "id": "usr_admin_cb958530-92c5-4a3e-85f6-fe0c7de1a96b",
+    "email": "admin9@getkudjo.com",
+    "role": "admin",
+    "status": "active",
+    "createdAt": "2025-05-25T21:44:09.162Z"
+  },
+  {
+    "id": "usr_admin_47cb8330-5dd6-4e93-934e-97ead491db38",
+    "email": "admin10@getkudjo.com",
+    "role": "admin",
+    "status": "active",
+    "createdAt": "2025-08-09T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_27e2427a-5b38-4f07-a29a-d52c2a2e5f8d",
+    "email": "business1@mariositalianbistro.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-08-20T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_fab0cec8-21fa-4aa2-8913-535408d4968e",
+    "email": "business2@tacofiesta.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-06-14T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_b59077bf-5b72-48d0-a39f-1b4cee6a4741",
+    "email": "business3@theburgerjoint.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-05-30T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_ee58de09-1cb2-42b5-944c-b55bccfcb47b",
+    "email": "business4@sushimaster.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-04-22T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_88a3bf8e-4f24-46d5-ab4e-e2c5c429d296",
+    "email": "business5@coffeecorner.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-03-28T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_71af879e-f13e-4f16-ac2a-87a98565403c",
+    "email": "business6@pizzapalace.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-09-01T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_b1720cf1-1da3-4ffc-b3f8-40ab6a082e2b",
+    "email": "business7@bbqsmokehouse.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-05-26T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_918ce9a6-8543-4191-bcc9-8eef1275acad",
+    "email": "business8@greengardencafe.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-06-11T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_da66d7dd-7191-4084-90d6-b60fa42d172e",
+    "email": "business9@oceanviewseafood.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-04-19T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_63d3c799-fc0c-4ca1-bc93-28b689cfa6fb",
+    "email": "business10@primesteakhouse.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-04-13T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_564cf314-afad-468c-9fac-7f9d4179ecd2",
+    "email": "business11@noodlehouse.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-08-10T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_a72857b2-6954-4e86-a223-b7abbbbb6d9e",
+    "email": "business12@breakfastclub.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-04-05T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_311a4ab5-b38f-467e-8d30-0becc1b90a7a",
+    "email": "business13@sandwichshop.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-03-24T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_347e938a-4c5e-4d47-80ae-5285a0e460a9",
+    "email": "business14@icecreamparlor.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-04-29T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_fbfea265-9013-40ce-90f9-076e5c5b100a",
+    "email": "business15@winedine.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-03-19T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_c420d4e1-1d6a-4f96-8fca-acc1239faca1",
+    "email": "business16@streettacos.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-04-22T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_36d909c6-4d80-4094-8ccf-8e51eae1e25c",
+    "email": "business17@pastaparadise.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-07-17T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_39477f93-22d5-466e-b0fa-d01bcff1a867",
+    "email": "business18@grillchill.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-08-01T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_7b47dc1d-230d-4cbf-81ee-a633a340f096",
+    "email": "business19@freshsalads.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-08-14T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_ee61e60d-5ba6-48ef-bc51-d6fb814e2f08",
+    "email": "business20@donutdelight.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-05-12T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_01f9b37a-b3b8-4450-8d7b-98c1bc30a05a",
+    "email": "business21@curryhouse.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-03-26T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_99060dbb-4de0-4a8c-a911-4e10094fa847",
+    "email": "business22@smoothiebar.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-04-06T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_c841e2e7-2c59-412b-9e74-b1be26bd21dd",
+    "email": "business23@bakerybliss.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-05-24T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_c5e37d2e-3fba-46ca-b642-deb00250e0d6",
+    "email": "business24@ramenstation.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-07-30T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_76efb208-7066-42b2-82b2-cb2ba130d256",
+    "email": "business25@chickencoop.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-08-31T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_66637cde-6834-4762-96e3-faa79031cd0b",
+    "email": "business26@veggiedelights.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-07-27T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_62722a80-4f89-496c-a6a2-3d3f177189e0",
+    "email": "business27@craftbrewery.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-04-06T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_9732b7e1-80c3-470d-9443-2cdd7f31c454",
+    "email": "business28@juicejunction.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-06-25T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_e30bceca-e4a6-4817-87b9-9789cfca2a7d",
+    "email": "business29@waffleworks.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-07-26T21:44:09.162Z"
+  },
+  {
+    "id": "usr_biz_c1b841ca-c666-4538-87fb-b4396c26eb91",
+    "email": "business30@soupkitchen.com",
+    "role": "business_owner",
+    "status": "active",
+    "createdAt": "2025-09-02T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_5b692c3f-7d3a-4d9b-a08b-38d93b1d4ffe",
+    "email": "foodie_explorer0@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-09-01T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_9484c1dd-8ba2-46e8-ae22-48b755af1947",
+    "email": "taste_tester1@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-08-27T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_28a5783d-c6fa-425b-9e77-d356fa6d2b55",
+    "email": "chef_wannabe2@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-08-14T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_1ae30aa2-41c0-4537-8b3d-e496f623385d",
+    "email": "hungry_blogger3@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-08-14T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_45bb01c7-f37f-44d3-b5d4-304df2613408",
+    "email": "snack_attack4@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-07-20T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_edd670a8-fd51-48ed-b195-adab1b1e8f2f",
+    "email": "flavor_hunter5@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-08-23T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_a9061cec-743f-40fe-9f6f-ebe5e291196c",
+    "email": "meal_master6@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-07-24T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_aca17c79-899a-4df1-8e69-f2b2339ff13b",
+    "email": "food_critic7@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-06-13T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_5f71192d-d94c-45eb-adb8-5b4866d4df2b",
+    "email": "dining_diva8@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-08-27T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_f83f232c-1185-48f3-9ee3-e0fb75c5c459",
+    "email": "culinary_queen9@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-08-13T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_50ad880b-0c36-4c63-bf03-8b8b460d02d1",
+    "email": "bite_sized10@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-06-18T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_a962c404-5cb6-409f-9c88-cb78948348a5",
+    "email": "food_fanatic11@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-08-26T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_33856c07-82fe-4be5-8dae-032ec39fc970",
+    "email": "taste_buds12@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-08-16T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_15b00488-7f7e-476c-9e3a-c185f464cad7",
+    "email": "kitchen_king13@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-07-11T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_54223955-63b4-4fd6-b6f2-2a86bfe36a77",
+    "email": "food_lover14@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-08-07T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_29cab3f8-06b7-4bcf-a41d-27d7d62cc00e",
+    "email": "gourmet_guru15@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-08-11T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_3591a096-bc59-4ff0-809d-242af1d926b6",
+    "email": "recipe_rebel16@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-08-05T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_4d8fcded-0522-44a5-b29a-1f89cfe9a924",
+    "email": "food_fighter17@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-07-16T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_df34ba1c-3dcf-4b9b-b873-c7c29c1bddfe",
+    "email": "taste_maker18@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-09-01T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_bb2fc202-7b9f-4542-ab8d-7fc6ae28ab5d",
+    "email": "dish_destroyer19@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-09-01T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_99cacbbd-b5a6-4c33-99ce-b6828e8cbdb5",
+    "email": "foodie_explorer20@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-06-06T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_3702d3df-e3ec-4e3e-88c2-6aee078effd9",
+    "email": "taste_tester21@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-07-19T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_80365da5-24fc-4eda-a0da-b5f511ef7d84",
+    "email": "chef_wannabe22@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-08-22T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_15eedc8e-4e0e-4ecf-83ce-2ebcef63b877",
+    "email": "hungry_blogger23@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-07-08T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_9f76f39f-db8e-456d-b793-4b13dacd4e5f",
+    "email": "snack_attack24@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-07-26T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_e81f9fe4-9128-4070-bdf8-8f2250c2e880",
+    "email": "flavor_hunter25@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-07-23T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_55a73706-f9d5-45d5-9865-bd57b91ece01",
+    "email": "meal_master26@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-08-27T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_13e9732b-cc0c-4895-b494-4d485332bd8b",
+    "email": "food_critic27@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-08-18T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_c63d5de3-e41f-4856-9380-c2b339506514",
+    "email": "dining_diva28@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-06-11T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_315fbe55-5d6b-4f5c-8408-2cf44914658f",
+    "email": "culinary_queen29@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-08-06T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_bf11ab65-e501-45f6-b1b1-a9abf8bd23a2",
+    "email": "bite_sized30@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-06-05T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_9606f9a2-b11a-4585-84cc-b832211844bf",
+    "email": "food_fanatic31@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-06-07T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_ac20946d-e84a-483c-9d23-8bb3af8d8a45",
+    "email": "taste_buds32@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-06-14T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_37426456-a5f3-462e-bb84-2a0afa947c3d",
+    "email": "kitchen_king33@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-06-14T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_af26fc53-c61a-4917-b9fe-f86c23b82abb",
+    "email": "food_lover34@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-08-07T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_961cf835-2ee6-4dff-9e84-5d1bb2df85fd",
+    "email": "gourmet_guru35@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-06-18T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_1b756119-4e2e-4664-ba2b-18ea3497b539",
+    "email": "recipe_rebel36@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-07-04T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_590791ba-023f-49ee-bc7f-eff95df9eafd",
+    "email": "food_fighter37@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-09-02T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_611b51d1-1d45-49f8-8e64-4365294ea421",
+    "email": "taste_maker38@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-07-21T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_f83bc051-eb25-4da2-b531-fa1c311a8cf4",
+    "email": "dish_destroyer39@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-08-06T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_f7533b1b-20a2-4e4f-a9f9-83e12bf46923",
+    "email": "foodie_explorer40@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-07-12T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_43931cd7-4f97-4299-af15-8f98d0daf07d",
+    "email": "taste_tester41@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-07-25T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_c9149aaf-67e8-4d0b-b6b9-7bea19f87ec0",
+    "email": "chef_wannabe42@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-08-27T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_ef2ad492-7b95-4b57-a8a3-058b8a0ae800",
+    "email": "hungry_blogger43@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-07-15T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_c953609c-170f-40c2-b80c-92890b4c1ebf",
+    "email": "snack_attack44@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-07-14T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_e11fbbdb-8906-43f2-8634-38a2da320eca",
+    "email": "flavor_hunter45@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-09-01T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_ec6113e0-75d5-4f5c-8f97-f053f5bdad29",
+    "email": "meal_master46@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-06-30T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_eefc9f49-3021-4b17-a0ed-d1b845ad08c3",
+    "email": "food_critic47@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-07-13T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_57c5d6dc-e0dc-446a-945e-56c6d54918fc",
+    "email": "dining_diva48@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-06-17T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_6dc5b938-9cdb-4194-9f5c-63a14a6dc7fb",
+    "email": "culinary_queen49@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-07-26T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_46a467fa-aca4-4b3d-8663-2ef1c86529dc",
+    "email": "bite_sized50@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-09-02T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_71cb1d31-392b-44f2-b66e-5682c6bac352",
+    "email": "food_fanatic51@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-06-28T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_86cf262e-fead-40f1-b963-25d256892335",
+    "email": "taste_buds52@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-07-02T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_e4bf4e19-b29b-4e6e-bd89-f80089c643a6",
+    "email": "kitchen_king53@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-08-29T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_ee5f5451-758e-4059-ad10-921fa0976ef3",
+    "email": "food_lover54@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-06-18T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_b93a8b5d-74d3-4b74-ba9c-e423a0017023",
+    "email": "gourmet_guru55@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-06-25T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_096a27d4-ac13-4925-b835-1b1ef08e06e7",
+    "email": "recipe_rebel56@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-08-05T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_e1fdc696-8608-4789-9f03-bf054684c02c",
+    "email": "food_fighter57@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-06-20T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_14b1e353-fb65-427e-ab6a-57fcdcdd7fa1",
+    "email": "taste_maker58@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-07-11T21:44:09.162Z"
+  },
+  {
+    "id": "usr_inf_f8422cdf-b26e-4ae3-8908-5d5267c15829",
+    "email": "dish_destroyer59@influencer.com",
+    "role": "influencer",
+    "status": "active",
+    "createdAt": "2025-06-17T21:44:09.162Z"
+  }
+]

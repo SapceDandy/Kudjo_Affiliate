@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get business tier defaults
-    const businessDoc = await adminDb.collection('businesses').doc(businessId).get();
+    const businessDoc = await adminDb!.collection('businesses').doc(businessId).get();
     
     if (!businessDoc.exists) {
       return NextResponse.json({ error: 'Business not found' }, { status: 404 });
@@ -54,11 +54,10 @@ export async function GET(request: NextRequest) {
 
     const businessData = businessDoc.data();
     const tierDefaults = businessData?.tierDefaults || {
-      S: { defaultSplit: 15, name: 'Silver', followers: '1K-10K' },
-      M: { defaultSplit: 20, name: 'Gold', followers: '10K-50K' },
-      L: { defaultSplit: 25, name: 'Platinum', followers: '50K-100K' },
-      XL: { defaultSplit: 30, name: 'Diamond', followers: '100K-500K' },
-      Huge: { defaultSplit: 35, name: 'Celebrity', followers: '500K+' }
+      Bronze: { defaultSplit: 15, name: 'Bronze', followers: '1K-5K' },
+      Silver: { defaultSplit: 20, name: 'Silver', followers: '5K-20K' },
+      Gold: { defaultSplit: 25, name: 'Gold', followers: '20K-50K' },
+      Platinum: { defaultSplit: 30, name: 'Platinum', followers: '50K+' }
     };
 
     return NextResponse.json({ tierDefaults });
@@ -96,7 +95,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Validate tier defaults structure
-    const validTiers = ['S', 'M', 'L', 'XL', 'Huge'];
+    const validTiers = ['Bronze', 'Silver', 'Gold', 'Platinum'];
     for (const tier of validTiers) {
       if (!tierDefaults[tier] || typeof tierDefaults[tier].defaultSplit !== 'number') {
         return NextResponse.json({ 
@@ -113,7 +112,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Update business tier defaults
-    await adminDb.collection('businesses').doc(businessId).update({
+    await adminDb!.collection('businesses').doc(businessId).update({
       tierDefaults,
       updatedAt: new Date().toISOString()
     });

@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Query influencer requests
-    const requestsRef = adminDb.collection('influencerRequests');
+    const requestsRef = adminDb!.collection('influencerRequests');
     let requestsSnapshot;
     
     try {
@@ -129,7 +129,7 @@ export async function PUT(request: NextRequest) {
         break;
     }
 
-    await adminDb.collection('influencerRequests').doc(requestId).update(updateData);
+    await adminDb!.collection('influencerRequests').doc(requestId).update(updateData);
     
     return NextResponse.json({ success: true });
 

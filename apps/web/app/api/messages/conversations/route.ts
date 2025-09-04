@@ -16,9 +16,16 @@ export async function GET(request: NextRequest) {
     }
 
     // Query conversations where user is participant
-    const conversationsQuery = adminDb.collection('conversations')
-      .where(userType === 'business' ? 'businessId' : 'influencerId', '==', userId)
-      .orderBy('lastMessageAt', 'desc');
+    let conversationsQuery;
+    if (userType === 'business') {
+      conversationsQuery = adminDb!.collection('conversations')
+        .where('businessId', '==', userId)
+        .orderBy('lastMessageAt', 'desc');
+    } else {
+      conversationsQuery = adminDb!.collection('conversations')
+        .where('influencerId', '==', userId)
+        .orderBy('lastMessageAt', 'desc');
+    }
 
     const conversationsSnapshot = await conversationsQuery.get();
     

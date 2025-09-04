@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Query influencer requests for this business
-    const requestsRef = adminDb.collection('influencerRequests');
+    const requestsRef = adminDb!.collection('influencerRequests');
     const requestsQuery = requestsRef
       .where('bizId', '==', businessId)
       .limit(limit);
@@ -118,7 +118,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Firebase not configured' }, { status: 500 });
     }
 
-    await adminDb.collection('influencerRequests').doc(requestId).update(updateData);
+    await adminDb!.collection('influencerRequests').doc(requestId).update(updateData);
     
     return NextResponse.json({ success: true });
 
@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
     // If influencerId is provided, get influencer details
     if (influencerId) {
       try {
-        const influencerDoc = await adminDb.collection('influencers').doc(influencerId).get();
+        const influencerDoc = await adminDb!.collection('influencers').doc(influencerId).get();
         if (influencerDoc.exists) {
           const influencerData = influencerDoc.data();
           finalInfluencerName = influencerData?.name || influencerData?.displayName || influencer || 'Unknown Influencer';
@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
     } else {
       // If only influencer name provided, try to find by name (fallback for existing functionality)
       try {
-        const influencerQuery = adminDb.collection('influencers')
+        const influencerQuery = adminDb!.collection('influencers')
           .where('name', '==', influencer)
           .limit(1);
         const influencerSnapshot = await influencerQuery.get();
@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
             createdAt: new Date(),
             isPlaceholder: true
           };
-          const newInfluencerRef = await adminDb.collection('influencers').add(placeholderInfluencer);
+          const newInfluencerRef = await adminDb!.collection('influencers').add(placeholderInfluencer);
           finalInfluencerId = newInfluencerRef.id;
         }
       } catch (error) {
@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
 
     // Get business name
     try {
-      const businessDoc = await adminDb.collection('businesses').doc(businessId).get();
+      const businessDoc = await adminDb!.collection('businesses').doc(businessId).get();
       if (businessDoc.exists) {
         businessName = businessDoc.data()?.name || businessName;
       }
@@ -207,7 +207,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for existing active requests to this influencer
-    const existingRequestsQuery = adminDb.collection('influencerRequests')
+    const existingRequestsQuery = adminDb!.collection('influencerRequests')
       .where('bizId', '==', businessId)
       .where('infId', '==', finalInfluencerId)
       .where('status', 'in', ['pending', 'countered']);
@@ -243,11 +243,11 @@ export async function POST(request: NextRequest) {
     };
 
     console.log('Creating request with data:', requestData);
-    const docRef = await adminDb.collection('influencerRequests').add(requestData);
+    const docRef = await adminDb!.collection('influencerRequests').add(requestData);
 
     // Update business metrics - increment active requests count
     try {
-      const metricsRef = adminDb.collection('businessMetrics').doc(businessId);
+      const metricsRef = adminDb!.collection('businessMetrics').doc(businessId);
       await metricsRef.set({
         activeRequests: 1, // Simple increment since FieldValue may not be available
         updatedAt: new Date()

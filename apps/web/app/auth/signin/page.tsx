@@ -3,14 +3,12 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useDemoAuth } from '@/lib/demo-auth';
-import { auth as clientAuth, db as clientDb } from '@/lib/firebase';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from 'react-hot-toast';
 
 export default function SignInPage() {
   const [activeTab, setActiveTab] = useState<'business' | 'influencer'>('business');
@@ -19,7 +17,7 @@ export default function SignInPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-  const { switchUser } = useDemoAuth();
+  const { signIn, signInWithGoogle, loading: authLoading } = useAuth();
   const router = useRouter();
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
@@ -28,31 +26,16 @@ export default function SignInPage() {
     setError('');
     
     try {
-      // Check if user exists in Firestore first
-      const userCheckResponse = await fetch('/api/auth/check-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, role: activeTab })
-      });
-      
-      if (userCheckResponse.ok) {
-        const userData = await userCheckResponse.json();
-        if (userData.exists) {
-          // User exists, proceed with demo sign-in
-          console.log('Existing user found, signing in directly');
-          switchUser(activeTab);
-          router.push(activeTab === 'business' ? '/business' : '/influencer');
-          return;
-        }
+      const role = await signIn(email, password);
+      if (role) {
+        toast.success('Signed in successfully!');
+        router.push(role === 'business' ? '/business' : '/influencer');
+      } else {
+        setError('Invalid credentials or user not found.');
       }
-      
-      // User doesn't exist, redirect to signup
-      console.log('User not found, redirecting to signup');
-      router.push(`/auth/signup?role=${activeTab}&email=${encodeURIComponent(email)}`);
-      
-    } catch (err) {
+    } catch (err: any) {
       console.error('Sign-in error:', err);
-      setError('Sign-in failed. Please try again.');
+      setError(err.message || 'Sign-in failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -63,10 +46,9 @@ export default function SignInPage() {
     setError('');
     
     try {
-      console.log('Starting demo Google sign-in with role:', role);
-      switchUser(role);
-      console.log('Demo Google sign-in successful, role:', role);
-      router.push(role === 'business' ? '/business' : '/influencer');
+      const userRole = await signInWithGoogle(role);
+      toast.success('Signed in with Google successfully!');
+      router.push(userRole === 'business' ? '/business' : '/influencer');
     } catch (err: any) {
       console.error('Google sign-in error:', err);
       setError(err.message || 'Google sign-in failed');
@@ -75,84 +57,6 @@ export default function SignInPage() {
     }
   };
 
-  const handleDemoSignIn = async (role: 'business' | 'influencer') => {
-    setLoading(true);
-    setError('');
-    
-    // Pre-fill with demo account email
-    const demoEmail = role === 'business' ? 'demo.business@example.com' : 'demo.influencer@example.com';
-    const demoPassword = 'demo123';
-    
-    try {
-      // Demo sign-in
-      switchUser(role);
-      // Ensure intended role docs exist to avoid RoleGuard race
-      const uid = clientAuth.currentUser?.uid;
-      if (uid) {
-        if (role === 'business') {
-          const bizDoc = await getDoc(doc(clientDb, 'businesses', uid));
-          if (!bizDoc.exists()) {
-            await setDoc(doc(clientDb, 'businesses', uid), {
-              id: uid,
-              ownerId: uid,
-              name: 'Demo Business',
-              status: 'active',
-              createdAt: serverTimestamp(),
-            }, { merge: true });
-          }
-        } else {
-          const infDoc = await getDoc(doc(clientDb, 'influencers', uid));
-          if (!infDoc.exists()) {
-            await setDoc(doc(clientDb, 'influencers', uid), {
-              id: uid,
-              ownerId: uid,
-              handle: '@demo_influencer',
-              approved: true,
-              createdAt: serverTimestamp(),
-            }, { merge: true });
-          }
-        }
-      }
-      const redirectRole = role;
-      router.push(redirectRole === 'business' ? '/business' : '/influencer');
-    } catch (err) {
-      try {
-        // Self-provision demo user via client SDK (no admin required)
-        const cred = await createUserWithEmailAndPassword(clientAuth, demoEmail, demoPassword);
-        const uid = cred.user.uid;
-        // Create role docs
-        await setDoc(doc(clientDb, 'users', uid), {
-          id: uid,
-          email: demoEmail,
-          role,
-          status: 'active',
-          createdAt: serverTimestamp(),
-        }, { merge: true });
-        if (role === 'business') {
-          await setDoc(doc(clientDb, 'businesses', uid), {
-            id: uid,
-            ownerId: uid,
-            name: 'Demo Business',
-            status: 'active',
-            createdAt: serverTimestamp(),
-          }, { merge: true });
-        } else {
-          await setDoc(doc(clientDb, 'influencers', uid), {
-            id: uid,
-            ownerId: uid,
-            handle: '@demo_influencer',
-            approved: true,
-            createdAt: serverTimestamp(),
-          }, { merge: true });
-        }
-        router.push(role === 'business' ? '/business' : '/influencer');
-      } catch (e) {
-        setError('Demo sign-in failed. Please try again later.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleAdminLogin = () => {
     router.push('/control-center/login');
@@ -173,7 +77,7 @@ export default function SignInPage() {
           <Button 
             className="w-full mb-4 flex items-center justify-center"
             onClick={() => handleGoogleSignIn('business')}
-            disabled={loading}
+            disabled={loading || authLoading}
           >
             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
               <path
@@ -195,21 +99,13 @@ export default function SignInPage() {
             </svg>
             Continue with Google as Business
           </Button>
-          <Button 
-            className="w-full mb-2" 
-            variant="outline" 
-            onClick={() => handleDemoSignIn('business')} 
-            disabled={loading}
-          >
-            Demo: Continue as Business
-          </Button>
         </TabsContent>
         
         <TabsContent value="influencer">
           <Button 
             className="w-full mb-4 flex items-center justify-center"
             onClick={() => handleGoogleSignIn('influencer')}
-            disabled={loading}
+            disabled={loading || authLoading}
           >
             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
               <path
@@ -222,22 +118,10 @@ export default function SignInPage() {
               />
               <path
                 fill="currentColor"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-              />
-              <path
-                fill="currentColor"
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
             Continue with Google as Influencer
-          </Button>
-          <Button 
-            className="w-full mb-2" 
-            variant="outline" 
-            onClick={() => handleDemoSignIn('influencer')} 
-            disabled={loading}
-          >
-            Demo: Continue as Influencer
           </Button>
         </TabsContent>
       </Tabs>
@@ -279,7 +163,7 @@ export default function SignInPage() {
         
         {error && <p className="text-red-500 mb-4">{error}</p>}
         
-        <Button type="submit" className="w-full" disabled={loading}>
+        <Button type="submit" className="w-full" disabled={loading || authLoading}>
           Sign In as {activeTab === 'business' ? 'Business' : 'Influencer'}
         </Button>
       </form>

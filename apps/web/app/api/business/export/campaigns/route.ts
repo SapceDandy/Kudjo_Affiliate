@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get offers for this business
-    let offersQuery = adminDb.collection('offers')
+    let offersQuery = adminDb!.collection('offers')
       .where('bizId', '==', businessId);
 
     if (status !== 'all') {
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
         const offerId = offerDoc.id;
 
         // Get redemptions for this offer
-        const redemptionsSnapshot = await adminDb.collection('redemptions')
+        const redemptionsSnapshot = await adminDb!.collection('redemptions')
           .where('offerId', '==', offerId)
           .get();
 

@@ -1,0 +1,1130 @@
+[
+  {
+    "id": "inf_219a5f74-6093-4e04-a9d2-fe7f652ced43",
+    "ownerUserId": "usr_inf_5b692c3f-7d3a-4d9b-a08b-38d93b1d4ffe",
+    "name": "Sarah Johnson",
+    "handle": "@foodie_explorer0",
+    "followers": 28337,
+    "avgViews": 14393,
+    "platforms": [
+      "tiktok"
+    ],
+    "tier": "Gold",
+    "geo": {
+      "lat": 25.874718302362847,
+      "lng": -80.39104979273762
+    },
+    "status": "active",
+    "createdAt": "2025-08-22T21:44:09.163Z"
+  },
+  {
+    "id": "inf_26c78c9c-205b-4051-8c78-08c9c7c674d0",
+    "ownerUserId": "usr_inf_9484c1dd-8ba2-46e8-ae22-48b755af1947",
+    "name": "Mike Chen",
+    "handle": "@taste_tester1",
+    "followers": 64560,
+    "avgViews": 42848,
+    "platforms": [
+      "instagram",
+      "youtube"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 35.99636275883512,
+      "lng": -86.65552657645662
+    },
+    "status": "active",
+    "createdAt": "2025-08-25T21:44:09.163Z"
+  },
+  {
+    "id": "inf_39172ecf-248a-445e-926d-69a47f15c0ba",
+    "ownerUserId": "usr_inf_28a5783d-c6fa-425b-9e77-d356fa6d2b55",
+    "name": "Emily Rodriguez",
+    "handle": "@chef_wannabe2",
+    "followers": 6003,
+    "avgViews": 4250,
+    "platforms": [
+      "instagram",
+      "tiktok"
+    ],
+    "tier": "Silver",
+    "geo": {
+      "lat": 45.66328785842954,
+      "lng": -122.51676511157653
+    },
+    "status": "active",
+    "createdAt": "2025-08-14T21:44:09.163Z"
+  },
+  {
+    "id": "inf_2ad5e4f5-0e2c-4317-a268-6961a8307cfd",
+    "ownerUserId": "usr_inf_1ae30aa2-41c0-4537-8b3d-e496f623385d",
+    "name": "David Kim",
+    "handle": "@hungry_blogger3",
+    "followers": 56854,
+    "avgViews": 35695,
+    "platforms": [
+      "instagram",
+      "youtube"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 45.65773567798046,
+      "lng": -122.58861228788794
+    },
+    "status": "active",
+    "createdAt": "2025-08-05T21:44:09.163Z"
+  },
+  {
+    "id": "inf_292e34df-cea9-44d1-ba99-5e8eeb0a46da",
+    "ownerUserId": "usr_inf_45bb01c7-f37f-44d3-b5d4-304df2613408",
+    "name": "Lisa Thompson",
+    "handle": "@snack_attack4",
+    "followers": 61015,
+    "avgViews": 21211,
+    "platforms": [
+      "instagram",
+      "tiktok",
+      "youtube"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 30.182507746432016,
+      "lng": -97.55717473767665
+    },
+    "status": "active",
+    "createdAt": "2025-07-08T21:44:09.163Z"
+  },
+  {
+    "id": "inf_4c69d324-e513-4992-a7e6-ecdee586558d",
+    "ownerUserId": "usr_inf_edd670a8-fd51-48ed-b195-adab1b1e8f2f",
+    "name": "Alex Martinez",
+    "handle": "@flavor_hunter5",
+    "followers": 25408,
+    "avgViews": 7992,
+    "platforms": [
+      "youtube"
+    ],
+    "tier": "Gold",
+    "geo": {
+      "lat": 36.33813037814908,
+      "lng": -86.86358357151474
+    },
+    "status": "active",
+    "createdAt": "2025-08-13T21:44:09.163Z"
+  },
+  {
+    "id": "inf_55b96865-10cf-4a70-a091-44ea27b21e24",
+    "ownerUserId": "usr_inf_a9061cec-743f-40fe-9f6f-ebe5e291196c",
+    "name": "Jessica Wong",
+    "handle": "@meal_master6",
+    "followers": 97679,
+    "avgViews": 45633,
+    "platforms": [
+      "tiktok",
+      "youtube"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 45.36535314348201,
+      "lng": -122.81734883016206
+    },
+    "status": "active",
+    "createdAt": "2025-07-17T21:44:09.163Z"
+  },
+  {
+    "id": "inf_7624814f-416c-4663-922e-e368d98058b5",
+    "ownerUserId": "usr_inf_aca17c79-899a-4df1-8e69-f2b2339ff13b",
+    "name": "Ryan O'Connor",
+    "handle": "@food_critic7",
+    "followers": 98330,
+    "avgViews": 74891,
+    "platforms": [
+      "tiktok"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 45.552426592534104,
+      "lng": -122.65578559972879
+    },
+    "status": "active",
+    "createdAt": "2025-09-01T21:44:09.163Z"
+  },
+  {
+    "id": "inf_9bc28adb-4835-4ab9-a6b8-9344cbfc2461",
+    "ownerUserId": "usr_inf_5f71192d-d94c-45eb-adb8-5b4866d4df2b",
+    "name": "Amanda Davis",
+    "handle": "@dining_diva8",
+    "followers": 76688,
+    "avgViews": 56043,
+    "platforms": [
+      "instagram",
+      "tiktok",
+      "youtube"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 30.253606395640695,
+      "lng": -97.93383745362495
+    },
+    "status": "active",
+    "createdAt": "2025-09-01T21:44:09.163Z"
+  },
+  {
+    "id": "inf_02851576-5fa3-447c-a87d-f7c341001936",
+    "ownerUserId": "usr_inf_f83f232c-1185-48f3-9ee3-e0fb75c5c459",
+    "name": "Carlos Ruiz",
+    "handle": "@culinary_queen9",
+    "followers": 37561,
+    "avgViews": 19662,
+    "platforms": [
+      "youtube"
+    ],
+    "tier": "Gold",
+    "geo": {
+      "lat": 36.347803263237964,
+      "lng": -86.78903690725872
+    },
+    "status": "active",
+    "createdAt": "2025-08-07T21:44:09.163Z"
+  },
+  {
+    "id": "inf_eed25c85-238a-499d-b6c1-b3c4047d468d",
+    "ownerUserId": "usr_inf_50ad880b-0c36-4c63-bf03-8b8b460d02d1",
+    "name": "Nicole Brown",
+    "handle": "@bite_sized10",
+    "followers": 59940,
+    "avgViews": 42483,
+    "platforms": [
+      "instagram",
+      "tiktok"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 32.72564940534936,
+      "lng": -117.30652346808945
+    },
+    "status": "active",
+    "createdAt": "2025-08-06T21:44:09.163Z"
+  },
+  {
+    "id": "inf_17300aee-608c-4290-afd5-04596da1b433",
+    "ownerUserId": "usr_inf_a962c404-5cb6-409f-9c88-cb78948348a5",
+    "name": "Kevin Lee",
+    "handle": "@food_fanatic11",
+    "followers": 65303,
+    "avgViews": 20850,
+    "platforms": [
+      "tiktok"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 25.63775667530151,
+      "lng": -80.28898859819755
+    },
+    "status": "active",
+    "createdAt": "2025-07-22T21:44:09.163Z"
+  },
+  {
+    "id": "inf_ed77dc58-71a1-47c1-9aaf-5c913278dcf1",
+    "ownerUserId": "usr_inf_33856c07-82fe-4be5-8dae-032ec39fc970",
+    "name": "Rachel Green",
+    "handle": "@taste_buds12",
+    "followers": 72499,
+    "avgViews": 52500,
+    "platforms": [
+      "youtube"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 32.89576551113225,
+      "lng": -116.9654120705
+    },
+    "status": "active",
+    "createdAt": "2025-08-13T21:44:09.163Z"
+  },
+  {
+    "id": "inf_85959e19-22c8-403f-bd29-703ac2268336",
+    "ownerUserId": "usr_inf_15b00488-7f7e-476c-9e3a-c185f464cad7",
+    "name": "Tyler Wilson",
+    "handle": "@kitchen_king13",
+    "followers": 91303,
+    "avgViews": 32172,
+    "platforms": [
+      "instagram",
+      "youtube"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 32.5567860349612,
+      "lng": -117.16548175248282
+    },
+    "status": "active",
+    "createdAt": "2025-08-08T21:44:09.163Z"
+  },
+  {
+    "id": "inf_d989ec90-3773-4133-a5ed-bffedd884321",
+    "ownerUserId": "usr_inf_54223955-63b4-4fd6-b6f2-2a86bfe36a77",
+    "name": "Megan Clark",
+    "handle": "@food_lover14",
+    "followers": 25754,
+    "avgViews": 9805,
+    "platforms": [
+      "instagram",
+      "tiktok"
+    ],
+    "tier": "Gold",
+    "geo": {
+      "lat": 45.578370579310935,
+      "lng": -122.72632521721319
+    },
+    "status": "active",
+    "createdAt": "2025-08-05T21:44:09.163Z"
+  },
+  {
+    "id": "inf_0f6b3298-b98a-4e35-8cea-08e25396d7ef",
+    "ownerUserId": "usr_inf_29cab3f8-06b7-4bcf-a41d-27d7d62cc00e",
+    "name": "Jordan Taylor",
+    "handle": "@gourmet_guru15",
+    "followers": 66304,
+    "avgViews": 31572,
+    "platforms": [
+      "tiktok",
+      "youtube"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 45.56814548258851,
+      "lng": -122.59965306885381
+    },
+    "status": "active",
+    "createdAt": "2025-07-16T21:44:09.163Z"
+  },
+  {
+    "id": "inf_18ea922a-6a4f-46f8-8e48-ad8197ecc15d",
+    "ownerUserId": "usr_inf_3591a096-bc59-4ff0-809d-242af1d926b6",
+    "name": "Ashley Garcia",
+    "handle": "@recipe_rebel16",
+    "followers": 5051,
+    "avgViews": 3335,
+    "platforms": [
+      "instagram",
+      "youtube"
+    ],
+    "tier": "Silver",
+    "geo": {
+      "lat": 45.339963063010416,
+      "lng": -122.70941006622945
+    },
+    "status": "active",
+    "createdAt": "2025-08-28T21:44:09.163Z"
+  },
+  {
+    "id": "inf_d56c000d-ed89-495e-9745-07268e49b377",
+    "ownerUserId": "usr_inf_4d8fcded-0522-44a5-b29a-1f89cfe9a924",
+    "name": "Brandon Miller",
+    "handle": "@food_fighter17",
+    "followers": 50317,
+    "avgViews": 36507,
+    "platforms": [
+      "tiktok"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 35.999195442153216,
+      "lng": -86.75952088037776
+    },
+    "status": "active",
+    "createdAt": "2025-07-10T21:44:09.163Z"
+  },
+  {
+    "id": "inf_9104d799-b7f8-4c4b-ab6c-eb0592f5b99b",
+    "ownerUserId": "usr_inf_df34ba1c-3dcf-4b9b-b873-c7c29c1bddfe",
+    "name": "Samantha Jones",
+    "handle": "@taste_maker18",
+    "followers": 80006,
+    "avgViews": 44276,
+    "platforms": [
+      "youtube"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 45.45315431602551,
+      "lng": -122.7611385201779
+    },
+    "status": "active",
+    "createdAt": "2025-07-07T21:44:09.163Z"
+  },
+  {
+    "id": "inf_f6855495-ed8f-44fb-bd8b-d7667edb6892",
+    "ownerUserId": "usr_inf_bb2fc202-7b9f-4542-ab8d-7fc6ae28ab5d",
+    "name": "Chris Anderson",
+    "handle": "@dish_destroyer19",
+    "followers": 98096,
+    "avgViews": 41622,
+    "platforms": [
+      "tiktok",
+      "youtube"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 25.673494553527238,
+      "lng": -80.07901479166085
+    },
+    "status": "active",
+    "createdAt": "2025-08-14T21:44:09.163Z"
+  },
+  {
+    "id": "inf_75725e7b-b32e-429e-be58-3fbf5ef0a85c",
+    "ownerUserId": "usr_inf_99cacbbd-b5a6-4c33-99ce-b6828e8cbdb5",
+    "name": "Sarah Johnson",
+    "handle": "@foodie_explorer20",
+    "followers": 62645,
+    "avgViews": 48947,
+    "platforms": [
+      "tiktok"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 25.668276800746682,
+      "lng": -80.25896961239673
+    },
+    "status": "active",
+    "createdAt": "2025-08-11T21:44:09.163Z"
+  },
+  {
+    "id": "inf_ae182b12-4c52-4079-8718-cf2486908b0e",
+    "ownerUserId": "usr_inf_3702d3df-e3ec-4e3e-88c2-6aee078effd9",
+    "name": "Mike Chen",
+    "handle": "@taste_tester21",
+    "followers": 51351,
+    "avgViews": 22433,
+    "platforms": [
+      "instagram",
+      "tiktok"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 36.28610006613524,
+      "lng": -86.82863708522817
+    },
+    "status": "active",
+    "createdAt": "2025-07-27T21:44:09.163Z"
+  },
+  {
+    "id": "inf_67fc1b9c-c9ba-4945-a646-cbc62761bf25",
+    "ownerUserId": "usr_inf_80365da5-24fc-4eda-a0da-b5f511ef7d84",
+    "name": "Emily Rodriguez",
+    "handle": "@chef_wannabe22",
+    "followers": 25642,
+    "avgViews": 15853,
+    "platforms": [
+      "instagram",
+      "tiktok"
+    ],
+    "tier": "Gold",
+    "geo": {
+      "lat": 30.37705799154887,
+      "lng": -97.54399777470748
+    },
+    "status": "active",
+    "createdAt": "2025-07-05T21:44:09.163Z"
+  },
+  {
+    "id": "inf_701d01f6-8765-47c6-a5c7-ed25e90fd679",
+    "ownerUserId": "usr_inf_15eedc8e-4e0e-4ecf-83ce-2ebcef63b877",
+    "name": "David Kim",
+    "handle": "@hungry_blogger23",
+    "followers": 16320,
+    "avgViews": 7975,
+    "platforms": [
+      "instagram",
+      "tiktok",
+      "youtube"
+    ],
+    "tier": "Silver",
+    "geo": {
+      "lat": 36.276294928137354,
+      "lng": -86.87342374867907
+    },
+    "status": "active",
+    "createdAt": "2025-08-04T21:44:09.163Z"
+  },
+  {
+    "id": "inf_de5bb6f2-f6c5-4c4e-813d-0c655c2081de",
+    "ownerUserId": "usr_inf_9f76f39f-db8e-456d-b793-4b13dacd4e5f",
+    "name": "Lisa Thompson",
+    "handle": "@snack_attack24",
+    "followers": 15443,
+    "avgViews": 11929,
+    "platforms": [
+      "instagram",
+      "youtube"
+    ],
+    "tier": "Silver",
+    "geo": {
+      "lat": 25.799730808469878,
+      "lng": -80.1170936120289
+    },
+    "status": "active",
+    "createdAt": "2025-07-13T21:44:09.163Z"
+  },
+  {
+    "id": "inf_922dddc7-744f-4e60-aee0-620cd97b3eef",
+    "ownerUserId": "usr_inf_e81f9fe4-9128-4070-bdf8-8f2250c2e880",
+    "name": "Alex Martinez",
+    "handle": "@flavor_hunter25",
+    "followers": 5363,
+    "avgViews": 2769,
+    "platforms": [
+      "instagram",
+      "tiktok",
+      "youtube"
+    ],
+    "tier": "Silver",
+    "geo": {
+      "lat": 45.41126297636641,
+      "lng": -122.54896030681647
+    },
+    "status": "active",
+    "createdAt": "2025-07-19T21:44:09.163Z"
+  },
+  {
+    "id": "inf_a8eee73b-b1d2-4cb8-b3b1-beaf13306742",
+    "ownerUserId": "usr_inf_55a73706-f9d5-45d5-9865-bd57b91ece01",
+    "name": "Jessica Wong",
+    "handle": "@meal_master26",
+    "followers": 33030,
+    "avgViews": 25041,
+    "platforms": [
+      "youtube"
+    ],
+    "tier": "Gold",
+    "geo": {
+      "lat": 30.219928121489087,
+      "lng": -97.86786086615537
+    },
+    "status": "active",
+    "createdAt": "2025-07-16T21:44:09.163Z"
+  },
+  {
+    "id": "inf_60bac5a8-4661-43ca-9382-813e8bd8de09",
+    "ownerUserId": "usr_inf_13e9732b-cc0c-4895-b494-4d485332bd8b",
+    "name": "Ryan O'Connor",
+    "handle": "@food_critic27",
+    "followers": 65466,
+    "avgViews": 38219,
+    "platforms": [
+      "instagram",
+      "youtube"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 45.44755336970778,
+      "lng": -122.60409034513825
+    },
+    "status": "active",
+    "createdAt": "2025-07-22T21:44:09.163Z"
+  },
+  {
+    "id": "inf_18719cf4-5a77-4d0f-b9a3-9b18b612a389",
+    "ownerUserId": "usr_inf_c63d5de3-e41f-4856-9380-c2b339506514",
+    "name": "Amanda Davis",
+    "handle": "@dining_diva28",
+    "followers": 42560,
+    "avgViews": 21734,
+    "platforms": [
+      "tiktok",
+      "youtube"
+    ],
+    "tier": "Gold",
+    "geo": {
+      "lat": 32.834455966027434,
+      "lng": -117.06446385744691
+    },
+    "status": "active",
+    "createdAt": "2025-07-25T21:44:09.163Z"
+  },
+  {
+    "id": "inf_50b4c34a-5691-4e4e-a94e-ec89b1467988",
+    "ownerUserId": "usr_inf_315fbe55-5d6b-4f5c-8408-2cf44914658f",
+    "name": "Carlos Ruiz",
+    "handle": "@culinary_queen29",
+    "followers": 53579,
+    "avgViews": 27990,
+    "platforms": [
+      "instagram",
+      "tiktok",
+      "youtube"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 45.483583813469465,
+      "lng": -122.83077629143497
+    },
+    "status": "active",
+    "createdAt": "2025-08-02T21:44:09.163Z"
+  },
+  {
+    "id": "inf_46b1f52e-70ec-4988-b96f-c34b7252147f",
+    "ownerUserId": "usr_inf_bf11ab65-e501-45f6-b1b1-a9abf8bd23a2",
+    "name": "Nicole Brown",
+    "handle": "@bite_sized30",
+    "followers": 78453,
+    "avgViews": 56303,
+    "platforms": [
+      "instagram",
+      "tiktok",
+      "youtube"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 30.09677363998715,
+      "lng": -97.80850590872802
+    },
+    "status": "active",
+    "createdAt": "2025-08-16T21:44:09.163Z"
+  },
+  {
+    "id": "inf_2f3bab05-2f65-463f-9ba9-2302d2df6d3f",
+    "ownerUserId": "usr_inf_9606f9a2-b11a-4585-84cc-b832211844bf",
+    "name": "Kevin Lee",
+    "handle": "@food_fanatic31",
+    "followers": 25930,
+    "avgViews": 15873,
+    "platforms": [
+      "tiktok"
+    ],
+    "tier": "Gold",
+    "geo": {
+      "lat": 25.93054266247847,
+      "lng": -80.00167600616808
+    },
+    "status": "active",
+    "createdAt": "2025-08-03T21:44:09.163Z"
+  },
+  {
+    "id": "inf_90229b7e-ea69-4d69-a2fd-8aff88b14d57",
+    "ownerUserId": "usr_inf_ac20946d-e84a-483c-9d23-8bb3af8d8a45",
+    "name": "Rachel Green",
+    "handle": "@taste_buds32",
+    "followers": 26238,
+    "avgViews": 18244,
+    "platforms": [
+      "instagram"
+    ],
+    "tier": "Gold",
+    "geo": {
+      "lat": 36.03067923509503,
+      "lng": -86.83490469815041
+    },
+    "status": "active",
+    "createdAt": "2025-07-15T21:44:09.163Z"
+  },
+  {
+    "id": "inf_68155038-4f14-4c48-8ea9-8b91975f5b37",
+    "ownerUserId": "usr_inf_37426456-a5f3-462e-bb84-2a0afa947c3d",
+    "name": "Tyler Wilson",
+    "handle": "@kitchen_king33",
+    "followers": 20432,
+    "avgViews": 12188,
+    "platforms": [
+      "instagram",
+      "tiktok",
+      "youtube"
+    ],
+    "tier": "Gold",
+    "geo": {
+      "lat": 32.79966472219435,
+      "lng": -117.12174525410286
+    },
+    "status": "active",
+    "createdAt": "2025-07-19T21:44:09.163Z"
+  },
+  {
+    "id": "inf_6633c2f2-0ed5-4c10-a645-50b4c6000d16",
+    "ownerUserId": "usr_inf_af26fc53-c61a-4917-b9fe-f86c23b82abb",
+    "name": "Megan Clark",
+    "handle": "@food_lover34",
+    "followers": 23764,
+    "avgViews": 12717,
+    "platforms": [
+      "instagram",
+      "tiktok",
+      "youtube"
+    ],
+    "tier": "Gold",
+    "geo": {
+      "lat": 45.549987419699086,
+      "lng": -122.62634388854458
+    },
+    "status": "active",
+    "createdAt": "2025-08-30T21:44:09.163Z"
+  },
+  {
+    "id": "inf_871442bb-fa79-437b-8b5f-b050ae5e7245",
+    "ownerUserId": "usr_inf_961cf835-2ee6-4dff-9e84-5d1bb2df85fd",
+    "name": "Jordan Taylor",
+    "handle": "@gourmet_guru35",
+    "followers": 88239,
+    "avgViews": 43362,
+    "platforms": [
+      "instagram"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 30.452550062847504,
+      "lng": -97.84828513575563
+    },
+    "status": "active",
+    "createdAt": "2025-08-06T21:44:09.163Z"
+  },
+  {
+    "id": "inf_96aef05e-236f-428d-88ac-252ff34bd7a6",
+    "ownerUserId": "usr_inf_1b756119-4e2e-4664-ba2b-18ea3497b539",
+    "name": "Ashley Garcia",
+    "handle": "@recipe_rebel36",
+    "followers": 15293,
+    "avgViews": 9298,
+    "platforms": [
+      "instagram"
+    ],
+    "tier": "Silver",
+    "geo": {
+      "lat": 45.50673127522906,
+      "lng": -122.5207513171675
+    },
+    "status": "active",
+    "createdAt": "2025-07-12T21:44:09.163Z"
+  },
+  {
+    "id": "inf_2a46b41d-4661-4a5f-bed9-94774f7bafcf",
+    "ownerUserId": "usr_inf_590791ba-023f-49ee-bc7f-eff95df9eafd",
+    "name": "Brandon Miller",
+    "handle": "@food_fighter37",
+    "followers": 5376,
+    "avgViews": 2696,
+    "platforms": [
+      "youtube"
+    ],
+    "tier": "Silver",
+    "geo": {
+      "lat": 30.070412406004547,
+      "lng": -97.59623788882331
+    },
+    "status": "active",
+    "createdAt": "2025-08-10T21:44:09.163Z"
+  },
+  {
+    "id": "inf_0fd3d676-54d3-4390-9381-334957e6e10a",
+    "ownerUserId": "usr_inf_611b51d1-1d45-49f8-8e64-4365294ea421",
+    "name": "Samantha Jones",
+    "handle": "@taste_maker38",
+    "followers": 95515,
+    "avgViews": 41368,
+    "platforms": [
+      "instagram",
+      "tiktok"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 32.88556618128983,
+      "lng": -117.30629896240885
+    },
+    "status": "active",
+    "createdAt": "2025-07-26T21:44:09.163Z"
+  },
+  {
+    "id": "inf_589091d4-eb35-4761-8e67-c75bf4c21e29",
+    "ownerUserId": "usr_inf_f83bc051-eb25-4da2-b531-fa1c311a8cf4",
+    "name": "Chris Anderson",
+    "handle": "@dish_destroyer39",
+    "followers": 87931,
+    "avgViews": 52821,
+    "platforms": [
+      "youtube"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 30.068353268537027,
+      "lng": -97.72897403973991
+    },
+    "status": "active",
+    "createdAt": "2025-08-13T21:44:09.163Z"
+  },
+  {
+    "id": "inf_f61410d5-c8ae-486c-a7bf-ac29b814773b",
+    "ownerUserId": "usr_inf_f7533b1b-20a2-4e4f-a9f9-83e12bf46923",
+    "name": "Sarah Johnson",
+    "handle": "@foodie_explorer40",
+    "followers": 78520,
+    "avgViews": 55241,
+    "platforms": [
+      "instagram",
+      "tiktok"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 45.67765287179263,
+      "lng": -122.66678134116273
+    },
+    "status": "active",
+    "createdAt": "2025-07-27T21:44:09.163Z"
+  },
+  {
+    "id": "inf_a48c9c7c-7629-4f19-bc54-16bd3b130ed8",
+    "ownerUserId": "usr_inf_43931cd7-4f97-4299-af15-8f98d0daf07d",
+    "name": "Mike Chen",
+    "handle": "@taste_tester41",
+    "followers": 68523,
+    "avgViews": 26014,
+    "platforms": [
+      "instagram"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 32.5948242618033,
+      "lng": -117.36064251619558
+    },
+    "status": "active",
+    "createdAt": "2025-07-06T21:44:09.163Z"
+  },
+  {
+    "id": "inf_03cfa4ee-49d5-49bb-8a77-00e0d1803cb8",
+    "ownerUserId": "usr_inf_c9149aaf-67e8-4d0b-b6b9-7bea19f87ec0",
+    "name": "Emily Rodriguez",
+    "handle": "@chef_wannabe42",
+    "followers": 33747,
+    "avgViews": 24052,
+    "platforms": [
+      "youtube"
+    ],
+    "tier": "Gold",
+    "geo": {
+      "lat": 32.77381491615412,
+      "lng": -117.04232290390627
+    },
+    "status": "active",
+    "createdAt": "2025-08-09T21:44:09.163Z"
+  },
+  {
+    "id": "inf_5cd8a736-3efb-43f8-8047-4817dc7abf18",
+    "ownerUserId": "usr_inf_ef2ad492-7b95-4b57-a8a3-058b8a0ae800",
+    "name": "David Kim",
+    "handle": "@hungry_blogger43",
+    "followers": 8947,
+    "avgViews": 3137,
+    "platforms": [
+      "tiktok",
+      "youtube"
+    ],
+    "tier": "Silver",
+    "geo": {
+      "lat": 45.51989866457283,
+      "lng": -122.85094246860344
+    },
+    "status": "active",
+    "createdAt": "2025-08-03T21:44:09.163Z"
+  },
+  {
+    "id": "inf_f9e8aee0-51ae-42a5-8dde-e35149c257c4",
+    "ownerUserId": "usr_inf_c953609c-170f-40c2-b80c-92890b4c1ebf",
+    "name": "Lisa Thompson",
+    "handle": "@snack_attack44",
+    "followers": 61073,
+    "avgViews": 37520,
+    "platforms": [
+      "instagram",
+      "tiktok"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 36.20587825609132,
+      "lng": -86.65484772613357
+    },
+    "status": "active",
+    "createdAt": "2025-08-19T21:44:09.163Z"
+  },
+  {
+    "id": "inf_a9f9caf4-6d30-4f35-b2ce-cd0586547b78",
+    "ownerUserId": "usr_inf_e11fbbdb-8906-43f2-8634-38a2da320eca",
+    "name": "Alex Martinez",
+    "handle": "@flavor_hunter45",
+    "followers": 31983,
+    "avgViews": 18156,
+    "platforms": [
+      "instagram",
+      "tiktok"
+    ],
+    "tier": "Gold",
+    "geo": {
+      "lat": 30.364167855035234,
+      "lng": -97.57822949065313
+    },
+    "status": "active",
+    "createdAt": "2025-08-30T21:44:09.163Z"
+  },
+  {
+    "id": "inf_f1b2747d-9b8c-4410-9ea0-0f5f93c5b56f",
+    "ownerUserId": "usr_inf_ec6113e0-75d5-4f5c-8f97-f053f5bdad29",
+    "name": "Jessica Wong",
+    "handle": "@meal_master46",
+    "followers": 90327,
+    "avgViews": 66495,
+    "platforms": [
+      "instagram"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 35.98173852327483,
+      "lng": -86.77024213868711
+    },
+    "status": "active",
+    "createdAt": "2025-07-06T21:44:09.163Z"
+  },
+  {
+    "id": "inf_ef647929-487c-4359-9c05-213859c0036a",
+    "ownerUserId": "usr_inf_eefc9f49-3021-4b17-a0ed-d1b845ad08c3",
+    "name": "Ryan O'Connor",
+    "handle": "@food_critic47",
+    "followers": 80764,
+    "avgViews": 52396,
+    "platforms": [
+      "youtube"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 30.098367067882915,
+      "lng": -97.66978641109908
+    },
+    "status": "active",
+    "createdAt": "2025-07-22T21:44:09.163Z"
+  },
+  {
+    "id": "inf_ff0685a5-f326-4370-bafd-fce21bba0a11",
+    "ownerUserId": "usr_inf_57c5d6dc-e0dc-446a-945e-56c6d54918fc",
+    "name": "Amanda Davis",
+    "handle": "@dining_diva48",
+    "followers": 77963,
+    "avgViews": 35485,
+    "platforms": [
+      "instagram",
+      "tiktok",
+      "youtube"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 25.570745588338266,
+      "lng": -80.06288444545012
+    },
+    "status": "active",
+    "createdAt": "2025-07-11T21:44:09.163Z"
+  },
+  {
+    "id": "inf_7661158d-695f-4df7-be13-87f3a1df6933",
+    "ownerUserId": "usr_inf_6dc5b938-9cdb-4194-9f5c-63a14a6dc7fb",
+    "name": "Carlos Ruiz",
+    "handle": "@culinary_queen49",
+    "followers": 81879,
+    "avgViews": 32985,
+    "platforms": [
+      "instagram",
+      "youtube"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 32.595275899507676,
+      "lng": -117.00562551486718
+    },
+    "status": "active",
+    "createdAt": "2025-07-09T21:44:09.163Z"
+  },
+  {
+    "id": "inf_c9fa4c30-d4e7-4635-9d42-bcd9e7d2eef8",
+    "ownerUserId": "usr_inf_46a467fa-aca4-4b3d-8663-2ef1c86529dc",
+    "name": "Nicole Brown",
+    "handle": "@bite_sized50",
+    "followers": 7188,
+    "avgViews": 2923,
+    "platforms": [
+      "instagram",
+      "tiktok"
+    ],
+    "tier": "Silver",
+    "geo": {
+      "lat": 36.17366066432565,
+      "lng": -86.95993771967522
+    },
+    "status": "active",
+    "createdAt": "2025-08-12T21:44:09.163Z"
+  },
+  {
+    "id": "inf_da8de769-4bdc-41ef-9a5d-d6eb52444f37",
+    "ownerUserId": "usr_inf_71cb1d31-392b-44f2-b66e-5682c6bac352",
+    "name": "Kevin Lee",
+    "handle": "@food_fanatic51",
+    "followers": 47534,
+    "avgViews": 19974,
+    "platforms": [
+      "tiktok"
+    ],
+    "tier": "Gold",
+    "geo": {
+      "lat": 30.21051856384808,
+      "lng": -97.55483396609111
+    },
+    "status": "active",
+    "createdAt": "2025-08-12T21:44:09.163Z"
+  },
+  {
+    "id": "inf_24ebcace-26ff-4af7-8e90-bfc502ebdcc2",
+    "ownerUserId": "usr_inf_86cf262e-fead-40f1-b963-25d256892335",
+    "name": "Rachel Green",
+    "handle": "@taste_buds52",
+    "followers": 29573,
+    "avgViews": 12220,
+    "platforms": [
+      "tiktok",
+      "youtube"
+    ],
+    "tier": "Gold",
+    "geo": {
+      "lat": 32.69436492022189,
+      "lng": -116.99613522221732
+    },
+    "status": "active",
+    "createdAt": "2025-08-25T21:44:09.163Z"
+  },
+  {
+    "id": "inf_6037f09b-9045-4a6d-b808-08a1fcd8f04e",
+    "ownerUserId": "usr_inf_e4bf4e19-b29b-4e6e-bd89-f80089c643a6",
+    "name": "Tyler Wilson",
+    "handle": "@kitchen_king53",
+    "followers": 6252,
+    "avgViews": 4601,
+    "platforms": [
+      "instagram",
+      "tiktok",
+      "youtube"
+    ],
+    "tier": "Silver",
+    "geo": {
+      "lat": 25.79871408776604,
+      "lng": -80.26190216068548
+    },
+    "status": "active",
+    "createdAt": "2025-08-26T21:44:09.163Z"
+  },
+  {
+    "id": "inf_96f8fbd7-f045-4043-879a-0ace8ed62bac",
+    "ownerUserId": "usr_inf_ee5f5451-758e-4059-ad10-921fa0976ef3",
+    "name": "Megan Clark",
+    "handle": "@food_lover54",
+    "followers": 58341,
+    "avgViews": 32134,
+    "platforms": [
+      "instagram",
+      "youtube"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 32.83587735570668,
+      "lng": -117.29253231979091
+    },
+    "status": "active",
+    "createdAt": "2025-08-16T21:44:09.163Z"
+  },
+  {
+    "id": "inf_948a5d38-62dc-4d53-b84f-9032394c5f2d",
+    "ownerUserId": "usr_inf_b93a8b5d-74d3-4b74-ba9c-e423a0017023",
+    "name": "Jordan Taylor",
+    "handle": "@gourmet_guru55",
+    "followers": 21900,
+    "avgViews": 16581,
+    "platforms": [
+      "tiktok",
+      "youtube"
+    ],
+    "tier": "Gold",
+    "geo": {
+      "lat": 30.164590508930356,
+      "lng": -97.59538952357522
+    },
+    "status": "active",
+    "createdAt": "2025-08-23T21:44:09.163Z"
+  },
+  {
+    "id": "inf_b932aa9e-9ed4-4e72-a40a-196ba8b91db7",
+    "ownerUserId": "usr_inf_096a27d4-ac13-4925-b835-1b1ef08e06e7",
+    "name": "Ashley Garcia",
+    "handle": "@recipe_rebel56",
+    "followers": 45586,
+    "avgViews": 16705,
+    "platforms": [
+      "instagram",
+      "youtube"
+    ],
+    "tier": "Gold",
+    "geo": {
+      "lat": 25.62725459872782,
+      "lng": -80.08881259287335
+    },
+    "status": "active",
+    "createdAt": "2025-08-02T21:44:09.163Z"
+  },
+  {
+    "id": "inf_f7ceb14a-6596-40cb-b16e-8b4344ad2411",
+    "ownerUserId": "usr_inf_e1fdc696-8608-4789-9f03-bf054684c02c",
+    "name": "Brandon Miller",
+    "handle": "@food_fighter57",
+    "followers": 94710,
+    "avgViews": 28767,
+    "platforms": [
+      "instagram",
+      "tiktok",
+      "youtube"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 36.17743152401288,
+      "lng": -86.67400237653146
+    },
+    "status": "active",
+    "createdAt": "2025-08-03T21:44:09.163Z"
+  },
+  {
+    "id": "inf_aa42bd61-ce5e-42aa-a6b0-19b4efef329b",
+    "ownerUserId": "usr_inf_14b1e353-fb65-427e-ab6a-57fcdcdd7fa1",
+    "name": "Samantha Jones",
+    "handle": "@taste_maker58",
+    "followers": 95316,
+    "avgViews": 34373,
+    "platforms": [
+      "youtube"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 32.66110677837999,
+      "lng": -117.18063400275133
+    },
+    "status": "active",
+    "createdAt": "2025-08-24T21:44:09.163Z"
+  },
+  {
+    "id": "inf_6b94e4e0-a047-4705-b29d-1dad28f6f870",
+    "ownerUserId": "usr_inf_f8422cdf-b26e-4ae3-8908-5d5267c15829",
+    "name": "Chris Anderson",
+    "handle": "@dish_destroyer59",
+    "followers": 66086,
+    "avgViews": 31880,
+    "platforms": [
+      "tiktok"
+    ],
+    "tier": "Platinum",
+    "geo": {
+      "lat": 30.3873837945234,
+      "lng": -97.94155955294795
+    },
+    "status": "active",
+    "createdAt": "2025-07-26T21:44:09.163Z"
+  }
+]

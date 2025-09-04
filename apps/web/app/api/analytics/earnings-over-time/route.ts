@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build query for redemptions
-    let redemptionsQuery = adminDb.collection('redemptions')
+    let redemptionsQuery = adminDb!.collection('redemptions')
       .where('redeemedAt', '>=', startDate)
       .where('redeemedAt', '<=', endDate);
 

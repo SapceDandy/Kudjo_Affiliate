@@ -29,10 +29,10 @@ export async function GET(request: NextRequest) {
 
 
     // Get influencer tier - create if doesn't exist for demo
-    let influencerDoc = await adminDb.collection('influencers').doc(infId).get();
+    let influencerDoc = await adminDb!.collection('influencers').doc(infId).get();
     if (!influencerDoc.exists) {
       // Create demo influencer
-      await adminDb.collection('influencers').doc(infId).set({
+      await adminDb!.collection('influencers').doc(infId).set({
         id: infId,
         tier: 'M',
         name: 'Demo Influencer',
@@ -40,14 +40,14 @@ export async function GET(request: NextRequest) {
         followers: 25000,
         createdAt: new Date()
       });
-      influencerDoc = await adminDb.collection('influencers').doc(infId).get();
+      influencerDoc = await adminDb!.collection('influencers').doc(infId).get();
     }
 
     const influencerData = influencerDoc.data()!;
     const influencerTier = influencerData.tier || 'S';
 
     // Query offers - get all offers first, then filter
-    const offersRef = adminDb.collection('offers');
+    const offersRef = adminDb!.collection('offers');
     
     // Get all offers and filter in memory to avoid index issues
     let offersSnapshot = await offersRef.get();
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
 
     // Get business details first for filtering
     const businessMap = new Map();
-    const allBusinessDocs = await adminDb.collection('businesses').get();
+    const allBusinessDocs = await adminDb!.collection('businesses').get();
     allBusinessDocs.forEach((doc: QueryDocumentSnapshot) => {
       const data = doc.data();
       businessMap.set(doc.id, {
@@ -146,7 +146,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Sort by expiration date (soonest to expire first)
-    allEligibleOffers.sort((a, b) => {
+    allEligibleOffers.sort((a: any, b: any) => {
       const aEndDate = a.endAt ? (a.endAt.toDate ? a.endAt.toDate() : new Date(a.endAt)) : new Date('2099-12-31');
       const bEndDate = b.endAt ? (b.endAt.toDate ? b.endAt.toDate() : new Date(b.endAt)) : new Date('2099-12-31');
       return aEndDate.getTime() - bEndDate.getTime();
@@ -157,33 +157,29 @@ export async function GET(request: NextRequest) {
     
     // Collect business IDs for the paginated offers
     for (const offer of paginatedOffers) {
-      businessIds.add(offer.bizId);
-      eligibleOffers.push(offer);
+      businessIds.add((offer as any).bizId);
     }
 
-    // Format response
-    const campaigns = paginatedOffers.map(offer => {
-      return {
-        id: offer.id,
-        title: offer.title || 'Untitled Campaign',
-        description: offer.description,
-        businessName: offer.businessName,
-        businessId: offer.bizId,
-        splitPct: offer.splitPct || 20,
-        discountType: offer.discountType || 'percentage',
-        userDiscountPct: offer.userDiscountPct,
-        userDiscountCents: offer.userDiscountCents,
-        minSpendCents: offer.minSpendCents,
-        eligibleTiers: offer.eligibleTiers || ['S', 'M', 'L', 'XL', 'Huge'],
-        maxInfluencers: offer.maxInfluencers,
-        currentInfluencers: 0, // Would need to calculate
-        maxRedemptions: offer.maxRedemptions,
-        currentRedemptions: 0, // Would need to calculate
-        endAt: offer.endAt?.toDate ? offer.endAt.toDate() : offer.endAt ? new Date(offer.endAt) : null,
-        status: 'active',
-        createdAt: offer.createdAt?.toDate ? offer.createdAt.toDate() : offer.createdAt ? new Date(offer.createdAt) : new Date(),
-      };
-    });
+    const campaigns = paginatedOffers.map((offer: any) => ({
+      id: offer.id,
+      title: offer.title,
+      description: offer.description,
+      businessName: offer.businessName,
+      businessId: offer.bizId,
+      splitPct: offer.splitPct,
+      discountType: offer.discountType,
+      userDiscountPct: offer.userDiscountPct,
+      userDiscountCents: offer.userDiscountCents,
+      minSpendCents: offer.minSpendCents,
+      eligibleTiers: offer.eligibleTiers,
+      maxInfluencers: offer.maxInfluencers,
+      currentInfluencers: 0, // Will be calculated if needed
+      maxRedemptions: offer.maxRedemptions,
+      currentRedemptions: 0, // Will be calculated if needed
+      endAt: offer.endAt ? (offer.endAt.toDate ? offer.endAt.toDate() : new Date(offer.endAt)) : null,
+      status: 'active',
+      createdAt: offer.createdAt ? (offer.createdAt.toDate ? offer.createdAt.toDate() : new Date(offer.createdAt)) : new Date(),
+    }));
 
     const hasMore = allEligibleOffers.length > offset + limit;
     const nextOffset = hasMore ? offset + limit : null;

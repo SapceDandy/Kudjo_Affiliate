@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build query based on filters
-    let influencersRef = adminDb.collection('influencers');
+    let influencersRef = adminDb!.collection('influencers');
     let query: any = influencersRef;
 
     // Apply filters

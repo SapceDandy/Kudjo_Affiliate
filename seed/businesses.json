@@ -1,0 +1,1352 @@
+[
+  {
+    "id": "biz_4aaf27ed-decf-4547-b505-3ab750b6f08f",
+    "ownerUserId": "usr_biz_27e2427a-5b38-4f07-a29a-d52c2a2e5f8d",
+    "name": "Mario's Italian Bistro",
+    "address": "8996 Oak Ave, Nashville, TN",
+    "cuisine": "Mexican",
+    "avgTicket": 41,
+    "defaultSplitPct": 19,
+    "geo": {
+      "lat": 36.08682714773282,
+      "lng": -86.70052429826299
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-05-29T21:44:09.162Z"
+  },
+  {
+    "id": "biz_81bd7d45-f1c2-4c07-b253-47cc8f201f9c",
+    "ownerUserId": "usr_biz_fab0cec8-21fa-4aa2-8913-535408d4968e",
+    "name": "Taco Fiesta",
+    "address": "7694 Oak Ave, Nashville, TN",
+    "cuisine": "Asian",
+    "avgTicket": 26,
+    "defaultSplitPct": 10,
+    "geo": {
+      "lat": 36.082688849949996,
+      "lng": -86.87678408579764
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-08-26T21:44:09.162Z"
+  },
+  {
+    "id": "biz_c45e340c-a26e-4fe9-9ebb-4685bbf54ddb",
+    "ownerUserId": "usr_biz_b59077bf-5b72-48d0-a39f-1b4cee6a4741",
+    "name": "The Burger Joint",
+    "address": "9914 Market St, Nashville, TN",
+    "cuisine": "Vegan",
+    "avgTicket": 40,
+    "defaultSplitPct": 18,
+    "geo": {
+      "lat": 36.08513070545117,
+      "lng": -86.87880552949674
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-05-23T21:44:09.162Z"
+  },
+  {
+    "id": "biz_249bda32-1e3e-4593-9000-84f9086a0a6f",
+    "ownerUserId": "usr_biz_ee58de09-1cb2-42b5-944c-b55bccfcb47b",
+    "name": "Sushi Master",
+    "address": "8821 Market St, San Diego, CA",
+    "cuisine": "Seafood",
+    "avgTicket": 16,
+    "defaultSplitPct": 24,
+    "geo": {
+      "lat": 32.64320644130843,
+      "lng": -117.11372359401973
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-07-20T21:44:09.162Z"
+  },
+  {
+    "id": "biz_840b8e7e-5045-4357-91bc-b1f0b2dcf246",
+    "ownerUserId": "usr_biz_88a3bf8e-4f24-46d5-ab4e-e2c5c429d296",
+    "name": "Coffee Corner",
+    "address": "249 Main St, Nashville, TN",
+    "cuisine": "Asian",
+    "avgTicket": 52,
+    "defaultSplitPct": 23,
+    "geo": {
+      "lat": 36.18982430719168,
+      "lng": -86.79648563793604
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-09-01T21:44:09.162Z"
+  },
+  {
+    "id": "biz_735dfbaf-89db-484b-96c7-2179b55e61c7",
+    "ownerUserId": "usr_biz_71af879e-f13e-4f16-ac2a-87a98565403c",
+    "name": "Pizza Palace",
+    "address": "7750 Oak Ave, Nashville, TN",
+    "cuisine": "Mediterranean",
+    "avgTicket": 45,
+    "defaultSplitPct": 22,
+    "geo": {
+      "lat": 36.22918010274283,
+      "lng": -86.82067472284287
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-06-14T21:44:09.162Z"
+  },
+  {
+    "id": "biz_e5eb797c-5167-4005-ad55-a52b694ec408",
+    "ownerUserId": "usr_biz_b1720cf1-1da3-4ffc-b3f8-40ab6a082e2b",
+    "name": "BBQ Smokehouse",
+    "address": "5108 Main St, Nashville, TN",
+    "cuisine": "BBQ",
+    "avgTicket": 24,
+    "defaultSplitPct": 19,
+    "geo": {
+      "lat": 36.12647844591044,
+      "lng": -86.69738960067636
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-08-29T21:44:09.162Z"
+  },
+  {
+    "id": "biz_9a120546-e9d0-4b31-adf9-54d16380e034",
+    "ownerUserId": "usr_biz_918ce9a6-8543-4191-bcc9-8eef1275acad",
+    "name": "Green Garden Cafe",
+    "address": "133 Market St, Miami, FL",
+    "cuisine": "Steakhouse",
+    "avgTicket": 33,
+    "defaultSplitPct": 20,
+    "geo": {
+      "lat": 25.733711654954448,
+      "lng": -80.28648398211399
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-08-01T21:44:09.163Z"
+  },
+  {
+    "id": "biz_5046bc34-029c-4eee-b200-38e65da6a617",
+    "ownerUserId": "usr_biz_da66d7dd-7191-4084-90d6-b60fa42d172e",
+    "name": "Ocean View Seafood",
+    "address": "7498 Main St, Portland, OR",
+    "cuisine": "Italian",
+    "avgTicket": 52,
+    "defaultSplitPct": 16,
+    "geo": {
+      "lat": 45.528382243775475,
+      "lng": -122.60246661244948
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-07-21T21:44:09.163Z"
+  },
+  {
+    "id": "biz_247a55fc-0a2b-4b4c-80ea-26c20d2d0037",
+    "ownerUserId": "usr_biz_63d3c799-fc0c-4ca1-bc93-28b689cfa6fb",
+    "name": "Prime Steakhouse",
+    "address": "7484 Main St, Miami, FL",
+    "cuisine": "Vegan",
+    "avgTicket": 49,
+    "defaultSplitPct": 13,
+    "geo": {
+      "lat": 25.71523975142526,
+      "lng": -80.21334125918482
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-06-19T21:44:09.163Z"
+  },
+  {
+    "id": "biz_e0033dc2-4131-4467-aff1-079e2d08b75a",
+    "ownerUserId": "usr_biz_564cf314-afad-468c-9fac-7f9d4179ecd2",
+    "name": "Noodle House",
+    "address": "7479 Elm Dr, Portland, OR",
+    "cuisine": "Mediterranean",
+    "avgTicket": 16,
+    "defaultSplitPct": 21,
+    "geo": {
+      "lat": 45.555989700799856,
+      "lng": -122.75263941684288
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-05-28T21:44:09.163Z"
+  },
+  {
+    "id": "biz_ffffca55-695e-4de8-8de9-fb67d1e929cd",
+    "ownerUserId": "usr_biz_a72857b2-6954-4e86-a223-b7abbbbb6d9e",
+    "name": "Breakfast Club",
+    "address": "4367 Oak Ave, Miami, FL",
+    "cuisine": "Seafood",
+    "avgTicket": 43,
+    "defaultSplitPct": 18,
+    "geo": {
+      "lat": 25.683108365315796,
+      "lng": -80.2913604138445
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-08-29T21:44:09.163Z"
+  },
+  {
+    "id": "biz_91d9e6a9-23b6-4800-820c-ad254ced0bcf",
+    "ownerUserId": "usr_biz_311a4ab5-b38f-467e-8d30-0becc1b90a7a",
+    "name": "Sandwich Shop",
+    "address": "515 Market St, Miami, FL",
+    "cuisine": "American",
+    "avgTicket": 70,
+    "defaultSplitPct": 17,
+    "geo": {
+      "lat": 25.79867271835331,
+      "lng": -80.19615386508397
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-05-16T21:44:09.163Z"
+  },
+  {
+    "id": "biz_5f357b45-32c9-4d58-82dc-44ec5239822a",
+    "ownerUserId": "usr_biz_347e938a-4c5e-4d47-80ae-5285a0e460a9",
+    "name": "Ice Cream Parlor",
+    "address": "2785 Pine St, Austin, TX",
+    "cuisine": "American",
+    "avgTicket": 63,
+    "defaultSplitPct": 24,
+    "geo": {
+      "lat": 30.275903199659957,
+      "lng": -97.73273351486364
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-07-16T21:44:09.163Z"
+  },
+  {
+    "id": "biz_68decd2f-ce75-46bf-9df6-867b70c3492d",
+    "ownerUserId": "usr_biz_fbfea265-9013-40ce-90f9-076e5c5b100a",
+    "name": "Wine & Dine",
+    "address": "7136 Elm Dr, Miami, FL",
+    "cuisine": "Asian",
+    "avgTicket": 41,
+    "defaultSplitPct": 23,
+    "geo": {
+      "lat": 25.793989721393686,
+      "lng": -80.23297521725917
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-07-11T21:44:09.163Z"
+  },
+  {
+    "id": "biz_96af6ce1-2fa6-412f-90e0-b8d26fbd7668",
+    "ownerUserId": "usr_biz_c420d4e1-1d6a-4f96-8fca-acc1239faca1",
+    "name": "Street Tacos",
+    "address": "3358 Oak Ave, Nashville, TN",
+    "cuisine": "Asian",
+    "avgTicket": 49,
+    "defaultSplitPct": 15,
+    "geo": {
+      "lat": 36.177739928516765,
+      "lng": -86.74634062363447
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-07-28T21:44:09.163Z"
+  },
+  {
+    "id": "biz_990d6a59-012d-4f1c-be1c-77bbc6ca64b6",
+    "ownerUserId": "usr_biz_36d909c6-4d80-4094-8ccf-8e51eae1e25c",
+    "name": "Pasta Paradise",
+    "address": "5334 Pine St, Nashville, TN",
+    "cuisine": "Vegan",
+    "avgTicket": 36,
+    "defaultSplitPct": 20,
+    "geo": {
+      "lat": 36.084882057670036,
+      "lng": -86.84158676973802
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-07-30T21:44:09.163Z"
+  },
+  {
+    "id": "biz_f4ec0ef9-d4d0-433e-b72c-3ab9d447deda",
+    "ownerUserId": "usr_biz_39477f93-22d5-466e-b0fa-d01bcff1a867",
+    "name": "Grill & Chill",
+    "address": "8518 Market St, Miami, FL",
+    "cuisine": "Steakhouse",
+    "avgTicket": 50,
+    "defaultSplitPct": 25,
+    "geo": {
+      "lat": 25.856534341881446,
+      "lng": -80.16421712431377
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-05-16T21:44:09.163Z"
+  },
+  {
+    "id": "biz_b64e1e84-0f7a-43c2-a193-9f08cf15f413",
+    "ownerUserId": "usr_biz_7b47dc1d-230d-4cbf-81ee-a633a340f096",
+    "name": "Fresh Salads",
+    "address": "9762 Market St, San Diego, CA",
+    "cuisine": "American",
+    "avgTicket": 39,
+    "defaultSplitPct": 20,
+    "geo": {
+      "lat": 32.72967839353256,
+      "lng": -117.09467534590723
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-06-23T21:44:09.163Z"
+  },
+  {
+    "id": "biz_53cd1a12-a480-4803-ac38-aadafec8be06",
+    "ownerUserId": "usr_biz_ee61e60d-5ba6-48ef-bc51-d6fb814e2f08",
+    "name": "Donut Delight",
+    "address": "6387 Elm Dr, San Diego, CA",
+    "cuisine": "Seafood",
+    "avgTicket": 47,
+    "defaultSplitPct": 17,
+    "geo": {
+      "lat": 32.73214223681575,
+      "lng": -117.15358179455741
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-05-09T21:44:09.163Z"
+  },
+  {
+    "id": "biz_d06b4d3e-5fc6-40b2-a98d-189f11514130",
+    "ownerUserId": "usr_biz_01f9b37a-b3b8-4450-8d7b-98c1bc30a05a",
+    "name": "Curry House",
+    "address": "4404 Pine St, Austin, TX",
+    "cuisine": "Mexican",
+    "avgTicket": 40,
+    "defaultSplitPct": 17,
+    "geo": {
+      "lat": 30.2776346896679,
+      "lng": -97.69165131655123
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-05-07T21:44:09.163Z"
+  },
+  {
+    "id": "biz_6a8d00bf-d11f-461e-a522-8c51e93b88b1",
+    "ownerUserId": "usr_biz_99060dbb-4de0-4a8c-a911-4e10094fa847",
+    "name": "Smoothie Bar",
+    "address": "2238 Elm Dr, Austin, TX",
+    "cuisine": "Asian",
+    "avgTicket": 48,
+    "defaultSplitPct": 14,
+    "geo": {
+      "lat": 30.34517835222549,
+      "lng": -97.72922136314847
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-08-20T21:44:09.163Z"
+  },
+  {
+    "id": "biz_51f326fe-cd35-4042-a61f-0925991e987c",
+    "ownerUserId": "usr_biz_c841e2e7-2c59-412b-9e74-b1be26bd21dd",
+    "name": "Bakery Bliss",
+    "address": "9119 Oak Ave, Austin, TX",
+    "cuisine": "Cafe",
+    "avgTicket": 25,
+    "defaultSplitPct": 20,
+    "geo": {
+      "lat": 30.322983302859008,
+      "lng": -97.70047412410104
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-06-01T21:44:09.163Z"
+  },
+  {
+    "id": "biz_d0116e5f-eba7-43c5-b604-a8d3271abfa0",
+    "ownerUserId": "usr_biz_c5e37d2e-3fba-46ca-b642-deb00250e0d6",
+    "name": "Ramen Station",
+    "address": "3792 Oak Ave, Nashville, TN",
+    "cuisine": "BBQ",
+    "avgTicket": 67,
+    "defaultSplitPct": 19,
+    "geo": {
+      "lat": 36.17288886031313,
+      "lng": -86.70542915053727
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-06-04T21:44:09.163Z"
+  },
+  {
+    "id": "biz_1921f987-62bc-4f01-8259-fcf884384987",
+    "ownerUserId": "usr_biz_76efb208-7066-42b2-82b2-cb2ba130d256",
+    "name": "Chicken Coop",
+    "address": "2005 Market St, Nashville, TN",
+    "cuisine": "Asian",
+    "avgTicket": 41,
+    "defaultSplitPct": 17,
+    "geo": {
+      "lat": 36.23228524600292,
+      "lng": -86.8425047505324
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-08-26T21:44:09.163Z"
+  },
+  {
+    "id": "biz_74f2fd5c-c809-4ac6-9c25-f4fce21e2be7",
+    "ownerUserId": "usr_biz_66637cde-6834-4762-96e3-faa79031cd0b",
+    "name": "Veggie Delights",
+    "address": "4927 Oak Ave, Portland, OR",
+    "cuisine": "Mediterranean",
+    "avgTicket": 64,
+    "defaultSplitPct": 24,
+    "geo": {
+      "lat": 45.57766096831127,
+      "lng": -122.72814092446401
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-06-11T21:44:09.163Z"
+  },
+  {
+    "id": "biz_42d6d28b-761c-47ab-9876-050c4656f27f",
+    "ownerUserId": "usr_biz_62722a80-4f89-496c-a6a2-3d3f177189e0",
+    "name": "Craft Brewery",
+    "address": "1801 Oak Ave, Miami, FL",
+    "cuisine": "Mexican",
+    "avgTicket": 45,
+    "defaultSplitPct": 19,
+    "geo": {
+      "lat": 25.858180944530705,
+      "lng": -80.17243032667571
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-08-13T21:44:09.163Z"
+  },
+  {
+    "id": "biz_939370c2-5c0d-4d79-8cb5-18d605a336bc",
+    "ownerUserId": "usr_biz_9732b7e1-80c3-470d-9443-2cdd7f31c454",
+    "name": "Juice Junction",
+    "address": "5376 Elm Dr, Nashville, TN",
+    "cuisine": "Asian",
+    "avgTicket": 38,
+    "defaultSplitPct": 13,
+    "geo": {
+      "lat": 36.13486906637199,
+      "lng": -86.83563091139435
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-05-08T21:44:09.163Z"
+  },
+  {
+    "id": "biz_acbda934-0e11-49ca-be74-a8d5f83c93f1",
+    "ownerUserId": "usr_biz_e30bceca-e4a6-4817-87b9-9789cfca2a7d",
+    "name": "Waffle Works",
+    "address": "994 Elm Dr, Nashville, TN",
+    "cuisine": "Asian",
+    "avgTicket": 29,
+    "defaultSplitPct": 14,
+    "geo": {
+      "lat": 36.120409174994364,
+      "lng": -86.70680494824774
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-06-12T21:44:09.163Z"
+  },
+  {
+    "id": "biz_8cd0c066-520f-4c82-96a9-76a7323938af",
+    "ownerUserId": "usr_biz_c1b841ca-c666-4538-87fb-b4396c26eb91",
+    "name": "Soup Kitchen",
+    "address": "9981 Pine St, Austin, TX",
+    "cuisine": "Steakhouse",
+    "avgTicket": 59,
+    "defaultSplitPct": 13,
+    "geo": {
+      "lat": 30.26723850554219,
+      "lng": -97.8256813376789
+    },
+    "hours": {
+      "mon": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "tue": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "wed": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "thu": {
+        "open": "09:00",
+        "close": "21:00"
+      },
+      "fri": {
+        "open": "09:00",
+        "close": "22:00"
+      },
+      "sat": {
+        "open": "10:00",
+        "close": "22:00"
+      },
+      "sun": {
+        "open": "10:00",
+        "close": "20:00"
+      }
+    },
+    "status": "active",
+    "createdAt": "2025-06-29T21:44:09.163Z"
+  }
+]

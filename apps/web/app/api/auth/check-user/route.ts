@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     if (role === 'business') {
       // Check businesses collection for email
-      const businessesSnapshot = await adminDb.collection('businesses')
+      const businessesSnapshot = await adminDb!.collection('businesses')
         .where('email', '==', email)
         .limit(1)
         .get();
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       }
     } else if (role === 'influencer') {
       // Check influencers collection for email
-      const influencersSnapshot = await adminDb.collection('influencers')
+      const influencersSnapshot = await adminDb!.collection('influencers')
         .where('email', '==', email)
         .limit(1)
         .get();
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     // Also check users collection as fallback
     if (!userExists) {
-      const usersSnapshot = await adminDb.collection('users')
+      const usersSnapshot = await adminDb!.collection('users')
         .where('email', '==', email)
         .where('role', '==', role)
         .limit(1)

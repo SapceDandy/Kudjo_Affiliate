@@ -8,11 +8,13 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from '@/components/ui/input';
 import { toast } from 'react-hot-toast';
 import { useRealtimeOffers } from '@/lib/hooks/use-realtime-offers';
+import { ComplianceNotice } from '@/components/legal/compliance-notice';
 import { useRealtimeRequests } from '@/lib/hooks/use-realtime-requests';
 import { useBusinessPrograms } from '@/lib/hooks/use-business-programs';
 import { CreateOfferDialog } from '@/components/business/create-offer-dialog';
 import { MessageCenter } from '@/components/messaging/message-center';
-import { FindInfluencersDialog } from '@/components/business/find-influencers-dialog';
+import { FindInfluencersDialog } from '@/components/find-influencers-dialog';
+import { useAuth } from '@/lib/auth';
 import { 
   DollarSign, 
   MessageSquare, 
@@ -26,7 +28,16 @@ import {
 type DiscountType = 'percentage' | 'dollar' | 'bogo' | 'student' | 'happy_hour' | 'free_appetizer' | 'first_time';
 
 export default function BusinessHome() {
-  const user = { uid: 'demo_business_user' };
+  const { user, loading: authLoading } = useAuth();
+
+  useEffect(() => {
+    if (!authLoading && (!user || user.role !== 'business')) {
+      window.location.href = '/auth/signin';
+    }
+  }, [user, authLoading]);
+
+  if (authLoading) return <div className="flex justify-center items-center h-screen"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div></div>;
+  if (!user || user.role !== 'business') return null;
   const { offers: realOffers, loading: offersLoading, pauseOffer, resumeOffer, createOffer } = useRealtimeOffers();
   
   // Debug logging
@@ -126,6 +137,18 @@ export default function BusinessHome() {
     <>
       <div className="space-y-6">
         {/* Header + CTA */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Business Dashboard</h1>
+          <p className="text-muted-foreground">
+            Manage your offers, track performance, and connect with influencers.
+          </p>
+        </div>
+
+        {/* Legal Compliance Notice */}
+        <div className="mb-6">
+          <ComplianceNotice type="legal" />
+        </div>
+
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-semibold flex items-center gap-2">
@@ -445,10 +468,9 @@ export default function BusinessHome() {
 
       <FindInfluencersDialog 
         open={findDialogOpen} 
-        onOpenChange={setFindDialogOpen}
-        businessId={user.uid}
-        onRequestSent={() => {
-          // Refresh requests data - real-time hook will update automatically
+        onClose={() => setFindDialogOpen(false)}
+        onSendRequest={() => {
+          // Dialog will close automatically, no need to refresh as useRealtimeRequests handles updates
         }}
       />
 

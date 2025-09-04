@@ -113,6 +113,17 @@ export async function POST(request: NextRequest) {
     const business = bizDoc.data();
     const influencer = infDoc.data();
 
+    // Check if assignment already exists for this offer+influencer pair
+    const assignmentId = `off_${offerId}__inf_${infId}`;
+    const assignmentDoc = await dbRef.collection('offer_assignments').doc(assignmentId).get();
+    
+    if (!assignmentDoc.exists && !override) {
+      return NextResponse.json(
+        { error: 'No active assignment found for this offer and influencer' },
+        { status: 400 }
+      );
+    }
+    
     // Enforce cooldown: one promotion per (bizId, infId) per cooldownDays unless override allowed
     const cooldownDays = Number(business?.cooldownDays ?? 30);
     const allowMultiple = Boolean(business?.allowMultiplePromos);
@@ -120,11 +131,10 @@ export async function POST(request: NextRequest) {
     cutoff.setDate(cutoff.getDate() - cooldownDays);
     if (!allowMultiple && !override) {
       try {
-        // Fetch most recent coupon for this biz+inf pair and check date window
+        // Fetch most recent coupon for this assignment and check date window
         const recentSnap = await dbRef
           .collection('coupons')
-          .where('bizId', '==', bizId)
-          .where('infId', '==', infId)
+          .where('assignmentId', '==', assignmentId)
           .orderBy('createdAt', 'desc')
           .limit(1)
           .get();
@@ -197,55 +207,78 @@ export async function POST(request: NextRequest) {
       deadlineAt = addDays(new Date(), 7).toISOString();
     }
 
-    // Create affiliate link if needed
-    let linkId: string | undefined;
+    // Create affiliate link if needed (using v2 schema)
+    let linkToken: string | undefined;
     if (type === 'AFFILIATE') {
-      linkId = makeDocumentId();
+      linkToken = makeDocumentId(8);
       
       const affiliateLink = {
-        bizId,
-        infId,
-        offerId,
-        shortCode: makeDocumentId(8),
-        token: makeDocumentId(8),
-        url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/a/${makeDocumentId(8)}`,
-        qrUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/qr/${linkId}`,
+        id: linkToken,
+        assignmentId,
+        urlToken: linkToken,
         status: 'active',
-        createdAt: now,
+        destinationUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/offer/${offerId}?i=${infId}`,
+        qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/r/${linkToken}`,
+        utm: {
+          source: 'kudjo',
+          medium: 'affiliate',
+          campaign: offerId
+        },
+        businessId: bizId,
+        influencerId: infId,
+        offerId,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
       };
 
-      await dbRef.collection('affiliateLinks').doc(linkId).set(affiliateLink);
+      await dbRef.collection('affiliate_links').doc(linkToken).set(affiliateLink);
+      
+      // Update assignment with affiliate link reference
+      await dbRef.collection('offer_assignments').doc(assignmentId).set({
+        tracking: {
+          affiliateLinkId: linkToken
+        },
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
     }
 
-    // Create coupon document
+    // Create coupon document (v2 schema)
     const coupon = {
+      id: couponId,
       type,
-      bizId,
-      infId,
+      businessId: bizId,
+      influencerId: infId,
       offerId,
-      linkId,
+      assignmentId,
       code,
-      status: 'issued',
-      cap_cents: capCents,
-      deadlineAt,
-      createdAt: now,
-      admin: {
-        posAdded: false,
-      },
+      status: 'ACTIVE',
+      capCents,
+      deadline: deadlineAt,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      posAdded: false,
+      usageCount: 0
     };
 
-    // Save coupon to Firestore
+    // Save coupon to Firestore and update assignment tracking
     await dbRef.collection('coupons').doc(couponId).set(coupon);
+    
+    // Update assignment with coupon reference
+    await dbRef.collection('offer_assignments').doc(assignmentId).set({
+      tracking: {
+        couponId
+      },
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
 
     // Return response
     const response: CouponCreateResponse = {
       couponId,
       code,
       qrUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/qr/${couponId}`,
-      ...(type === 'AFFILIATE' && linkId ? { link: {
-        linkId,
-        url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/r/${makeDocumentId(8)}`,
-        qrUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/qr/${linkId}`,
+      ...(type === 'AFFILIATE' && linkToken ? { link: {
+        linkId: linkToken,
+        url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/r/${linkToken}`,
+        qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/r/${linkToken}`,
       } } : {}),
     };
 
@@ -253,7 +286,6 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Coupon creation error:', error);
-    
     // Handle quota exceeded errors with mock data fallback
     if (error?.code === 8 || error?.message?.includes('Quota exceeded')) {
       console.log('Quota exceeded, returning mock coupon');

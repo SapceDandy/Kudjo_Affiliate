@@ -81,7 +81,9 @@ export function FindInfluencersDialog({
       if (filters.verified) params.append('verified', 'true');
       params.append('limit', '20');
 
-      const response = await fetch(`/api/business/influencers/search?${params}`);
+      // Add businessId parameter for the correct endpoint
+      params.append('businessId', businessId);
+      const response = await fetch(`/api/business/influencers?${params}`);
       
       if (!response.ok) {
         throw new Error('Failed to search influencers');
@@ -329,7 +331,7 @@ export function FindInfluencersDialog({
                           )}
                           
                           <div className="flex gap-1 flex-wrap">
-                            {influencer.platforms.map((platform) => (
+                            {(influencer.platforms || ['instagram']).map((platform) => (
                               <Badge key={platform} variant="outline" className="text-xs">
                                 {platform === 'instagram' && <Instagram className="w-3 h-3 mr-1" />}
                                 {platform}

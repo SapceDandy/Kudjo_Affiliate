@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get current influencer data
-    const influencerRef = adminDb.collection('influencers').doc(user.uid);
+    const influencerRef = adminDb!.collection('influencers').doc(user.uid);
     const influencerDoc = await influencerRef.get();
     
     if (!influencerDoc.exists) {
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
 
     // Log tier change if applicable
     if (previousTier !== newTier) {
-      await adminDb.collection('tierUpdates').add({
+      await adminDb!.collection('tierUpdates').add({
         influencerId: user.uid,
         previousTier,
         newTier,

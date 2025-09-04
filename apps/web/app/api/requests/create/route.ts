@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     if (!bizId || !title) return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
     const id = `req_${Math.random().toString(36).slice(2, 10)}`;
     const now = new Date().toISOString();
-    await adminDb.collection('requests').doc(id).set({
+    await adminDb!.collection('requests').doc(id).set({
       id,
       bizId,
       title,

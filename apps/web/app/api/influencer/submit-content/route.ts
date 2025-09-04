@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get coupon details
-    const couponDoc = await adminDb.collection('coupons').doc(couponId).get();
+    const couponDoc = await adminDb!.collection('coupons').doc(couponId).get();
     if (!couponDoc.exists) {
       return NextResponse.json({ error: 'Coupon not found' }, { status: 404 });
     }
@@ -33,34 +33,36 @@ export async function POST(request: NextRequest) {
     const submissionId = nanoid();
     const now = new Date();
     
-    await adminDb.collection('contentSubmissions').doc(submissionId).set({
+    await adminDb!.collection('contentSubmissions').doc(submissionId).set({
       id: submissionId,
       couponId,
       infId: actualInfId,
-      offerId: couponData.offerId,
-      bizId: couponData.bizId,
+      offerId: couponData?.offerId,
+      bizId: couponData?.bizId,
       contentType, // 'photo', 'video', 'story', 'reel'
       contentUrl,
       caption: caption || '',
       platform: platform || 'instagram',
       status: 'submitted',
+      lastContentSubmittedAt: now,
+      contentSubmissionCount: couponData?.contentSubmissionCount ? couponData.contentSubmissionCount + 1 : 1,
       submittedAt: now,
       createdAt: now,
       updatedAt: now
     });
 
     // Update coupon with content submission
-    await adminDb.collection('coupons').doc(couponId).update({
+    await adminDb!.collection('coupons').doc(couponId).update({
       contentSubmitted: true,
       contentSubmittedAt: now,
       updatedAt: now
     });
 
     // Check if this completes the campaign requirements
-    const isContentCoupon = couponData.type === 'CONTENT_MEAL';
+    const isContentCoupon = couponData?.type === 'CONTENT_MEAL';
     if (isContentCoupon) {
       // Mark content requirement as fulfilled
-      await adminDb.collection('coupons').doc(couponId).update({
+      await adminDb!.collection('coupons').doc(couponId).update({
         'admin.contentSubmitted': true,
         'admin.contentSubmittedAt': now
       });

@@ -64,10 +64,24 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const limit = Math.min(Number(searchParams.get('limit') || '20'), 100);
     const offset = Math.max(Number(searchParams.get('offset') || '0'), 0);
+    const influencerId = searchParams.get('influencerId'); // Get influencer ID for tier-based splits
     // Optional location for client-side filtering
     const lat = searchParams.get('lat');
     const lng = searchParams.get('lng');
     const mock = searchParams.get('mock') === '1';
+
+    // Get influencer tier if influencerId is provided
+    let influencerTier = null;
+    if (influencerId) {
+      try {
+        const influencerDoc = await dbRef.collection('influencers').doc(influencerId).get();
+        if (influencerDoc.exists) {
+          influencerTier = influencerDoc.data()?.tier;
+        }
+      } catch (error) {
+        console.error('Error fetching influencer tier:', error);
+      }
+    }
 
     // Fetch active offers
     const baseQuery = dbRef
@@ -80,14 +94,30 @@ export async function GET(request: NextRequest) {
         const o = d.data() || {};
         const biz = await dbRef.collection('businesses').doc(o.bizId).get();
         const b = biz.exists ? biz.data() : {};
+        
+        // Calculate tier-based split percentage
+        let splitPct = o.splitPct || 0;
+        if (influencerTier && b?.tierDefaults?.[influencerTier]) {
+          splitPct = b.tierDefaults[influencerTier].defaultSplit;
+        } else if (influencerTier) {
+          // Fallback defaults if business hasn't set tier defaults
+          const defaultSplits: Record<string, number> = {
+            Bronze: 15,
+            Silver: 20,
+            Gold: 25,
+            Platinum: 30
+          };
+          splitPct = defaultSplits[influencerTier] || 20;
+        }
+        
         return {
           id: d.id,
           title: o.title,
           description: o.description || '',
-          splitPct: o.splitPct || 0,
+          splitPct,
           userDiscountPct: o.userDiscountPct || 20,
           userDiscountCents: o.userDiscountCents || null,
-          payoutPerRedemptionCents: o.payoutPerRedemptionCents || Math.round((o.splitPct || 0) * 10),
+          payoutPerRedemptionCents: o.payoutPerRedemptionCents || Math.round(splitPct * 10),
           bizId: o.bizId,
           businessName: b?.name || o.bizId,
           businessGeo: b?.geo || null,
@@ -102,14 +132,29 @@ export async function GET(request: NextRequest) {
       const bizSnap = await dbRef.collection('businesses').get();
       offers = bizSnap.docs.slice(0, limit).map((b: any) => {
         const bd = b.data() || {};
+        
+        // Calculate tier-based split for mock offers
+        let mockSplitPct = 20;
+        if (influencerTier && bd?.tierDefaults?.[influencerTier]) {
+          mockSplitPct = bd.tierDefaults[influencerTier].defaultSplit;
+        } else if (influencerTier) {
+          const defaultSplits: Record<string, number> = {
+            Bronze: 15,
+            Silver: 20,
+            Gold: 25,
+            Platinum: 30
+          };
+          mockSplitPct = defaultSplits[influencerTier] || 20;
+        }
+        
         return {
           id: `mock_offer_${b.id}`,
           title: `${bd.name || 'Local Business'} Special`,
           description: 'Try our demo campaign!',
-          splitPct: 20,
+          splitPct: mockSplitPct,
           userDiscountPct: 20,
           userDiscountCents: null,
-          payoutPerRedemptionCents: 200,
+          payoutPerRedemptionCents: mockSplitPct * 10,
           bizId: b.id,
           businessName: bd.name || b.id,
           businessGeo: bd.geo || null,

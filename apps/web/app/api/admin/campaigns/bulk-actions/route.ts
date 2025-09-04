@@ -33,12 +33,12 @@ export async function POST(request: NextRequest) {
 
     // Process campaigns in batches to avoid Firestore limits
     for (let i = 0; i < campaignIds.length; i += 10) {
-      const batch = adminDb.batch();
+      const batch = adminDb!.batch();
       const batchCampaignIds = campaignIds.slice(i, i + 10);
 
       for (const campaignId of batchCampaignIds) {
         try {
-          const campaignRef = adminDb.collection('offers').doc(campaignId);
+          const campaignRef = adminDb!.collection('offers').doc(campaignId);
           const campaignDoc = await campaignRef.get();
 
           if (!campaignDoc.exists) {
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
           }
 
           // Log the bulk action
-          const logRef = adminDb.collection('campaignLogs').doc();
+          const logRef = adminDb!.collection('campaignLogs').doc();
           batch.set(logRef, {
             campaignId,
             action: `bulk_${action}`,

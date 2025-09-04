@@ -27,9 +27,9 @@ export async function GET(request: Request) {
 
 		try {
 			if (adminDb) {
-				let query = adminDb.collection('users').orderBy(adminDb.collection('users').doc().id ? '__name__' : '__name__');
+				let query = adminDb!.collection('users').orderBy(adminDb!.collection('users').doc().id ? '__name__' : '__name__');
 				// Using document ID ordering for a consistent cursor without relying on createdAt type
-				query = adminDb.collection('users').orderBy('__name__');
+				query = adminDb!.collection('users').orderBy('__name__');
 				if (cursor) {
 					query = query.startAfter(cursor);
 				}
@@ -127,14 +127,14 @@ export async function POST(request: Request) {
 		}
 
 		// Create Firestore documents
-		await adminDb.collection('users').doc(businessUserId).set({
+		await adminDb!.collection('users').doc(businessUserId).set({
 			id: businessUserId,
 			email: businessEmail,
 			role: 'business',
 			status: 'active',
 			createdAt: new Date().toISOString(),
 		});
-		await adminDb.collection('businesses').doc(businessId).set({
+		await adminDb!.collection('businesses').doc(businessId).set({
 			id: businessId,
 			ownerId: businessUserId,
 			name: 'Demo Bistro',
@@ -152,14 +152,14 @@ export async function POST(request: Request) {
 		});
 
 		// Create mock influencer
-		await adminDb.collection('users').doc(influencerUserId).set({
+		await adminDb!.collection('users').doc(influencerUserId).set({
 			id: influencerUserId,
 			email: influencerEmail,
 			role: 'influencer',
 			status: 'active',
 			createdAt: new Date().toISOString(),
 		});
-		await adminDb.collection('influencers').doc(influencerId).set({
+		await adminDb!.collection('influencers').doc(influencerId).set({
 			id: influencerId,
 			ownerId: influencerUserId,
 			handle: '@demo_influencer',
@@ -170,7 +170,7 @@ export async function POST(request: Request) {
 		});
 
 		// Create one demo offer for the business
-		await adminDb.collection('offers').doc('demo_offer').set({
+		await adminDb!.collection('offers').doc('demo_offer').set({
 			id: 'demo_offer',
 			bizId: businessId,
 			title: '20% Off Any Entree',

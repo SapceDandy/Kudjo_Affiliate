@@ -77,7 +77,7 @@ export async function POST(request: Request) {
     const nowIso = new Date().toISOString();
 
     // Create/merge Firestore user doc
-    await adminDb.collection('users').doc(uid).set({
+    await adminDb!.collection('users').doc(uid).set({
       id: uid,
       email,
       displayName: displayName || userRecord.displayName || email,
@@ -88,7 +88,7 @@ export async function POST(request: Request) {
     }, { merge: true });
 
     if (role === 'business') {
-      await adminDb.collection('businesses').doc(uid).set({
+      await adminDb!.collection('businesses').doc(uid).set({
         id: uid,
         ownerId: uid,
         name: businessName,
@@ -98,7 +98,7 @@ export async function POST(request: Request) {
         updatedAt: nowIso,
       }, { merge: true });
     } else if (role === 'influencer') {
-      await adminDb.collection('influencers').doc(uid).set({
+      await adminDb!.collection('influencers').doc(uid).set({
         id: uid,
         ownerId: uid,
         handle: influencerName,

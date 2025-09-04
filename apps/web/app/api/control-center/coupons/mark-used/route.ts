@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     if (!adminDb) return NextResponse.json({ error: 'Admin DB not available' }, { status: 500 });
     const { id } = await request.json();
     if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
-    await adminDb.collection('coupons').doc(id).set({ status: 'redeemed', used: true, redeemedAt: new Date().toISOString() }, { merge: true });
+    await adminDb!.collection('coupons').doc(id).set({ status: 'redeemed', used: true, redeemedAt: new Date().toISOString() }, { merge: true });
     return NextResponse.json({ success: true });
   } catch (e) {
     return NextResponse.json({ error: 'Failed to mark used' }, { status: 500 });

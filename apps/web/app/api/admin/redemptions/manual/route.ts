@@ -63,14 +63,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify business exists
-    const businessDoc = await adminDb.collection('businesses').doc(businessId).get();
+    const businessDoc = await adminDb!.collection('businesses').doc(businessId).get();
     if (!businessDoc.exists) {
       return NextResponse.json({ error: 'Business not found' }, { status: 404 });
     }
     const businessData = businessDoc.data()!;
 
     // Verify influencer exists
-    const influencerDoc = await adminDb.collection('influencers').doc(influencerId).get();
+    const influencerDoc = await adminDb!.collection('influencers').doc(influencerId).get();
     if (!influencerDoc.exists) {
       return NextResponse.json({ error: 'Influencer not found' }, { status: 404 });
     }
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
     let splitPct = 20; // Default split
 
     try {
-      const couponQuery = await adminDb.collection('coupons')
+      const couponQuery = await adminDb!.collection('coupons')
         .where('code', '==', couponCode)
         .limit(1)
         .get();
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
 
         // Get offer details for split percentage
         if (offerId) {
-          const offerDoc = await adminDb.collection('offers').doc(offerId).get();
+          const offerDoc = await adminDb!.collection('offers').doc(offerId).get();
           if (offerDoc.exists) {
             const offerData = offerDoc.data()!;
             splitPct = offerData.splitPct || 20;
@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
     };
 
     // Add redemption
-    const redemptionRef = await adminDb.collection('redemptions').add(redemptionData);
+    const redemptionRef = await adminDb!.collection('redemptions').add(redemptionData);
 
     // Update coupon status if found
     if (couponDoc && couponData) {
@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
     // Update affiliate link if exists
     if (couponData?.linkId) {
       try {
-        const linkDoc = await adminDb.collection('affiliateLinks').doc(couponData.linkId).get();
+        const linkDoc = await adminDb!.collection('affiliateLinks').doc(couponData.linkId).get();
         if (linkDoc.exists) {
           await linkDoc.ref.update({
             conversions: (linkDoc.data()?.conversions || 0) + 1,
@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
 
     // Update business metrics
     try {
-      const metricsRef = adminDb.collection('businessMetrics').doc(businessId);
+      const metricsRef = adminDb!.collection('businessMetrics').doc(businessId);
       const metricsDoc = await metricsRef.get();
       
       if (metricsDoc.exists) {
@@ -189,7 +189,7 @@ export async function POST(request: NextRequest) {
 
     // Update influencer metrics
     try {
-      const infMetricsRef = adminDb.collection('influencerMetrics').doc(influencerId);
+      const infMetricsRef = adminDb!.collection('influencerMetrics').doc(influencerId);
       const infMetricsDoc = await infMetricsRef.get();
       
       if (infMetricsDoc.exists) {
@@ -260,7 +260,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get recent manual redemptions
-    const redemptionsQuery = adminDb.collection('redemptions')
+    const redemptionsQuery = adminDb!.collection('redemptions')
       .where('source', '==', 'manual_admin')
       .orderBy('createdAt', 'desc')
       .limit(limit);

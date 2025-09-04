@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const businessDoc = await adminDb.collection('businesses').doc(businessId).get();
+    const businessDoc = await adminDb!.collection('businesses').doc(businessId).get();
     
     if (!businessDoc.exists) {
       return NextResponse.json(
@@ -70,7 +70,7 @@ export async function PUT(request: NextRequest) {
       updatedAt: new Date()
     };
 
-    await adminDb.collection('businesses').doc(businessId).update({
+    await adminDb!.collection('businesses').doc(businessId).update({
       tierSettings,
       updatedAt: new Date()
     });

@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { firebaseCache } from '@/lib/firebase-cache';
-import { safeFirestoreQuery } from '@/lib/quota-manager';
-import { generate203MockInfluencers, shouldUseMockData } from '@/lib/mock-data';
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,52 +18,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Business ID is required' }, { status: 400 });
     }
 
-    // Use mock data if Firebase is not configured or quota exceeded
-    if (shouldUseMockData() || !adminDb) {
-      console.log('Using mock data for influencer search - Firebase not configured or quota exceeded');
-      const mockInfluencers = generate203MockInfluencers();
-      let filteredInfluencers = mockInfluencers;
-
-      // Apply filters
-      if (minFollowers > 0) {
-        filteredInfluencers = filteredInfluencers.filter(inf => inf.followers >= minFollowers);
-      }
-      if (maxFollowers < 999999999) {
-        filteredInfluencers = filteredInfluencers.filter(inf => inf.followers <= maxFollowers);
-      }
-      if (tier) {
-        filteredInfluencers = filteredInfluencers.filter(inf => inf.tier === tier);
-      }
-      if (platform && platform !== 'all') {
-        if (platform === 'both') {
-          filteredInfluencers = filteredInfluencers.filter(inf => inf.platform === 'both');
-        } else {
-          filteredInfluencers = filteredInfluencers.filter(inf => 
-            inf.platform === platform || inf.platform === 'both'
-          );
-        }
-      }
-      if (search.trim()) {
-        const searchLower = search.toLowerCase();
-        filteredInfluencers = filteredInfluencers.filter(inf => 
-          inf.displayName.toLowerCase().includes(searchLower) ||
-          inf.email.toLowerCase().includes(searchLower) ||
-          inf.bio.toLowerCase().includes(searchLower) ||
-          inf.handle.toLowerCase().includes(searchLower)
-        );
-      }
-
-      const totalCount = filteredInfluencers.length;
-      const paginatedInfluencers = filteredInfluencers.slice(offset, offset + limit);
-
-      return NextResponse.json({ 
-        influencers: paginatedInfluencers,
-        total: totalCount,
-        count: paginatedInfluencers.length,
-        offset,
-        hasMore: offset + paginatedInfluencers.length < totalCount,
-        source: 'mock_203_influencers'
-      });
+    if (!adminDb) {
+      return NextResponse.json({ error: 'Firebase not configured' }, { status: 500 });
     }
 
     // Check cache first to avoid quota usage
@@ -82,79 +36,57 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Get all influencers from Firebase (remove limit to get all 203)
+    // Get influencers that don't have active assignments with this business
     let snapshot;
-    try {
-      snapshot = await safeFirestoreQuery(
-        'business-influencers',
-        () => adminDb.collection('influencers').get()
-      ) as any;
-    } catch (error: any) {
-      // If quota exceeded or any Firebase error, fall back to mock data
-      console.log('Firebase query failed, falling back to mock data:', error.message);
-      const mockInfluencers = generate203MockInfluencers();
-      let filteredInfluencers = mockInfluencers;
-
-      // Apply same filters as above
-      if (minFollowers > 0) {
-        filteredInfluencers = filteredInfluencers.filter(inf => inf.followers >= minFollowers);
-      }
-      if (maxFollowers < 999999999) {
-        filteredInfluencers = filteredInfluencers.filter(inf => inf.followers <= maxFollowers);
-      }
-      if (tier) {
-        filteredInfluencers = filteredInfluencers.filter(inf => inf.tier === tier);
-      }
-      if (platform && platform !== 'all') {
-        if (platform === 'both') {
-          filteredInfluencers = filteredInfluencers.filter(inf => inf.platform === 'both');
-        } else {
-          filteredInfluencers = filteredInfluencers.filter(inf => 
-            inf.platform === platform || inf.platform === 'both'
-          );
-        }
-      }
-      if (search.trim()) {
-        const searchLower = search.toLowerCase();
-        filteredInfluencers = filteredInfluencers.filter(inf => 
-          inf.displayName.toLowerCase().includes(searchLower) ||
-          inf.email.toLowerCase().includes(searchLower) ||
-          inf.bio.toLowerCase().includes(searchLower) ||
-          inf.handle.toLowerCase().includes(searchLower)
-        );
-      }
-
-      const totalCount = filteredInfluencers.length;
-      const paginatedInfluencers = filteredInfluencers.slice(offset, offset + limit);
-
-      return NextResponse.json({ 
-        influencers: paginatedInfluencers,
-        total: totalCount,
-        count: paginatedInfluencers.length,
-        offset,
-        hasMore: offset + paginatedInfluencers.length < totalCount,
-        source: 'mock_fallback_203_influencers'
-      });
-    }
-    console.log(`Found ${snapshot.docs.length} influencer documents in Firestore`);
+    let assignedInfluencerIds = new Set<string>();
     
-    let allInfluencers = snapshot.docs.map((doc: any) => {
-      const data = doc.data();
-      console.log(`Processing influencer: ${doc.id}`, data);
-      return {
-        id: doc.id,
-        displayName: data.displayName || data.handle || data.name || 'Unknown',
-        email: data.email || '',
-        followers: data.followers || 0,
-        tier: data.tier || 'S',
-        platform: data.platform || 'instagram',
-        verified: data.verified || false,
-        location: data.location || '',
-        bio: data.bio || '',
-        engagementRate: data.engagementRate || 0,
-        handle: data.handle || data.displayName || 'unknown'
-      };
-    });
+    try {
+      // First get all influencers
+      snapshot = await adminDb.collection('influencers').get();
+      
+      // Get existing assignments for this business to filter out already assigned influencers
+      const assignmentsSnapshot = await adminDb.collection('offer_assignments')
+        .where('businessId', '==', businessId)
+        .where('status', '==', 'active')
+        .get();
+      
+      assignedInfluencerIds = new Set(
+        assignmentsSnapshot.docs.map(doc => doc.data().influencerId)
+      );
+      
+      console.log(`Found ${snapshot.docs.length} total influencers, ${assignedInfluencerIds.size} already assigned to business ${businessId}`);
+      
+    } catch (error: any) {
+      console.error('Firebase query failed:', error.message);
+      return NextResponse.json(
+        { error: 'Failed to fetch influencers from database', details: error.message },
+        { status: 500 }
+      );
+    }
+    
+    // Process and filter influencers (exclude those with active assignments)
+    const allInfluencers = snapshot.docs
+      .filter(doc => !assignedInfluencerIds.has(doc.id))
+      .map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          handle: data.handle || '',
+          displayName: data.name || data.displayName || '',
+          name: data.name || data.displayName || '',
+          followers: data.followers || 0,
+          avgViews: data.avgViews || 0,
+          tier: data.tier || 'Bronze',
+          platforms: data.platforms || [],
+          platform: data.platforms?.[0] || 'instagram',
+          location: data.location || '',
+          bio: data.bio || '',
+          profileImage: data.profileImage || '',
+          verified: data.verified || false,
+          createdAt: data.createdAt,
+          status: data.status || 'active'
+        };
+      });
 
     // Sort by followers descending
     allInfluencers.sort((a: any, b: any) => b.followers - a.followers);
@@ -176,20 +108,22 @@ export async function GET(request: NextRequest) {
     if (search.trim()) {
       const searchLower = search.toLowerCase();
       filteredInfluencers = filteredInfluencers.filter((inf: any) => 
-        inf.displayName.toLowerCase().includes(searchLower) ||
-        inf.email.toLowerCase().includes(searchLower) ||
-        inf.bio.toLowerCase().includes(searchLower) ||
-        inf.handle.toLowerCase().includes(searchLower)
+        (inf.displayName && inf.displayName.toLowerCase().includes(searchLower)) ||
+        (inf.email && inf.email.toLowerCase().includes(searchLower)) ||
+        (inf.bio && inf.bio.toLowerCase().includes(searchLower)) ||
+        (inf.handle && inf.handle.toLowerCase().includes(searchLower))
       );
     }
 
     // Apply platform filter
     if (platform && platform !== 'all') {
       if (platform === 'both') {
-        filteredInfluencers = filteredInfluencers.filter((inf: any) => inf.platform === 'both');
+        filteredInfluencers = filteredInfluencers.filter((inf: any) => 
+          inf.platforms && inf.platforms.length >= 2
+        );
       } else {
         filteredInfluencers = filteredInfluencers.filter((inf: any) => 
-          inf.platform === platform || inf.platform === 'both'
+          inf.platforms && inf.platforms.includes(platform)
         );
       }
     }

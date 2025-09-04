@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the coupon
-    const couponRef = adminDb.collection('coupons').doc(couponId);
+    const couponRef = adminDb!.collection('coupons').doc(couponId);
     const couponDoc = await couponRef.get();
 
     if (!couponDoc.exists) {
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if content deadline has passed
-    if (coupon.type === 'CONTENT_MEAL' && UnifiedCouponService.isContentDeadlinePassed(coupon)) {
+    if (coupon.type === 'CONTENT_MEAL' && UnifiedCouponService.isContentDeadlinePassed(coupon as any)) {
       return NextResponse.json({ 
         error: 'Content submission deadline has passed' 
       }, { status: 400 });
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Create notification for admin review
-    await adminDb.collection('adminNotifications').add({
+    await adminDb!.collection('adminNotifications').add({
       type: 'post_verification_required',
       couponId,
       influencerId: coupon.influencerId,
@@ -139,7 +139,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Get the coupon
-    const couponRef = adminDb.collection('coupons').doc(couponId);
+    const couponRef = adminDb!.collection('coupons').doc(couponId);
     const couponDoc = await couponRef.get();
 
     if (!couponDoc.exists) {
@@ -187,13 +187,13 @@ export async function PUT(request: NextRequest) {
     }
 
     // Update admin notification
-    await adminDb.collection('adminNotifications')
+    await adminDb!.collection('adminNotifications')
       .where('couponId', '==', couponId)
       .where('type', '==', 'post_verification_required')
       .where('status', '==', 'pending')
       .get()
       .then((snapshot: any) => {
-        const batch = adminDb.batch();
+        const batch = adminDb!.batch();
         snapshot.docs.forEach((doc: any) => {
           batch.update(doc.ref, {
             status: 'completed',
@@ -206,7 +206,7 @@ export async function PUT(request: NextRequest) {
       });
 
     // Create notification for influencer
-    await adminDb.collection('influencerNotifications').add({
+    await adminDb!.collection('influencerNotifications').add({
       type: 'post_verification_result',
       influencerId: coupon.influencerId,
       couponId,
@@ -259,7 +259,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Database not available' }, { status: 500 });
     }
 
-    let query = adminDb.collection('coupons');
+    let query = adminDb!.collection('coupons');
 
     // Apply filters based on role and parameters
     if (couponId) {
@@ -269,7 +269,7 @@ export async function GET(request: NextRequest) {
       }
 
       const coupon = couponDoc.data()!;
-      const complianceStatus = UnifiedCouponService.getComplianceStatus(coupon);
+      const complianceStatus = UnifiedCouponService.getComplianceStatus(coupon as any);
 
       return NextResponse.json({
         coupon: {
@@ -282,13 +282,13 @@ export async function GET(request: NextRequest) {
 
     // Filter by role
     if (authResult.user.role === 'influencer') {
-      query = query.where('influencerId', '==', authResult.user.influencerId);
+      query = query.where('influencerId', '==', authResult.user.influencerId) as any;
     } else if (authResult.user.role === 'business' && businessId) {
-      query = query.where('businessId', '==', businessId);
+      query = query.where('businessId', '==', businessId) as any;
     } else if (influencerId) {
-      query = query.where('influencerId', '==', influencerId);
+      query = query.where('influencerId', '==', influencerId) as any;
     } else if (businessId) {
-      query = query.where('businessId', '==', businessId);
+      query = query.where('businessId', '==', businessId) as any;
     }
 
     // Get coupons that require post verification

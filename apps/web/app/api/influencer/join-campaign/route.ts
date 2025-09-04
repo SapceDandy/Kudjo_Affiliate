@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     const { offerId, infId, legalAccepted } = parsed;
 
     // Verify offer exists and is active
-    const offerDoc = await adminDb.collection('offers').doc(offerId).get();
+    const offerDoc = await adminDb!.collection('offers').doc(offerId).get();
     if (!offerDoc.exists) {
       return NextResponse.json({ error: 'Offer not found' }, { status: 404 });
     }
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify influencer exists and get tier
-    const influencerDoc = await adminDb.collection('influencers').doc(infId).get();
+    const influencerDoc = await adminDb!.collection('influencers').doc(infId).get();
     if (!influencerDoc.exists) {
       return NextResponse.json({ error: 'Influencer not found' }, { status: 404 });
     }
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
     // Check if offer has reached max influencers
     if (offerData.maxInfluencers) {
-      const currentInfluencers = await adminDb.collection('coupons')
+      const currentInfluencers = await adminDb!.collection('coupons')
         .where('offerId', '==', offerId)
         .where('type', '==', 'AFFILIATE')
         .where('status', '==', 'active')
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     const cooldownDate = new Date();
     cooldownDate.setDate(cooldownDate.getDate() - cooldownDays);
 
-    const recentCoupons = await adminDb.collection('coupons')
+    const recentCoupons = await adminDb!.collection('coupons')
       .where('infId', '==', infId)
       .where('bizId', '==', offerData.bizId)
       .where('createdAt', '>', cooldownDate)
@@ -81,10 +81,10 @@ export async function POST(request: NextRequest) {
     const contentQR = await QRCode.toDataURL(contentCode);
 
     // Create both coupons in a batch
-    const batch = adminDb.batch();
+    const batch = adminDb!.batch();
 
     // Affiliate coupon
-    const affiliateCouponRef = adminDb.collection('coupons').doc();
+    const affiliateCouponRef = adminDb!.collection('coupons').doc();
     batch.set(affiliateCouponRef, {
       type: 'AFFILIATE',
       bizId: offerData.bizId,
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Content meal coupon
-    const contentCouponRef = adminDb.collection('coupons').doc();
+    const contentCouponRef = adminDb!.collection('coupons').doc();
     batch.set(contentCouponRef, {
       type: 'CONTENT_MEAL',
       bizId: offerData.bizId,
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Create affiliate link record
-    const affiliateLinkRef = adminDb.collection('affiliateLinks').doc(linkId);
+    const affiliateLinkRef = adminDb!.collection('affiliateLinks').doc(linkId);
     batch.set(affiliateLinkRef, {
       linkId,
       infId,

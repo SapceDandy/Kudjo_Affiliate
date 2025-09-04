@@ -28,7 +28,7 @@ export async function POST(
     }
 
     // Get the original campaign
-    const originalCampaignDoc = await adminDb.collection('offers').doc(campaignId).get();
+    const originalCampaignDoc = await adminDb!.collection('offers').doc(campaignId).get();
 
     if (!originalCampaignDoc.exists) {
       return NextResponse.json({ error: 'Original campaign not found' }, { status: 404 });
@@ -65,11 +65,11 @@ export async function POST(
     };
 
     // Create the new campaign
-    const newCampaignRef = await adminDb.collection('offers').add(newCampaignData);
+    const newCampaignRef = await adminDb!.collection('offers').add(newCampaignData);
     const newCampaignId = newCampaignRef.id;
 
     // Log the duplication action
-    await adminDb.collection('campaignLogs').add({
+    await adminDb!.collection('campaignLogs').add({
       campaignId: newCampaignId,
       action: 'duplicate',
       originalCampaignId: campaignId,

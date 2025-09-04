@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Copy, ExternalLink, QrCode } from 'lucide-react';
-import { useDemoAuth } from '@/lib/demo-auth';
+import { useAuth } from '@/lib/auth';
 import { useAnalytics } from '@/components/analytics';
 import toast from 'react-hot-toast';
 
@@ -35,7 +35,7 @@ export function ClaimOfferDialog({ offerId, open, onClose }: ClaimOfferDialogPro
   const [error, setError] = useState('');
   const [campaignData, setCampaignData] = useState<CampaignData | null>(null);
   const [legalAccepted, setLegalAccepted] = useState(false);
-  const { user } = useDemoAuth();
+  const { user } = useAuth();
   const { trackCampaignStart, trackCouponClaim } = useAnalytics();
 
   const handleStartCampaign = async () => {

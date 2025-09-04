@@ -33,6 +33,14 @@ export function BasicInfoForm({ onNext, initialData }: OnboardingStepProps) {
     }
   };
 
+  const validateWebsite = (url: string): boolean => {
+    if (!url.trim()) return true; // Optional field
+    
+    // Allow various formats: domain.com, www.domain.com, https://domain.com, etc.
+    const domainPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i;
+    return domainPattern.test(url.trim());
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
@@ -47,6 +55,10 @@ export function BasicInfoForm({ onNext, initialData }: OnboardingStepProps) {
     
     if (!overview.trim()) {
       newErrors.overview = 'Business overview is required';
+    }
+    
+    if (website.trim() && !validateWebsite(website)) {
+      newErrors.website = 'Please enter a valid website URL (e.g., domain.com, www.domain.com, https://domain.com)';
     }
     
     if (defaultSplitPct < 1 || defaultSplitPct > 100) {
@@ -116,13 +128,13 @@ export function BasicInfoForm({ onNext, initialData }: OnboardingStepProps) {
         <Label htmlFor="website">Business Website (Optional)</Label>
         <Input
           id="website"
-          type="url"
+          type="text"
           value={website}
           onChange={(e) => {
             setWebsite(e.target.value);
             setErrors((prev) => ({ ...prev, website: '' }));
           }}
-          placeholder="https://www.yourbusiness.com"
+          placeholder="yourbusiness.com or https://www.yourbusiness.com"
           className={errors.website ? 'border-red-500' : ''}
           aria-invalid={!!errors.website}
           aria-describedby={errors.website ? 'website-error' : undefined}

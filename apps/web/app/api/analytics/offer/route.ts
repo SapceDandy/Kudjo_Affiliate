@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     }
 
     // Get offer details
-    const offerDoc = await adminDb.collection('offers').doc(offerId).get();
+    const offerDoc = await adminDb!.collection('offers').doc(offerId).get();
     if (!offerDoc.exists) {
       return NextResponse.json({ error: 'Offer not found' }, { status: 404 });
     }
@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     const offerData = offerDoc.data();
 
     // Get redemptions for this offer
-    const redemptionsSnapshot = await adminDb.collection('redemptions')
+    const redemptionsSnapshot = await adminDb!.collection('redemptions')
       .where('offerId', '==', offerId)
       .get();
 
@@ -37,7 +37,7 @@ export async function GET(request: Request) {
     const totalPayout = redemptions.reduce((sum, r) => sum + (r.infEarnings || 0), 0);
 
     // Get coupon views/clicks for this offer
-    const couponsSnapshot = await adminDb.collection('coupons')
+    const couponsSnapshot = await adminDb!.collection('coupons')
       .where('offerId', '==', offerId)
       .get();
 

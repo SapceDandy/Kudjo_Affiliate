@@ -26,7 +26,7 @@ export async function POST(
     }
 
     // Get the campaign
-    const campaignRef = adminDb.collection('offers').doc(campaignId);
+    const campaignRef = adminDb!.collection('offers').doc(campaignId);
     const campaignDoc = await campaignRef.get();
 
     if (!campaignDoc.exists) {
@@ -49,7 +49,7 @@ export async function POST(
     });
 
     // Log the action
-    await adminDb.collection('campaignLogs').add({
+    await adminDb!.collection('campaignLogs').add({
       campaignId,
       action: 'pause',
       reason: reason || 'Manual pause',

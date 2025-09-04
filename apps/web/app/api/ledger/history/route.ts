@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build query
-    let query = adminDb.collection('ledgerEntries')
+    let query = adminDb!.collection('ledgerEntries')
       .where('influencerId', '==', influencerId);
 
     if (type) {

@@ -10,8 +10,8 @@ async function enrichCouponNames(coupons: any[]) {
 		const uniqueBizIds = Array.from(new Set(coupons.map(c => c.bizId).filter(Boolean)));
 		const uniqueInfIds = Array.from(new Set(coupons.map(c => c.infId).filter(Boolean)));
 
-		const bizSnapshots = await Promise.all(uniqueBizIds.map(id => adminDb.collection('businesses').doc(id).get()));
-		const infSnapshots = await Promise.all(uniqueInfIds.map(id => adminDb.collection('users').doc(id).get()));
+		const bizSnapshots = await Promise.all(uniqueBizIds.map(id => adminDb!.collection('businesses').doc(id).get()));
+		const infSnapshots = await Promise.all(uniqueInfIds.map(id => adminDb!.collection('users').doc(id).get()));
 
 		const bizIdToName: Record<string, string> = {};
 		bizSnapshots.forEach(s => { if (s.exists) bizIdToName[s.id] = s.data()?.name || s.data()?.displayName || s.data()?.title || s.id; });
@@ -55,7 +55,7 @@ export async function GET(request: Request) {
 		console.log('Coupons list API called with', { limit, cursor });
 		try {
 			if (adminDb) {
-				let query = adminDb.collection('coupons').orderBy('__name__');
+				let query = adminDb!.collection('coupons').orderBy('__name__');
 				if (cursor) {
 					query = query.startAfter(cursor);
 				}

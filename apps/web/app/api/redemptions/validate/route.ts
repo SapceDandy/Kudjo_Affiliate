@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get coupon details for response
-    const couponSnapshot = await adminDb.collection('coupons')
+    const couponSnapshot = await adminDb!.collection('coupons')
       .where('code', '==', validatedData.couponCode)
       .limit(1)
       .get();
@@ -201,7 +201,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Get coupon
-    const couponSnapshot = await adminDb.collection('coupons')
+    const couponSnapshot = await adminDb!.collection('coupons')
       .where('code', '==', couponCode)
       .limit(1)
       .get();
@@ -255,8 +255,8 @@ export async function PUT(request: NextRequest) {
     };
 
     // Use transaction to ensure consistency
-    const redemptionRef = adminDb.collection('redemptions').doc();
-    const batch = adminDb.batch();
+    const redemptionRef = adminDb!.collection('redemptions').doc();
+    const batch = adminDb!.batch();
 
     // Add redemption
     batch.set(redemptionRef, redemptionData);
@@ -269,18 +269,18 @@ export async function PUT(request: NextRequest) {
     });
 
     // Update campaign stats
-    const campaignRef = adminDb.collection('offers').doc(coupon.offerId);
+    const campaignRef = adminDb!.collection('offers').doc(coupon.offerId);
     batch.update(campaignRef, {
-      totalRedemptions: adminDb.FieldValue.increment(1),
-      totalRevenue: adminDb.FieldValue.increment(amountCents),
+      totalRedemptions: (1),
+      totalRevenue: (amountCents),
       updatedAt: now
     });
 
     // Update influencer earnings
-    const influencerRef = adminDb.collection('influencers').doc(coupon.influencerId);
+    const influencerRef = adminDb!.collection('influencers').doc(coupon.influencerId);
     batch.update(influencerRef, {
-      totalEarnings: adminDb.FieldValue.increment(influencerEarningsCents),
-      totalRedemptions: adminDb.FieldValue.increment(1),
+      totalEarnings: (influencerEarningsCents),
+      totalRedemptions: (1),
       updatedAt: now
     });
 

@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Database not available' }, { status: 500 });
     }
 
-    const payoutRef = adminDb.collection('payouts').doc(payoutId);
+    const payoutRef = adminDb!.collection('payouts').doc(payoutId);
     const payoutDoc = await payoutRef.get();
 
     if (!payoutDoc.exists) {
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
 
         // Reverse the payout ledger entry
         const balance = await payoutSystem.calculateInfluencerBalance(payout.influencerId);
-        await adminDb.collection('ledgerEntries').add({
+        await adminDb!.collection('ledgerEntries').add({
           influencerId: payout.influencerId,
           type: 'adjustment',
           amountCents: payout.amountCents, // Positive to restore balance

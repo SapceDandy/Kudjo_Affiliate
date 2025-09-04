@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useDemoAuth } from '@/lib/demo-auth';
+import { useAuth } from '@/lib/auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function SignUpPage() {
@@ -14,7 +14,7 @@ export default function SignUpPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'business'>('business');
-  const { switchUser } = useDemoAuth();
+  const { signUp, signInWithGoogle } = useAuth();
   const router = useRouter();
 
   // Pre-fill email and role from URL params if redirected from sign-in
@@ -51,9 +51,10 @@ export default function SignUpPage() {
     }
     
     try {
-      // Demo signup - switch user based on role
-      switchUser(activeTab);
-      router.push('/business/onboard');
+      const role = await signUp(email, password, activeTab);
+      if (role === 'business') {
+        router.push('/business/onboard');
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to create account');
     } finally {
@@ -66,7 +67,7 @@ export default function SignUpPage() {
     setError('');
     
     try {
-      switchUser('business');
+      const userRole = await signInWithGoogle(role);
       
       // Redirect based on role
       router.replace('/business/onboard');

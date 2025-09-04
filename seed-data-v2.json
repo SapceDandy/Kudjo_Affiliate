@@ -1,0 +1,383 @@
+{
+  "businesses": {
+    "biz_1": {
+      "id": "biz_1",
+      "name": "Mario's Italian Bistro",
+      "address": "123 Main St, Downtown",
+      "phone": "555-123-4567",
+      "cuisine": "Italian",
+      "posIntegrated": true,
+      "createdAt": "2025-08-18T09:00:00.000Z",
+      "ownerId": "user_biz_1",
+      "status": "active",
+      "defaultSplitPct": 15,
+      "couponSettings": {
+        "defaultDiscountPct": 20
+      }
+    },
+    "biz_2": {
+      "id": "biz_2", 
+      "name": "Taco Express",
+      "address": "456 Oak Ave, Midtown",
+      "phone": "555-234-5678",
+      "cuisine": "Mexican",
+      "posIntegrated": false,
+      "createdAt": "2025-08-18T09:00:00.000Z",
+      "ownerId": "user_biz_2",
+      "status": "active",
+      "defaultSplitPct": 12,
+      "couponSettings": {
+        "defaultDiscountPct": 15
+      }
+    },
+    "biz_3": {
+      "id": "biz_3",
+      "name": "Burger Palace",
+      "address": "789 Pine St, Uptown",
+      "phone": "555-345-6789",
+      "cuisine": "American",
+      "posIntegrated": true,
+      "createdAt": "2025-08-18T09:00:00.000Z",
+      "ownerId": "user_biz_3",
+      "status": "active",
+      "defaultSplitPct": 18,
+      "couponSettings": {
+        "defaultDiscountPct": 25
+      }
+    }
+  },
+  "influencers": {
+    "inf_1": {
+      "id": "inf_1",
+      "handle": "foodie_explorer",
+      "name": "Sarah Johnson",
+      "followers": 25000,
+      "avgViews": 12000,
+      "tier": "Silver",
+      "createdAt": "2025-08-18T09:00:00.000Z",
+      "ownerId": "user_inf_1",
+      "status": "active",
+      "platforms": ["instagram", "tiktok"]
+    },
+    "inf_2": {
+      "id": "inf_2",
+      "handle": "taste_tester",
+      "name": "Mike Chen",
+      "followers": 85000,
+      "avgViews": 35000,
+      "tier": "Gold",
+      "createdAt": "2025-08-18T09:00:00.000Z",
+      "ownerId": "user_inf_2",
+      "status": "active",
+      "platforms": ["instagram", "youtube"]
+    },
+    "inf_3": {
+      "id": "inf_3",
+      "handle": "chef_wannabe",
+      "name": "Emily Rodriguez",
+      "followers": 8000,
+      "avgViews": 3500,
+      "tier": "Bronze",
+      "createdAt": "2025-08-18T09:00:00.000Z",
+      "ownerId": "user_inf_3",
+      "status": "active",
+      "platforms": ["tiktok"]
+    }
+  },
+  "users": {
+    "admin_user": {
+      "id": "admin_user",
+      "email": "devon@getkudjo.com",
+      "role": "admin",
+      "createdAt": "2025-08-18T09:00:00.000Z",
+      "status": "active"
+    },
+    "user_biz_1": {
+      "id": "user_biz_1",
+      "email": "mario@italianistro.com",
+      "role": "business",
+      "createdAt": "2025-08-18T09:00:00.000Z",
+      "status": "active"
+    },
+    "user_biz_2": {
+      "id": "user_biz_2",
+      "email": "owner@tacoexpress.com",
+      "role": "business",
+      "createdAt": "2025-08-18T09:00:00.000Z",
+      "status": "active"
+    },
+    "user_inf_1": {
+      "id": "user_inf_1",
+      "email": "sarah@foodieexplorer.com",
+      "role": "influencer",
+      "createdAt": "2025-08-18T09:00:00.000Z",
+      "status": "active"
+    },
+    "user_inf_2": {
+      "id": "user_inf_2",
+      "email": "mike@tastetester.com",
+      "role": "influencer",
+      "createdAt": "2025-08-18T09:00:00.000Z",
+      "status": "active"
+    }
+  },
+  "offers": {
+    "off_1": {
+      "id": "off_1",
+      "businessId": "biz_1",
+      "title": "20% Off Italian Dinner",
+      "description": "Get 20% off any dinner entree",
+      "discountPercent": 20,
+      "maxRedemptions": 100,
+      "currentRedemptions": 5,
+      "startDate": "2025-08-18T09:00:00.000Z",
+      "endDate": "2025-09-18T09:00:00.000Z",
+      "createdAt": "2025-08-18T09:00:00.000Z",
+      "status": "active"
+    },
+    "off_2": {
+      "id": "off_2",
+      "businessId": "biz_2",
+      "title": "Free Drink with Meal",
+      "description": "Get a free drink with any meal purchase",
+      "discountPercent": 15,
+      "maxRedemptions": 50,
+      "currentRedemptions": 12,
+      "startDate": "2025-08-18T09:00:00.000Z",
+      "endDate": "2025-09-18T09:00:00.000Z",
+      "createdAt": "2025-08-18T09:00:00.000Z",
+      "status": "active"
+    },
+    "off_3": {
+      "id": "off_3",
+      "businessId": "biz_3",
+      "title": "Buy One Get One Burger",
+      "description": "Buy one burger, get second 50% off",
+      "discountPercent": 25,
+      "maxRedemptions": 75,
+      "currentRedemptions": 8,
+      "startDate": "2025-08-18T09:00:00.000Z",
+      "endDate": "2025-09-18T09:00:00.000Z",
+      "createdAt": "2025-08-18T09:00:00.000Z",
+      "status": "active"
+    }
+  },
+  "offer_assignments": {
+    "off_off_1__inf_inf_1": {
+      "id": "off_off_1__inf_inf_1",
+      "offerId": "off_1",
+      "businessId": "biz_1",
+      "influencerId": "inf_1",
+      "status": "active",
+      "terms": {
+        "splitPercent": 15,
+        "discountPercent": 20
+      },
+      "tracking": {
+        "affiliateLinkId": "3w3tp7",
+        "couponId": "AFF-MAR-FOO-ABC123"
+      },
+      "stats": {
+        "clicks": 45,
+        "conversions": 3,
+        "revenue": 12750
+      },
+      "createdAt": "2025-08-18T09:00:00.000Z",
+      "updatedAt": "2025-08-18T09:00:00.000Z"
+    },
+    "off_off_2__inf_inf_2": {
+      "id": "off_off_2__inf_inf_2",
+      "offerId": "off_2",
+      "businessId": "biz_2",
+      "influencerId": "inf_2",
+      "status": "active",
+      "terms": {
+        "splitPercent": 12,
+        "discountPercent": 15
+      },
+      "tracking": {
+        "affiliateLinkId": "7k9mp2",
+        "couponId": "CON-TAC-TAS-XYZ789"
+      },
+      "stats": {
+        "clicks": 28,
+        "conversions": 1,
+        "revenue": 2850
+      },
+      "createdAt": "2025-08-18T09:00:00.000Z",
+      "updatedAt": "2025-08-18T09:00:00.000Z"
+    }
+  },
+  "affiliate_links": {
+    "3w3tp7": {
+      "id": "3w3tp7",
+      "assignmentId": "off_off_1__inf_inf_1",
+      "urlToken": "3w3tp7",
+      "status": "active",
+      "destinationUrl": "https://kudjo.app/offer/off_1?i=inf_1",
+      "qrUrl": "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://kudjo.app/r/3w3tp7",
+      "utm": {
+        "source": "kudjo",
+        "medium": "affiliate",
+        "campaign": "italian_dinner"
+      },
+      "businessId": "biz_1",
+      "influencerId": "inf_1",
+      "offerId": "off_1",
+      "createdAt": "2025-08-18T09:00:00.000Z",
+      "updatedAt": "2025-08-18T09:00:00.000Z"
+    },
+    "7k9mp2": {
+      "id": "7k9mp2",
+      "assignmentId": "off_off_2__inf_inf_2",
+      "urlToken": "7k9mp2",
+      "status": "active",
+      "destinationUrl": "https://kudjo.app/offer/off_2?i=inf_2",
+      "qrUrl": "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://kudjo.app/r/7k9mp2",
+      "utm": {
+        "source": "kudjo",
+        "medium": "affiliate",
+        "campaign": "free_drink"
+      },
+      "businessId": "biz_2",
+      "influencerId": "inf_2",
+      "offerId": "off_2",
+      "createdAt": "2025-08-18T09:00:00.000Z",
+      "updatedAt": "2025-08-18T09:00:00.000Z"
+    }
+  },
+  "coupons": {
+    "AFF-MAR-FOO-ABC123": {
+      "id": "AFF-MAR-FOO-ABC123",
+      "type": "AFFILIATE",
+      "businessId": "biz_1",
+      "influencerId": "inf_1", 
+      "offerId": "off_1",
+      "assignmentId": "off_off_1__inf_inf_1",
+      "createdAt": "2025-08-17T09:00:00.000Z",
+      "deadline": "2025-09-16T09:00:00.000Z",
+      "status": "ACTIVE",
+      "posAdded": true,
+      "usageCount": 3,
+      "lastUsedAt": "2025-08-18T08:30:00.000Z"
+    },
+    "CON-TAC-TAS-XYZ789": {
+      "id": "CON-TAC-TAS-XYZ789",
+      "type": "CONTENT_MEAL",
+      "businessId": "biz_2",
+      "influencerId": "inf_2",
+      "offerId": "off_2",
+      "assignmentId": "off_off_2__inf_inf_2",
+      "createdAt": "2025-08-16T09:00:00.000Z",
+      "deadline": "2025-08-30T09:00:00.000Z",
+      "status": "ACTIVE",
+      "posAdded": false,
+      "usageCount": 1,
+      "lastUsedAt": "2025-08-17T14:20:00.000Z"
+    }
+  },
+  "influencerRequests": {
+    "req_1": {
+      "id": "req_1",
+      "businessId": "biz_1",
+      "influencerId": "inf_1",
+      "offerId": "off_1",
+      "status": "approved",
+      "terms": {
+        "splitPercent": 15,
+        "discountPercent": 20
+      },
+      "createdAt": "2025-08-18T09:00:00.000Z",
+      "updatedAt": "2025-08-18T09:00:00.000Z"
+    },
+    "req_2": {
+      "id": "req_2",
+      "businessId": "biz_2",
+      "influencerId": "inf_2",
+      "offerId": "off_2",
+      "status": "approved",
+      "terms": {
+        "splitPercent": 12,
+        "discountPercent": 15
+      },
+      "createdAt": "2025-08-18T09:00:00.000Z",
+      "updatedAt": "2025-08-18T09:00:00.000Z"
+    }
+  },
+  "business_metrics": {
+    "biz_1": {
+      "businessId": "biz_1",
+      "activeRequests": 0,
+      "activeAssignments": 1,
+      "issuedCoupons": 1,
+      "redeemedToday": 3,
+      "gmvCentsToday": 12750,
+      "feesCentsToday": 188,
+      "lastComputedAt": "2025-09-03T19:39:19.000Z"
+    },
+    "biz_2": {
+      "businessId": "biz_2",
+      "activeRequests": 0,
+      "activeAssignments": 1,
+      "issuedCoupons": 1,
+      "redeemedToday": 1,
+      "gmvCentsToday": 2850,
+      "feesCentsToday": 49,
+      "lastComputedAt": "2025-09-03T19:39:19.000Z"
+    }
+  },
+  "business_metrics_daily": {
+    "biz_1": {
+      "20250903": {
+        "date": "2025-09-03",
+        "businessId": "biz_1",
+        "issued": 1,
+        "redeemed": 3,
+        "gmvCents": 12750,
+        "feesCents": 188,
+        "createdAt": "2025-09-03T19:39:19.000Z",
+        "updatedAt": "2025-09-03T19:39:19.000Z"
+      }
+    },
+    "biz_2": {
+      "20250903": {
+        "date": "2025-09-03",
+        "businessId": "biz_2",
+        "issued": 1,
+        "redeemed": 1,
+        "gmvCents": 2850,
+        "feesCents": 49,
+        "createdAt": "2025-09-03T19:39:19.000Z",
+        "updatedAt": "2025-09-03T19:39:19.000Z"
+      }
+    }
+  },
+  "redemptions": {
+    "red_1": {
+      "id": "red_1",
+      "businessId": "biz_1",
+      "influencerId": "inf_1",
+      "offerId": "off_1",
+      "assignmentId": "off_off_1__inf_inf_1",
+      "couponId": "AFF-MAR-FOO-ABC123",
+      "amount": 42.50,
+      "discountAmount": 8.50,
+      "influencerEarnings": 6.38,
+      "redeemedAt": "2025-09-03T14:30:00.000Z",
+      "createdAt": "2025-09-03T14:30:00.000Z"
+    },
+    "red_2": {
+      "id": "red_2",
+      "businessId": "biz_2",
+      "influencerId": "inf_2",
+      "offerId": "off_2",
+      "assignmentId": "off_off_2__inf_inf_2",
+      "couponId": "CON-TAC-TAS-XYZ789",
+      "amount": 28.50,
+      "discountAmount": 4.28,
+      "influencerEarnings": 3.42,
+      "redeemedAt": "2025-09-03T12:15:00.000Z",
+      "createdAt": "2025-09-03T12:15:00.000Z"
+    }
+  }
+}

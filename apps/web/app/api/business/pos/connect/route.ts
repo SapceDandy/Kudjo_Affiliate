@@ -16,14 +16,14 @@ export async function POST(request: NextRequest) {
     const validatedData = ConnectPosSchema.parse(body);
 
     // Verify business exists or create demo business
-    let businessDoc = await adminDb
+    let businessDoc = await adminDb!
       .collection('businesses')
       .doc(validatedData.businessId)
       .get();
 
     if (!businessDoc.exists) {
       // Create demo business for onboarding flow
-      await adminDb.collection('businesses').doc(validatedData.businessId).set({
+      await adminDb!.collection('businesses').doc(validatedData.businessId).set({
         id: validatedData.businessId,
         name: 'Demo Business',
         status: 'pending_approval',
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
         posProvider: null,
         posStatus: 'not_connected'
       });
-      businessDoc = await adminDb.collection('businesses').doc(validatedData.businessId).get();
+      businessDoc = await adminDb!.collection('businesses').doc(validatedData.businessId).get();
     }
 
     const businessId = validatedData.businessId;
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       updateData.manualModeEnabled = true;
     }
 
-    await adminDb.collection('businesses').doc(businessId).update(updateData);
+    await adminDb!.collection('businesses').doc(businessId).update(updateData);
 
     return NextResponse.json({
       success: true,

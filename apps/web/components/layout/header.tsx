@@ -3,10 +3,10 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { OptimizedButton } from '@/components/optimized-button';
-import { useDemoAuth } from '@/lib/demo-auth';
+import { useAuth } from '@/lib/auth';
 
 export function Header() {
-  const { user, signOut } = useDemoAuth();
+  const { user, signOut } = useAuth();
 
   const getPrimaryLink = () => {
     if (!user) return null;

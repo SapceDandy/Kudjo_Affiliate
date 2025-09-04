@@ -14,7 +14,7 @@ export async function GET(request: NextRequest, { params }: { params: { conversa
     }
 
     // Get messages for this conversation
-    const messagesQuery = adminDb.collection('messages')
+    const messagesQuery = adminDb!.collection('messages')
       .where('conversationId', '==', conversationId)
       .orderBy('timestamp', 'asc');
 

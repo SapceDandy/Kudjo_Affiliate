@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if conversation already exists
-    const existingConversationQuery = adminDb.collection('conversations')
+    const existingConversationQuery = adminDb!.collection('conversations')
       .where('businessId', '==', businessId)
       .where('influencerId', '==', influencerId);
 
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       unreadCount_influencer: 0
     };
 
-    const docRef = await adminDb.collection('conversations').add(conversationData);
+    const docRef = await adminDb!.collection('conversations').add(conversationData);
 
     return NextResponse.json({ 
       conversationId: docRef.id,

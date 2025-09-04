@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get campaign data
-    const campaignDoc = await adminDb.collection('offers').doc(campaignId).get();
+    const campaignDoc = await adminDb!.collection('offers').doc(campaignId).get();
     if (!campaignDoc.exists) {
       return NextResponse.json(
         { error: { code: 'CAMPAIGN_NOT_FOUND', message: 'Campaign not found' } },
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
     const health = await analyzeCampaignHealth(campaignId, campaignData);
 
     // Update health record
-    await adminDb.collection('campaignHealth').doc(campaignId).set({
+    await adminDb!.collection('campaignHealth').doc(campaignId).set({
       offerId: campaignId,
       bizId: user.uid,
       healthScore: health.score,

@@ -32,8 +32,8 @@ export async function GET(request: NextRequest) {
 
     // Get influencer and campaign data
     const [influencerDoc, campaignDoc] = await Promise.all([
-      adminDb.collection('influencers').doc(influencerId).get(),
-      adminDb.collection('offers').doc(campaignId).get()
+      adminDb!.collection('influencers').doc(influencerId).get(),
+      adminDb!.collection('offers').doc(campaignId).get()
     ]);
 
     if (!influencerDoc.exists) {
@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if already joined
-    const existingCouponQuery = await adminDb.collection('coupons')
+    const existingCouponQuery = await adminDb!.collection('coupons')
       .where('offerId', '==', campaignId)
       .where('influencerId', '==', influencerId)
       .where('type', '==', 'AFFILIATE')
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
     const cooldownHours = 24;
     const cooldownDate = new Date(now.getTime() - (cooldownHours * 60 * 60 * 1000));
     
-    const recentCouponsQuery = await adminDb.collection('coupons')
+    const recentCouponsQuery = await adminDb!.collection('coupons')
       .where('influencerId', '==', influencerId)
       .where('createdAt', '>=', cooldownDate)
       .get();

@@ -23,7 +23,6 @@ export function CreateOfferDialog({ open, onClose, onOfferCreated }: CreateOffer
     discountType: 'percentage' as 'percentage' | 'dollar',
     userDiscountPct: 15,
     userDiscountCents: 500,
-    splitPct: 20,
     minSpendCents: 0,
     terms: ''
   });
@@ -49,7 +48,6 @@ export function CreateOfferDialog({ open, onClose, onOfferCreated }: CreateOffer
           discountType: formData.discountType,
           userDiscountPct: formData.discountType === 'percentage' ? formData.userDiscountPct : undefined,
           userDiscountCents: formData.discountType === 'dollar' ? formData.userDiscountCents : undefined,
-          splitPct: formData.splitPct,
           minSpendCents: formData.minSpendCents,
           terms: formData.terms
         }),
@@ -71,7 +69,6 @@ export function CreateOfferDialog({ open, onClose, onOfferCreated }: CreateOffer
         discountType: 'percentage',
         userDiscountPct: 15,
         userDiscountCents: 500,
-        splitPct: 20,
         minSpendCents: 0,
         terms: ''
       });
@@ -188,23 +185,13 @@ export function CreateOfferDialog({ open, onClose, onOfferCreated }: CreateOffer
             </div>
           </div>
 
-          {/* Commission Settings */}
+          {/* Note about commission */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium">Influencer Commission</h3>
-            
-            <div>
-              <Label htmlFor="splitPct">Commission Percentage</Label>
-              <Input
-                id="splitPct"
-                type="number"
-                value={formData.splitPct}
-                onChange={(e) => setFormData(prev => ({ ...prev, splitPct: Number(e.target.value) }))}
-                min={10}
-                max={60}
-                className="mt-1"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Influencer gets {formData.splitPct}% of each sale they generate
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 className="text-sm font-medium text-blue-800 mb-2">Commission Structure</h3>
+              <p className="text-sm text-blue-700">
+                Commission percentages are automatically calculated based on each influencer's tier when they view this offer. 
+                You can set custom splits when sending direct collaboration requests.
               </p>
             </div>
           </div>

@@ -1,0 +1,17 @@
+{
+  "timestamp": "2025-09-02T23:15:11.819Z",
+  "recommendations": [
+    "Enable Next.js SWC minification",
+    "Use dynamic imports for large components",
+    "Optimize images with WebP format",
+    "Remove unused dependencies",
+    "Enable compression and caching headers",
+    "Consider lazy loading for non-critical components"
+  ],
+  "thresholds": {
+    "bundleSize": "2MB",
+    "pageLoadTime": "3 seconds",
+    "apiResponseTime": "1 second",
+    "imageSize": "500KB"
+  }
+}

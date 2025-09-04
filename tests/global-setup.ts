@@ -5,9 +5,9 @@ async function globalSetup(config: FullConfig) {
   console.log('🚀 Starting Firebase emulators...');
   
   // Start Firebase emulators in background
-  execSync('firebase emulators:start --only auth,firestore,functions --detach', {
+  execSync('firebase emulators:start --only auth,firestore,functions', {
     cwd: process.cwd(),
-    stdio: 'inherit'
+    stdio: 'pipe'
   });
 
   // Wait for emulators to be ready

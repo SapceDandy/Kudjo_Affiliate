@@ -3,11 +3,11 @@
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { initGA, pageview, analytics, GA_TRACKING_ID } from '@/lib/gtag';
-import { useDemoAuth } from '@/lib/demo-auth';
+import { useAuth } from '@/lib/auth';
 
 export function Analytics() {
   const pathname = usePathname();
-  const { user } = useDemoAuth();
+  const { user } = useAuth();
 
   // Initialize Google Analytics on mount
   useEffect(() => {
@@ -74,7 +74,7 @@ export function withAnalytics<T extends Record<string, any>>(
 
 // Hook for manual event tracking
 export function useAnalytics() {
-  const { user } = useDemoAuth();
+  const { user } = useAuth();
 
   return {
     trackEvent: (eventData: Parameters<typeof analytics.buttonClick>[0]) => {

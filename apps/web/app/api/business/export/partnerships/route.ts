@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get redemptions for this business
-    let redemptionsQuery = adminDb.collection('redemptions')
+    let redemptionsQuery = adminDb!.collection('redemptions')
       .where('businessId', '==', businessId);
 
     if (startDate) {
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
     
     for (let i = 0; i < influencerIdsArray.length; i += 30) {
       const batch = influencerIdsArray.slice(i, i + 30);
-      const influencersSnapshot = await adminDb.collection('influencers')
+      const influencersSnapshot = await adminDb!.collection('influencers')
         .where('__name__', 'in', batch)
         .get();
 

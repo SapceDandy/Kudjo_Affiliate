@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Query influencers based on status with limit to avoid quota
-    let query = adminDb.collection('influencers').limit(20);
+    let query = adminDb!.collection('influencers').limit(20);
     
     if (status !== 'all') {
       query = query.where('status', '==', status);
@@ -106,27 +106,18 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    // Get admin stats
-    const statsPromises = [
-      adminDb.collection('influencers').limit(10).get(),
-      adminDb.collection('influencers').where('status', '==', 'pending').limit(10).get(),
-      adminDb.collection('influencers')
-        .where('status', '==', 'approved')
-        .where('reviewedAt', '>=', new Date(Date.now() - 24 * 60 * 60 * 1000))
-        .limit(10).get(),
-      adminDb.collection('influencers')
-        .where('status', '==', 'rejected')
-        .where('reviewedAt', '>=', new Date(Date.now() - 24 * 60 * 60 * 1000))
-        .limit(10).get(),
-    ];
-
-    const [totalSnapshot, pendingSnapshot, approvedTodaySnapshot, rejectedTodaySnapshot] = await Promise.all(statsPromises);
+    // Get stats for different statuses
+    const [pending, approved, rejected] = await Promise.all([
+      adminDb!.collection('influencers').where('status', '==', 'pending').get().then(s => s.size),
+      adminDb!.collection('influencers').where('status', '==', 'approved').get().then(s => s.size),
+      adminDb!.collection('influencers').where('status', '==', 'rejected').get().then(s => s.size)
+    ]);
 
     const stats = {
-      totalInfluencers: totalSnapshot.size,
-      pendingReviews: pendingSnapshot.size,
-      approvedToday: approvedTodaySnapshot.size,
-      rejectedToday: rejectedTodaySnapshot.size,
+      totalInfluencers: influencers.length,
+      pendingReviews: pending,
+      approvedToday: approved,
+      rejectedToday: rejected,
       averageReviewTime: 24, // Mock average review time
     };
 
@@ -213,55 +204,50 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { influencerIds, action, reason, notes } = BulkInfluencerActionSchema.parse(body);
 
-    const batch = adminDb.batch();
+    const batch = adminDb!.batch();
     const now = new Date();
-    const adminId = 'admin'; // In real implementation, get from auth
 
-    // Update each influencer
     for (const influencerId of influencerIds) {
-      const influencerRef = adminDb.collection('influencers').doc(influencerId);
+      const influencerRef = adminDb!.collection('influencers').doc(influencerId);
       
       batch.update(influencerRef, {
         status: action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'info_requested',
         reviewedAt: now,
-        reviewedBy: adminId,
+        reviewedBy: 'admin',
         reviewNotes: notes || reason || '',
         updatedAt: now,
       });
 
       // Log the review action
-      const reviewLogRef = adminDb.collection('influencerReviews').doc();
+      const reviewLogRef = adminDb!.collection('influencerReviews').doc();
       batch.set(reviewLogRef, {
         influencerId,
         action,
-        reason: reason || '',
-        notes: notes || '',
-        reviewedBy: adminId,
-        reviewedAt: now,
-        createdAt: now,
+        reviewedAt: new Date(),
+        reviewedBy: 'admin'
       });
     }
 
+    // Commit the batch
     await batch.commit();
 
     return NextResponse.json({
       success: true,
-      message: `Successfully ${action}d ${influencerIds.length} influencer${influencerIds.length === 1 ? '' : 's'}`,
-      processedCount: influencerIds.length,
+      message: `Influencer ${action}d successfully`
     });
 
   } catch (error) {
-    console.error('Bulk influencer action error:', error);
+    console.error('Error processing review action:', error);
     
-    if (error instanceof z.ZodError) {
+    if (!adminDb) {
       return NextResponse.json(
-        { error: { code: 'VALIDATION_ERROR', message: 'Invalid request data', details: error.errors } },
-        { status: 400 }
+        { error: 'Database connection failed' },
+        { status: 500 }
       );
     }
-
+    
     return NextResponse.json(
-      { error: { code: 'INTERNAL_ERROR', message: 'Failed to process influencer actions' } },
+      { error: 'Failed to process review action' },
       { status: 500 }
     );
   }
@@ -279,7 +265,7 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { influencerId, action, reason, notes } = InfluencerReviewSchema.parse(body);
 
-    const influencerRef = adminDb.collection('influencers').doc(influencerId);
+    const influencerRef = adminDb!.collection('influencers').doc(influencerId);
     const influencerDoc = await influencerRef.get();
 
     if (!influencerDoc.exists) {
@@ -302,7 +288,7 @@ export async function PUT(request: NextRequest) {
     });
 
     // Log the review action
-    await adminDb.collection('influencerReviews').add({
+    await adminDb!.collection('influencerReviews').add({
       influencerId,
       action,
       reason: reason || '',

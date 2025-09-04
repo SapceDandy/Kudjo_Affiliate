@@ -285,7 +285,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                 />
               ) : (
                 <span className="text-4xl text-gray-600">
-                  {user.displayName.charAt(0)}
+                  {user.displayName?.charAt(0) || 'U'}
                 </span>
               )}
             </div>

@@ -59,7 +59,7 @@ export async function PATCH(
       updatedAt: new Date()
     };
 
-    await adminDb.collection('offers').doc(offerId).update(updateData);
+    await adminDb!.collection('offers').doc(offerId).update(updateData);
     
     return NextResponse.json({ 
       success: true,

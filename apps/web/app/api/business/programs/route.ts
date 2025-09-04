@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
     }
 
     console.log('Querying Firebase for redemptions...');
-    const redemptionsRef = adminDb.collection('redemptions');
+    const redemptionsRef = adminDb!.collection('redemptions');
     const redemptionsQuery = redemptionsRef
       .where('bizId', '==', businessId);
 
@@ -171,10 +171,10 @@ export async function POST(request: NextRequest) {
 
     if (action === 'payout') {
       // Create payout records for selected programs
-      const batch = adminDb.batch();
+      const batch = adminDb!.batch();
       
       for (const programId of programIds) {
-        const payoutRef = adminDb.collection('payouts').doc();
+        const payoutRef = adminDb!.collection('payouts').doc();
         batch.set(payoutRef, {
           bizId: businessId,
           programId,

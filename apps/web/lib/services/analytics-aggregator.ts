@@ -77,7 +77,7 @@ export class AnalyticsAggregator {
     if (!adminDb) throw new Error('Database not available');
 
     // Get redemptions in time range
-    const redemptionsSnapshot = await adminDb.collection('redemptions')
+    const redemptionsSnapshot = await adminDb!.collection('redemptions')
       .where('redeemedAt', '>=', timeRange.start)
       .where('redeemedAt', '<=', timeRange.end)
       .get();
@@ -103,7 +103,7 @@ export class AnalyticsAggregator {
     const businessIdsArray = Array.from(businessIds);
     for (let i = 0; i < businessIdsArray.length; i += 30) {
       const batch = businessIdsArray.slice(i, i + 30);
-      const businessesSnapshot = await adminDb.collection('businesses')
+      const businessesSnapshot = await adminDb!.collection('businesses')
         .where('__name__', 'in', batch)
         .get();
       
@@ -170,7 +170,7 @@ export class AnalyticsAggregator {
     if (!adminDb) throw new Error('Database not available');
 
     // Get redemptions in time range
-    const redemptionsSnapshot = await adminDb.collection('redemptions')
+    const redemptionsSnapshot = await adminDb!.collection('redemptions')
       .where('redeemedAt', '>=', timeRange.start)
       .where('redeemedAt', '<=', timeRange.end)
       .get();
@@ -215,7 +215,7 @@ export class AnalyticsAggregator {
 
     for (let i = 0; i < influencerIds.length; i += 30) {
       const batch = influencerIds.slice(i, i + 30);
-      const influencersSnapshot = await adminDb.collection('influencers')
+      const influencersSnapshot = await adminDb!.collection('influencers')
         .where('__name__', 'in', batch)
         .get();
       
@@ -257,7 +257,7 @@ export class AnalyticsAggregator {
     if (!adminDb) throw new Error('Database not available');
 
     // Get redemptions in time range
-    let redemptionsQuery = adminDb.collection('redemptions')
+    let redemptionsQuery = adminDb!.collection('redemptions')
       .where('redeemedAt', '>=', timeRange.start)
       .where('redeemedAt', '<=', timeRange.end);
 
@@ -314,7 +314,7 @@ export class AnalyticsAggregator {
 
     for (let i = 0; i < campaignIds.length; i += 30) {
       const batch = campaignIds.slice(i, i + 30);
-      const campaignsSnapshot = await adminDb.collection('offers')
+      const campaignsSnapshot = await adminDb!.collection('offers')
         .where('__name__', 'in', batch)
         .get();
       
@@ -360,7 +360,7 @@ export class AnalyticsAggregator {
     if (!adminDb) throw new Error('Database not available');
 
     // Get redemptions in time range
-    const redemptionsSnapshot = await adminDb.collection('redemptions')
+    const redemptionsSnapshot = await adminDb!.collection('redemptions')
       .where('redeemedAt', '>=', timeRange.start)
       .where('redeemedAt', '<=', timeRange.end)
       .get();
@@ -384,7 +384,7 @@ export class AnalyticsAggregator {
 
     for (let i = 0; i < influencerIdsArray.length; i += 30) {
       const batch = influencerIdsArray.slice(i, i + 30);
-      const influencersSnapshot = await adminDb.collection('influencers')
+      const influencersSnapshot = await adminDb!.collection('influencers')
         .where('__name__', 'in', batch)
         .get();
 

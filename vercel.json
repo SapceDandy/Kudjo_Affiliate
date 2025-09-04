@@ -1,0 +1,22 @@
+{
+  "builds": [
+    {
+      "src": "apps/web/package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "apps/web/$1"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "functions": {
+    "apps/web/app/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  }
+}
