@@ -110,7 +110,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               if (process.env.NODE_ENV === 'development') {
                 console.log('User role from Firestore:', role);
               }
-              setUser({ uid: firebaseUser.uid, email: firebaseUser.email, displayName: firebaseUser.displayName, photoURL: firebaseUser.photoURL, role });
+              const userObj = { uid: firebaseUser.uid, email: firebaseUser.email, displayName: firebaseUser.displayName, photoURL: firebaseUser.photoURL, role };
+              console.log('Setting user state:', userObj);
+              setUser(userObj);
             } else {
               if (process.env.NODE_ENV === 'development') {
                 console.log('No user detected, setting user to null');
@@ -248,8 +250,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      setUser({ uid: result.user.uid, email: result.user.email, displayName: result.user.displayName, photoURL: result.user.photoURL, role: userRole });
-      console.log('User authenticated successfully with role:', userRole);
+      // Set user state immediately after successful authentication
+      const newUser = { 
+        uid: result.user.uid, 
+        email: result.user.email, 
+        displayName: result.user.displayName, 
+        photoURL: result.user.photoURL, 
+        role: userRole 
+      };
+      setUser(newUser);
+      console.log('User authenticated successfully with role:', userRole, 'User object:', newUser);
       return userRole;
     } catch (err) {
       console.error('Google sign in error:', err);

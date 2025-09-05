@@ -84,7 +84,7 @@ export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: 
 
   const fetchPrograms = async () => {
     try {
-      const response = await fetch(`/api/business/offers?businessId=${user?.uid || 'demo_business_user'}`);
+      const response = await fetch(`/api/business/offers?businessId=${user?.uid}`);
       if (response.ok) {
         const data = await response.json();
         const offers = data.offers || [];
@@ -105,7 +105,7 @@ export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: 
 
   const fetchTierDefaults = async () => {
     try {
-      const response = await fetch(`/api/business/tier-defaults?businessId=${user?.uid || 'demo_business_user'}`);
+      const response = await fetch(`/api/business/tier-defaults?businessId=${user?.uid}`);
       if (response.ok) {
         const data = await response.json();
         setTierDefaults(data.tierDefaults || {});
@@ -126,7 +126,7 @@ export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: 
       if (createNewProgram) {
         // Create new offer first
         const newOfferData = {
-          businessId: user?.uid || 'demo_business_user',
+          businessId: user?.uid,
           title: newProgramTitle,
           description: newProgramDescription || `Special offer for ${influencer.displayName}`,
           discountType,
@@ -189,16 +189,29 @@ export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: 
         return;
       }
 
-      const requestData = {
-        businessId: user?.uid || 'demo_business_user',
+      // Helper to convert empty values to null and remove undefined
+      const sanitizeValue = (value: any) => {
+        if (value === undefined || value === '' || value === 0) return null;
+        return value;
+      };
+
+      const pruneUndefined = <T extends Record<string, any>>(obj: T): T => 
+        Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as T;
+
+      const requestData = pruneUndefined({
+        businessId: user?.uid,
         influencerId: influencer.id,
         influencerName: influencer.displayName,
         proposedSplitPct: customSplitPct,
-        message,
+        description: message,
         offerId: offerId,
         followers: influencer.followers,
-        tier: influencer.tier
-      };
+        tier: influencer.tier,
+        userDiscountPct: sanitizeValue(programData.userDiscountPct),
+        userDiscountCents: sanitizeValue(programData.userDiscountCents),
+        minSpendCents: sanitizeValue(programData.minSpendCents),
+        discountType: programData.discountType
+      });
 
       // Send request to API
       const response = await fetch('/api/business/requests', {
@@ -210,7 +223,9 @@ export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: 
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send request');
+        const errorData = await response.json();
+        console.error('API Error:', errorData);
+        throw new Error(errorData.error || 'Failed to send request');
       }
 
       onSendRequest(requestData);

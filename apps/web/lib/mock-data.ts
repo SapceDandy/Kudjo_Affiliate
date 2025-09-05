@@ -419,8 +419,6 @@ export function generate203MockInfluencers() {
  * Check if we should use mock data based on environment or quota status
  */
 export function shouldUseMockData(): boolean {
-  // Use mock data if Firebase is not properly configured or quota exceeded
-  const quotaExceeded = process.env.FIRESTORE_QUOTA_EXCEEDED === 'true';
-  const firebaseNotConfigured = !process.env.FIREBASE_PRIVATE_KEY || process.env.FIREBASE_PRIVATE_KEY.includes('REPLACE_THIS');
-  return quotaExceeded || firebaseNotConfigured;
+  // DISABLED FOR LIVE TESTING - Always use real Firebase data
+  return false;
 }

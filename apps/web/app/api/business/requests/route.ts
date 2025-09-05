@@ -1,7 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFirestore } from 'firebase-admin/firestore';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { z } from 'zod';
 import { UpdateRequestSchema } from '@/lib/schemas/business';
+
+// Request creation schema
+const CreateRequestSchema = z.object({
+  businessId: z.string(),
+  influencerId: z.string(),
+  influencerName: z.string(),
+  proposedSplitPct: z.number().min(5).max(50),
+  description: z.string().optional(),
+  offerId: z.string().optional(),
+  followers: z.number().min(0).optional(),
+  tier: z.string().optional(),
+  userDiscountPct: z.number().min(0).max(100).nullable().optional(),
+  userDiscountCents: z.number().min(0).nullable().optional(),
+  minSpendCents: z.number().min(0).nullable().optional(),
+  discountType: z.enum(['percentage', 'fixed', 'bogo', 'student', 'happy_hour', 'free_appetizer', 'first_time']).optional()
+});
 import { QueryDocumentSnapshot } from 'firebase-admin/firestore';
 
 // Initialize Firebase Admin
@@ -135,11 +152,33 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     console.log('POST /api/business/requests - Request body:', body);
+
+    // Validate and sanitize input
+    const validatedData = CreateRequestSchema.parse(body);
     
-    const { businessId, influencerId, influencer, followers, tier, proposedSplitPct, discountType, userDiscountPct, userDiscountCents, minSpendCents, title, description } = body;
+    // Helper to remove undefined values
+    const pruneUndefined = <T extends Record<string, any>>(obj: T): T => 
+      Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as T;
+
+    const cleanData = pruneUndefined(validatedData);
+
+    const {
+      businessId,
+      influencerId,
+      influencerName,
+      proposedSplitPct,
+      description,
+      offerId,
+      followers,
+      tier,
+      userDiscountPct,
+      userDiscountCents,
+      minSpendCents,
+      discountType
+    } = cleanData;
     
-    if (!businessId || (!influencerId && !influencer)) {
-      console.log('Missing required fields:', { businessId, influencerId, influencer });
+    if (!businessId || (!influencerId && !influencerName)) {
+      console.log('Missing required fields:', { businessId, influencerId, influencerName });
       return NextResponse.json({ error: 'Missing required fields: businessId and either influencerId or influencer name are required' }, { status: 400 });
     }
 
@@ -150,7 +189,7 @@ export async function POST(request: NextRequest) {
     }
 
     let finalInfluencerId = influencerId;
-    let finalInfluencerName = influencer;
+    let finalInfluencerName = influencerName;
     let businessName = 'Unknown Business';
 
     // If influencerId is provided, get influencer details
@@ -159,7 +198,7 @@ export async function POST(request: NextRequest) {
         const influencerDoc = await adminDb!.collection('influencers').doc(influencerId).get();
         if (influencerDoc.exists) {
           const influencerData = influencerDoc.data();
-          finalInfluencerName = influencerData?.name || influencerData?.displayName || influencer || 'Unknown Influencer';
+          finalInfluencerName = influencerData?.name || influencerData?.displayName || influencerName || 'Unknown Influencer';
         }
       } catch (error) {
         console.warn('Could not fetch influencer details:', error);
@@ -168,7 +207,7 @@ export async function POST(request: NextRequest) {
       // If only influencer name provided, try to find by name (fallback for existing functionality)
       try {
         const influencerQuery = adminDb!.collection('influencers')
-          .where('name', '==', influencer)
+          .where('name', '==', influencerName)
           .limit(1);
         const influencerSnapshot = await influencerQuery.get();
         
@@ -179,7 +218,7 @@ export async function POST(request: NextRequest) {
         } else {
           // Create a placeholder influencer record for name-only requests
           const placeholderInfluencer = {
-            name: influencer,
+            name: influencerName,
             followers: followers || 0,
             tier: tier || 'Nano',
             verified: false,
@@ -223,27 +262,52 @@ export async function POST(request: NextRequest) {
     }
 
     // Create new influencer request
-    const requestData = {
+    // Build request data, excluding undefined values
+    const requestData: any = {
       bizId: businessId,
       infId: finalInfluencerId,
       influencerName: finalInfluencerName,
       businessName: businessName,
-      title: title || `Collaboration Request from ${businessName}`,
+      title: `Collaboration Request from ${businessName}`,
       description: description || `${businessName} would like to collaborate with you on a campaign.`,
       followers: followers || 0,
       tier: tier || 'Nano',
       proposedSplitPct: proposedSplitPct || 20,
       discountType: discountType || 'percentage',
-      userDiscountPct: userDiscountPct,
-      userDiscountCents: userDiscountCents,
-      minSpendCents: minSpendCents,
       status: 'pending',
       createdAt: new Date(),
       updatedAt: new Date()
     };
 
+    // Only add optional fields if they have values
+    if (userDiscountPct !== undefined && userDiscountPct !== null) {
+      requestData.userDiscountPct = userDiscountPct;
+    }
+    if (userDiscountCents !== undefined && userDiscountCents !== null) {
+      requestData.userDiscountCents = userDiscountCents;
+    }
+    if (minSpendCents !== undefined && minSpendCents !== null) {
+      requestData.minSpendCents = minSpendCents;
+    }
+
     console.log('Creating request with data:', requestData);
-    const docRef = await adminDb!.collection('influencerRequests').add(requestData);
+    
+    // Store request under influencer document with bizId as sub-document ID
+    await adminDb!.collection('influencerRequests').doc(influencerId).collection('requests').doc(businessId).set(requestData);
+    
+    // Also update business document with active request tracking
+    await adminDb!.collection('businesses').doc(businessId).update({
+      [`activeRequests.${influencerId}`]: {
+        influencerName,
+        status: 'pending',
+        createdAt: new Date(),
+        tier,
+        followers
+      },
+      updatedAt: new Date()
+    });
+    
+    console.log('Request created successfully for influencer:', influencerId, 'from business:', businessId);
 
     // Update business metrics - increment active requests count
     try {
@@ -257,7 +321,11 @@ export async function POST(request: NextRequest) {
       // Don't fail the request creation if metrics update fails
     }
 
-    return NextResponse.json({ success: true, requestId: docRef.id });
+    return NextResponse.json({ 
+      success: true, 
+      requestId: `${influencerId}_${businessId}`,
+      message: 'Request sent successfully' 
+    });
 
   } catch (error) {
     console.error('Error creating request:', error);

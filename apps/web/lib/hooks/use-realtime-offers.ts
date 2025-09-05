@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { collection, query, where, onSnapshot, orderBy, Unsubscribe } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, Unsubscribe, doc, DocumentSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth';
 import { toast } from 'react-hot-toast';
@@ -39,40 +39,35 @@ export function useRealtimeOffers() {
     try {
       setError(null);
       
-      // Create real-time query for business offers
-      const offersRef = collection(db, 'offers');
-      const offersQuery = query(
-        offersRef,
-        where('bizId', '==', user.uid),
-        orderBy('createdAt', 'desc')
-      );
+      // Get offer document directly using bizId as document ID
+      const businessId = user.uid;
+      console.log('Setting up offers query for businessId:', businessId);
+      const offerDocRef = doc(db, 'offers', businessId);
 
-      // Set up real-time listener
+      // Set up real-time listener for single offer document
       unsubscribe = onSnapshot(
-        offersQuery,
-        (snapshot) => {
-          console.log('Real-time offers update:', snapshot.size, 'documents');
+        offerDocRef,
+        (snapshot: DocumentSnapshot) => {
+          console.log('Real-time offers update - document exists:', snapshot.exists());
           const updatedOffers: BusinessOffer[] = [];
           
-          snapshot.forEach((doc) => {
-            const data = doc.data();
-            console.log('Offer document:', doc.id, data);
+          if (snapshot.exists()) {
+            const data = snapshot.data();
             updatedOffers.push({
-              id: doc.id,
+              id: snapshot.id,
               title: data.title || 'Untitled Offer',
-              description: data.description,
-              splitPct: data.splitPct || 20,
+              description: data.description || '',
               discountType: data.discountType || 'percentage',
-              userDiscountPct: data.userDiscountPct,
-              userDiscountCents: data.userDiscountCents,
-              minSpendCents: data.minSpendCents,
-              status: data.status || 'active',
+              splitPct: data.discountValue || 0,
+              budgetCents: data.budgetCents || 0,
+              eligibleTiers: data.eligibleTiers || [],
+              active: data.active ?? true,
               createdAt: data.createdAt?.toDate?.() || new Date(),
-              updatedAt: data.updatedAt?.toDate?.(),
-              maxInfluencers: data.maxInfluencers,
-              currentInfluencers: data.currentInfluencers || 0
+              activeInfluencers: data.activeInfluencers || 0,
+              totalRedemptions: data.totalRedemptions || 0,
+              totalRevenue: data.totalRevenue || 0
             });
-          });
+          }
 
           console.log('Setting offers:', updatedOffers.length);
           setOffers(updatedOffers);

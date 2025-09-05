@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { collection, query, where, onSnapshot, orderBy, Unsubscribe } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, Unsubscribe, getDocs, doc, DocumentSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth';
 import { toast } from 'react-hot-toast';
@@ -40,31 +40,22 @@ export function useRealtimeRequests() {
     try {
       setError(null);
       
-      // Create real-time query for business requests
-      const requestsRef = collection(db, 'influencerRequests');
-      const requestsQuery = query(
-        requestsRef,
-        where('bizId', '==', user.uid),
-        orderBy('createdAt', 'desc')
-      );
+      // Get business document to find active requests
+      const businessId = user.uid;
+      console.log('Setting up requests query for businessId:', businessId);
+      console.log('Firebase db object:', db);
+      
+      const businessDocRef = doc(db, 'businesses', businessId);
 
-      // Set up real-time listener
+      console.log('Setting up real-time listener for business document...');
+
+      // Set up real-time listener for business document
       unsubscribe = onSnapshot(
-        requestsQuery,
+        businessDocRef,
         (snapshot) => {
-          const updatedRequests: BusinessRequest[] = [];
-          
-          snapshot.forEach((doc) => {
-            const data = doc.data();
-            updatedRequests.push({
-              id: doc.id,
-              influencer: data.influencerName || `Influencer ${data.infId?.slice(-4) || 'Unknown'}`,
-              followers: data.followers || 0,
-              tier: data.tier || 'Small',
-              proposedSplitPct: data.proposedSplitPct || 20,
-              discountType: data.discountType || 'percentage',
-              userDiscountPct: data.userDiscountPct,
-              userDiscountCents: data.userDiscountCents,
+          console.log('Real-time listener triggered for business document');
+          const data = snapshot.data();
+          const activeRequests = data?.activeRequests || [];
               minSpendCents: data.minSpendCents,
               createdAt: data.createdAt?.toDate?.() || new Date(),
               status: data.status || 'pending',
@@ -81,6 +72,9 @@ export function useRealtimeRequests() {
 
           setRequests(activeRequests);
           setLoading(false);
+          console.log(`Found ${updatedRequests.length} total requests, ${activeRequests.length} active requests for business ${businessId}`);
+          console.log('All requests:', updatedRequests);
+          console.log('Active requests:', activeRequests);
         },
         (err) => {
           console.error('Error in real-time requests listener:', err);

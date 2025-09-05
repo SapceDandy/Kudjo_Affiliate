@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'react-hot-toast';
+import { useAuth } from '@/lib/auth';
 
 interface CreateOfferDialogProps {
   open: boolean;
@@ -16,6 +17,7 @@ interface CreateOfferDialogProps {
 }
 
 export function CreateOfferDialog({ open, onClose, onOfferCreated }: CreateOfferDialogProps) {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -42,14 +44,15 @@ export function CreateOfferDialog({ open, onClose, onOfferCreated }: CreateOffer
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          businessId: 'demo_business_user',
+          businessId: user?.uid,
           title: formData.title,
           description: formData.description,
-          discountType: formData.discountType,
+          discountType: formData.discountType === 'percentage' ? 'percentage' : 'fixed',
           userDiscountPct: formData.discountType === 'percentage' ? formData.userDiscountPct : undefined,
           userDiscountCents: formData.discountType === 'dollar' ? formData.userDiscountCents : undefined,
-          minSpendCents: formData.minSpendCents,
-          terms: formData.terms
+          minSpendCents: formData.minSpendCents || undefined,
+          terms: formData.terms,
+          splitPct: 25 // Default split percentage for general offers
         }),
       });
 

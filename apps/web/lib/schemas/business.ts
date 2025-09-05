@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const CreateOfferSchema = z.object({
   businessId: z.string().min(1, 'Business ID is required'),
   title: z.string().min(1, 'Title is required'),
-  discountType: z.enum(['percentage', 'dollar', 'bogo', 'student', 'happy_hour', 'free_appetizer', 'first_time']),
+  discountType: z.enum(['percentage', 'fixed', 'dollar', 'bogo', 'student', 'happy_hour', 'free_appetizer', 'first_time']),
   splitPct: z.number().min(1).max(100, 'Split percentage must be between 1-100'),
   userDiscountPct: z.number().min(0).max(100).optional(),
   userDiscountCents: z.number().min(0).optional(),
