@@ -184,8 +184,23 @@ export async function POST(request: NextRequest) {
 
     const adminDb = getAdminDb();
     if (!adminDb) {
-      console.log('Firebase not configured, adminDb is null');
-      return NextResponse.json({ error: 'Firebase not configured' }, { status: 500 });
+      console.error('Failed to initialize Firebase Admin');
+      return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
+    }
+
+    // Check if business is approved
+    const businessDoc = await adminDb.collection('businesses').doc(businessId).get();
+    if (!businessDoc.exists) {
+      return NextResponse.json({ error: 'Business not found' }, { status: 404 });
+    }
+    
+    const businessData = businessDoc.data();
+    if (!businessData?.approved || businessData?.approvalStatus !== 'approved') {
+      return NextResponse.json({ 
+        error: 'Business not approved',
+        message: 'Your business account must be approved before sending requests',
+        approvalStatus: businessData?.approvalStatus || 'pending'
+      }, { status: 403 });
     }
 
     let finalInfluencerId = influencerId;
@@ -247,8 +262,8 @@ export async function POST(request: NextRequest) {
 
     // Check for existing active requests to this influencer
     const existingRequestsQuery = adminDb!.collection('influencerRequests')
-      .where('bizId', '==', businessId)
-      .where('infId', '==', finalInfluencerId)
+      .where('businessId', '==', businessId)
+      .where('influencerId', '==', finalInfluencerId)
       .where('status', 'in', ['pending', 'countered']);
 
     const existingRequestsSnapshot = await existingRequestsQuery.get();
@@ -264,8 +279,8 @@ export async function POST(request: NextRequest) {
     // Create new influencer request
     // Build request data, excluding undefined values
     const requestData: any = {
-      bizId: businessId,
-      infId: finalInfluencerId,
+      businessId: businessId,
+      influencerId: finalInfluencerId,
       influencerName: finalInfluencerName,
       businessName: businessName,
       title: `Collaboration Request from ${businessName}`,
@@ -292,17 +307,23 @@ export async function POST(request: NextRequest) {
 
     console.log('Creating request with data:', requestData);
     
-    // Store request under influencer document with bizId as sub-document ID
-    await adminDb!.collection('influencerRequests').doc(influencerId).collection('requests').doc(businessId).set(requestData);
+    // Store request in influencerRequests collection with unique ID
+    const requestRef = await adminDb!.collection('influencerRequests').add(requestData);
     
     // Also update business document with active request tracking
     await adminDb!.collection('businesses').doc(businessId).update({
-      [`activeRequests.${influencerId}`]: {
-        influencerName,
+      [`activeRequests.${finalInfluencerId}`]: {
+        id: requestRef.id,
+        influencerName: finalInfluencerName,
         status: 'pending',
         createdAt: new Date(),
-        tier,
-        followers
+        tier: tier || 'Nano',
+        followers: followers || 0,
+        proposedSplitPct: proposedSplitPct || 20,
+        discountType: discountType || 'percentage',
+        userDiscountPct,
+        userDiscountCents,
+        minSpendCents
       },
       updatedAt: new Date()
     });
@@ -323,12 +344,22 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ 
       success: true, 
-      requestId: `${influencerId}_${businessId}`,
+      requestId: requestRef.id,
       message: 'Request sent successfully' 
     });
 
   } catch (error) {
     console.error('Error creating request:', error);
+    
+    // Check if it's a validation error
+    if (error instanceof z.ZodError) {
+      console.error('Validation error details:', error.errors);
+      return NextResponse.json(
+        { error: 'Invalid request data', details: error.errors },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Failed to create request', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

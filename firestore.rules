@@ -36,7 +36,7 @@ service cloud.firestore {
 
     // Add influencers collection rules (previously missing)
     match /influencers/{infId} {
-      allow read: if isOwner(infId) || isAdmin();
+      allow read: if request.auth != null && (isOwner(infId) || isAdmin());
       allow create: if isOwner(infId) || isAdmin() || isSeedingUser();
       allow update: if isOwner(infId) || isAdmin() || isSeedingUser();
     }
@@ -115,6 +115,27 @@ service cloud.firestore {
     match /events/{id} {
       allow read: if false; // internal
       allow create: if false; // server only
+    }
+
+    // Add missing influencerRequests collection rules
+    match /influencerRequests/{requestId} {
+      allow read: if request.auth != null && (
+        resource.data.infId == request.auth.uid ||
+        resource.data.bizId == request.auth.uid ||
+        isAdmin()
+      );
+      allow create: if request.auth != null && (
+        isBusiness() && request.resource.data.bizId == request.auth.uid ||
+        isAdmin() ||
+        isSeedingUser()
+      );
+      allow update: if request.auth != null && (
+        (isInfluencer() && resource.data.infId == request.auth.uid) ||
+        (isBusiness() && resource.data.bizId == request.auth.uid) ||
+        isAdmin() ||
+        isSeedingUser()
+      );
+      allow delete: if isAdmin();
     }
   }
 } 

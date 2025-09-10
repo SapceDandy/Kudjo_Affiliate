@@ -224,10 +224,24 @@ function getFirebaseStatus() {
   };
 }
 
+// Async initialization function for API routes
+export async function initializeFirebaseAdmin(): Promise<{ db: Firestore; auth: Auth }> {
+  const initialized = await initializeFirebase();
+  
+  if (!initialized || !firebaseDb || !firebaseAuth) {
+    throw new Error('Firebase Admin initialization failed');
+  }
+  
+  return { db: firebaseDb, auth: firebaseAuth };
+}
+
 export { 
   adminDb,
   adminAuth,
   getFirebaseStatus,
   generateMockUsers, 
   generateMockCoupons 
-}; 
+};
+
+// Export db for compatibility
+export const db = adminDb; 

@@ -9,8 +9,17 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const infId = searchParams.get('infId');
     const limit = parseInt(searchParams.get('limit') || '20');
-    const page = parseInt(searchParams.get('page') || '1');
-    const offset = (page - 1) * limit;
+    
+    // Handle both page-based and offset-based pagination
+    let offset: number;
+    if (searchParams.has('offset')) {
+      // Direct offset parameter (used by influencer page)
+      offset = parseInt(searchParams.get('offset') || '0');
+    } else {
+      // Page-based parameter (used by hooks)
+      const page = parseInt(searchParams.get('page') || '1');
+      offset = (page - 1) * limit;
+    }
     
     // Search and filter parameters
     const searchQuery = searchParams.get('search')?.toLowerCase() || '';
@@ -36,6 +45,9 @@ export async function GET(request: NextRequest) {
         id: infId,
         tier: 'M',
         name: 'Demo Influencer',
+        approved: false,
+        approvalStatus: 'pending',
+        approvalHistory: [],
         handle: 'demo_influencer',
         followers: 25000,
         createdAt: new Date()
@@ -186,6 +198,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       campaigns,
+      total: allEligibleOffers.length,
       hasMore,
       nextOffset,
       influencerTier,

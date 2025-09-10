@@ -14,11 +14,17 @@ interface BusinessOffer {
   userDiscountPct?: number;
   userDiscountCents?: number;
   minSpendCents?: number;
+  budgetCents?: number;
   status: 'active' | 'paused' | 'ended';
   createdAt: Date;
   updatedAt?: Date;
   maxInfluencers?: number;
   currentInfluencers?: number;
+  eligibleTiers?: string[];
+  active?: boolean;
+  activeInfluencers?: number;
+  totalRedemptions?: number;
+  totalRevenue?: number;
 }
 
 export function useRealtimeOffers() {
@@ -39,22 +45,24 @@ export function useRealtimeOffers() {
     try {
       setError(null);
       
-      // Get offer document directly using bizId as document ID
+      // Query all offers for this business using bizId field
       const businessId = user.uid;
       console.log('Setting up offers query for businessId:', businessId);
-      const offerDocRef = doc(db, 'offers', businessId);
+      const offersRef = collection(db, 'offers');
+      const offersQuery = query(offersRef, where('businessId', '==', businessId));
 
-      // Set up real-time listener for single offer document
+      // Set up real-time listener for offers collection
       unsubscribe = onSnapshot(
-        offerDocRef,
-        (snapshot: DocumentSnapshot) => {
-          console.log('Real-time offers update - document exists:', snapshot.exists());
+        offersQuery,
+        (snapshot) => {
+          console.log('Real-time offers update - found docs:', snapshot.docs.length);
           const updatedOffers: BusinessOffer[] = [];
           
-          if (snapshot.exists()) {
-            const data = snapshot.data();
+          snapshot.docs.forEach((doc) => {
+            const data = doc.data();
+            console.log('Offer doc data:', data);
             updatedOffers.push({
-              id: snapshot.id,
+              id: doc.id,
               title: data.title || 'Untitled Offer',
               description: data.description || '',
               discountType: data.discountType || 'percentage',
@@ -62,12 +70,13 @@ export function useRealtimeOffers() {
               budgetCents: data.budgetCents || 0,
               eligibleTiers: data.eligibleTiers || [],
               active: data.active ?? true,
+              status: data.status || 'active',
               createdAt: data.createdAt?.toDate?.() || new Date(),
               activeInfluencers: data.activeInfluencers || 0,
               totalRedemptions: data.totalRedemptions || 0,
               totalRevenue: data.totalRevenue || 0
             });
-          }
+          });
 
           console.log('Setting offers:', updatedOffers.length);
           setOffers(updatedOffers);
@@ -136,6 +145,27 @@ export function useRealtimeOffers() {
     }
   };
 
+  const endOffer = async (offerId: string) => {
+    try {
+      const res = await fetch(`/api/business/offers/${offerId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'ended' })
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to end offer');
+      }
+
+      toast.success('Offer ended successfully');
+    } catch (error) {
+      console.error('Error ending offer:', error);
+      toast.error('Failed to end offer');
+      throw error;
+    }
+  };
+
   const createOffer = async (offerData: any) => {
     try {
       const res = await fetch('/api/business/offers', {
@@ -167,6 +197,7 @@ export function useRealtimeOffers() {
     error, 
     pauseOffer,
     resumeOffer,
+    endOffer,
     createOffer
   };
 }

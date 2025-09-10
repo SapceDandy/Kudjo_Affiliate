@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Shield, BarChart3, Tag, Users, Settings } from 'lucide-react';
+import { Shield, BarChart3, Tag, Users, Settings, CheckCircle } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -61,6 +61,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <Link href="/control-center/coupons">
                 <Tag className="w-4 h-4 mr-2" />
                 Coupons
+              </Link>
+            </Button>
+            <Button 
+              asChild 
+              variant={isActive('/control-center/approvals') ? "default" : "ghost"}
+              className={isActive('/control-center/approvals') ? "bg-brand hover:bg-brand/90" : ""}
+            >
+              <Link href="/control-center/approvals">
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Approvals
               </Link>
             </Button>
             <Button 

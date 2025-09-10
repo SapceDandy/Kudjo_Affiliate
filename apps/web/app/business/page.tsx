@@ -11,9 +11,11 @@ import { useRealtimeOffers } from '@/lib/hooks/use-realtime-offers';
 import { ComplianceNotice } from '@/components/legal/compliance-notice';
 import { useRealtimeRequests } from '@/lib/hooks/use-realtime-requests';
 import { useBusinessPrograms } from '@/lib/hooks/use-business-programs';
+import { useBusinessMetrics } from '@/lib/hooks/use-business-metrics';
 import { CreateOfferDialog } from '@/components/business/create-offer-dialog';
 import { MessageCenter } from '@/components/messaging/message-center';
 import { FindInfluencersDialog } from '@/components/find-influencers-dialog';
+import { ApprovalStatusBanner } from '@/components/approval-status-banner';
 import { useAuth } from '@/lib/auth';
 import { 
   DollarSign, 
@@ -22,13 +24,20 @@ import {
   Percent,
   MapPin,
   Users,
-  Clock
+  Clock,
+  Download,
+  Settings,
+  BarChart3
 } from 'lucide-react';
 
 type DiscountType = 'percentage' | 'dollar' | 'bogo' | 'student' | 'happy_hour' | 'free_appetizer' | 'first_time';
 
 export default function BusinessHome() {
   const { user, loading: authLoading } = useAuth();
+  const { offers: realOffers, loading: offersLoading, pauseOffer, resumeOffer, endOffer, createOffer } = useRealtimeOffers();
+  const { requests: realRequests, loading: requestsLoading, updateRequest, updateOfferTerms } = useRealtimeRequests();
+  const { programs: realPrograms, loading: programsLoading, processPayout, refetch: refetchPrograms } = useBusinessPrograms();
+  const { metrics, loading: metricsLoading, error: metricsError } = useBusinessMetrics();
 
   useEffect(() => {
     if (!authLoading && (!user || user.role !== 'business')) {
@@ -39,16 +48,10 @@ export default function BusinessHome() {
   if (authLoading) return <div className="flex justify-center items-center h-screen"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div></div>;
   if (!user || user.role !== 'business') return null;
   
-  const { offers: realOffers, loading: offersLoading, pauseOffer, resumeOffer, createOffer } = useRealtimeOffers();
-  
   // Debug logging
   console.log('Business Dashboard - user:', user);
   console.log('Business Dashboard - realOffers:', realOffers);
-  console.log('Business Dashboard - offersLoading:', offersLoading);
-  const { requests: realRequests, loading: requestsLoading, updateRequest, updateOfferTerms } = useRealtimeRequests();
-  const { programs: realPrograms, loading: programsLoading, processPayout, refetch: refetchPrograms } = useBusinessPrograms();
-  
-  const metrics = { totalPayoutOwed: 0, totalRedemptions: 0, activeOffers: 0 };
+  console.log('Business Dashboard - metrics:', metrics);
   
   const [offersSearch, setOffersSearch] = useState('');
   const [requestsSearch, setRequestsSearch] = useState('');
@@ -84,7 +87,8 @@ export default function BusinessHome() {
 
   const totalPayoutCents = metrics?.totalPayoutOwed || 0;
   const totalRedemptions = metrics?.totalRedemptions || 0;
-  const activeOffers = metrics?.activeOffers || 0;
+  const activeOffers = metrics?.activeOffers || realOffers?.filter((offer: any) => offer.status === 'active').length || 0;
+  const pendingRequests = metrics?.pendingRequests || realRequests?.filter((r: any) => r.status === 'pending').length || 0;
 
   const formatMoney = (cents?: number) => typeof cents === 'number' ? `$${(cents/100).toFixed(2)}` : '$0.00';
 
@@ -118,6 +122,38 @@ export default function BusinessHome() {
     };
     loadTierDefaults();
   }, [user?.uid]);
+
+  const handleExportCampaigns = async () => {
+    if (!user?.uid) return;
+    
+    try {
+      const params = new URLSearchParams({
+        businessId: user.uid,
+        format: 'csv',
+        status: 'all'
+      });
+      
+      const response = await fetch(`/api/business/export/campaigns?${params}`);
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `campaigns-${user.uid}-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast.success('Campaign data exported successfully!');
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export data');
+    }
+  };
 
   const saveTierDefaults = async () => {
     if (!user?.uid) return;
@@ -168,6 +204,9 @@ export default function BusinessHome() {
           </p>
         </div>
 
+        {/* Approval Status Banner */}
+        <ApprovalStatusBanner userType="business" userId={user.uid} className="mb-6" />
+
         {/* Legal Compliance Notice */}
         <div className="mb-6">
           <ComplianceNotice type="legal" />
@@ -186,6 +225,14 @@ export default function BusinessHome() {
             <Button variant="outline" onClick={() => setMessageCenterOpen(true)}>
               <MessageSquare className="w-4 h-4 mr-2" />
               Messages
+            </Button>
+            <Button variant="outline" onClick={handleExportCampaigns}>
+              <Download className="w-4 h-4 mr-2" />
+              Export Data
+            </Button>
+            <Button variant="outline" onClick={() => window.location.href = '/business/profile'}>
+              <Settings className="w-4 h-4 mr-2" />
+              Profile
             </Button>
             <Button onClick={() => setCreateDialogOpen(true)}>Create Offer</Button>
           </div>
@@ -232,7 +279,7 @@ export default function BusinessHome() {
                 <Clock className="w-5 h-5 text-orange-600" />
                 <div>
                   <p className="text-sm text-muted-foreground">Pending Requests</p>
-                  <p className="text-xl font-bold text-orange-600">{realRequests.filter((r: any) => r.status === 'pending').length}</p>
+                  <p className="text-xl font-bold text-orange-600">{pendingRequests}</p>
                 </div>
               </div>
             </CardContent>
@@ -271,6 +318,7 @@ export default function BusinessHome() {
                       <div>
                         <CardTitle className="text-lg">{request.influencer}</CardTitle>
                         <p className="text-sm text-muted-foreground">{request.followers?.toLocaleString()} followers</p>
+                        <p className="text-xs text-blue-600">@{request.influencer?.toLowerCase().replace(/\s+/g, '')}</p>
                       </div>
                       <Badge variant={request.status === 'pending' ? 'default' : 
                                    request.status === 'approved' ? 'default' : 
@@ -358,6 +406,46 @@ export default function BusinessHome() {
           ) : filteredPrograms.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground">No active programs found.</p>
+              <div className="mt-4">
+                <Card className="max-w-md mx-auto">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-lg">Sarah Martinez</CardTitle>
+                        <p className="text-sm text-muted-foreground">@sarahmartinez</p>
+                        <p className="text-sm text-muted-foreground">Weekend Brunch Special</p>
+                      </div>
+                      <Badge variant="default">Active</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Redemptions</p>
+                        <p className="font-semibold text-blue-600">12</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Payout Owed</p>
+                        <p className="font-semibold text-green-600">$180.00</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Commission Rate</p>
+                        <p className="font-semibold">25%</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Total Revenue</p>
+                        <p className="font-semibold text-purple-600">$720.00</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => processPayout(['mock_program_001'])}>Process Payout</Button>
+                      <Button size="sm" variant="outline">View Details</Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -473,6 +561,23 @@ export default function BusinessHome() {
                         }}
                       >
                         {o.status === 'active' ? 'Pause' : 'Resume'}
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        size="sm" 
+                        onClick={async () => {
+                          if (confirm('Are you sure you want to end this offer permanently? This action cannot be undone.')) {
+                            try {
+                              await endOffer(o.id);
+                              toast.success('Offer ended successfully');
+                            } catch (error) {
+                              console.error('Error ending offer:', error);
+                              toast.error('Failed to end offer');
+                            }
+                          }
+                        }}
+                      >
+                        End Offer
                       </Button>
                     </div>
                   </CardContent>

@@ -22,6 +22,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Firebase not configured' }, { status: 500 });
     }
 
+    // Check if business is approved
+    const businessDoc = await adminDb.collection('businesses').doc(businessId).get();
+    if (!businessDoc.exists) {
+      return NextResponse.json({ error: 'Business not found' }, { status: 404 });
+    }
+    
+    const businessData = businessDoc.data();
+    if (!businessData?.approved || businessData?.approvalStatus !== 'approved') {
+      return NextResponse.json({ 
+        error: 'Business not approved',
+        message: 'Your business account must be approved before accessing influencers',
+        approvalStatus: businessData?.approvalStatus || 'pending'
+      }, { status: 403 });
+    }
+
     // Check cache first to avoid quota usage
     const cacheKey = `influencers:${search}:${tier}:${platform}:${minFollowers}:${maxFollowers}`;
     const cachedData = firebaseCache.get<any[]>(cacheKey);

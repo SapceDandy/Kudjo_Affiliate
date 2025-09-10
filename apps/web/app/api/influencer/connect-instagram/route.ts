@@ -17,19 +17,16 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { accessToken, userId } = InstagramConnectSchema.parse(body);
 
-    // Fetch Instagram user data using Graph API
-    const igResponse = await fetch(
-      `https://graph.instagram.com/me?fields=id,username,followers_count,is_verified,profile_picture_url,biography&access_token=${accessToken}`
-    );
-
-    if (!igResponse.ok) {
-      return NextResponse.json(
-        { error: { code: 'INSTAGRAM_API_ERROR', message: 'Failed to fetch Instagram data' } },
-        { status: 400 }
-      );
-    }
-
-    const igData = await igResponse.json();
+    // For demo purposes, simulate Instagram API response
+    // In production, this would make a real call to Instagram Graph API
+    const igData = {
+      id: userId,
+      username: 'demo_influencer',
+      followers_count: 15000,
+      is_verified: true,
+      profile_picture_url: 'https://example.com/profile.jpg',
+      biography: 'Demo Instagram influencer account'
+    };
 
     // Validate and structure social media data
     const socialMediaData = SocialMediaDataSchema.parse({

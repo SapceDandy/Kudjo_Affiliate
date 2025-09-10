@@ -52,3 +52,22 @@ export async function verifyAdminAccess(request: NextRequest): Promise<boolean> 
   
   return authHeader === `Bearer ${adminPasscode}`;
 }
+
+export async function getAuth(request: NextRequest): Promise<{ user: ServerUser | null }> {
+  // Check for development bypass header
+  if (process.env.NODE_ENV === 'development') {
+    const bypassHeader = request.headers.get('x-admin-bypass');
+    if (bypassHeader === 'true') {
+      return {
+        user: {
+          uid: 'admin-dev-user',
+          email: 'admin@dev.local',
+          role: 'admin'
+        }
+      };
+    }
+  }
+  
+  const user = await getCurrentUser(request);
+  return { user };
+}

@@ -7,6 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
   LineChart, 
   Line, 
@@ -32,9 +34,16 @@ import {
   Target,
   AlertTriangle,
   CheckCircle,
-  Activity
+  Activity,
+  Download,
+  Search,
+  Filter,
+  UserCheck,
+  UserX,
+  Eye
 } from 'lucide-react';
 import Link from 'next/link';
+import { toast } from 'react-hot-toast';
 
 interface Metrics {
   totalUsers: number;
@@ -48,10 +57,31 @@ interface Metrics {
   isMockData?: boolean;
 }
 
+interface User {
+  id: string;
+  email: string;
+  displayName: string;
+  role: 'influencer' | 'business';
+  status: 'active' | 'pending' | 'suspended';
+  createdAt: string;
+  lastLoginAt?: string;
+  handle?: string;
+  followers?: number;
+  businessName?: string;
+  industry?: string;
+}
+
 interface CouponFormData {
   type: string;
   bizId: string;
   infId: string;
+}
+
+interface ExportFormData {
+  type: 'users' | 'businesses' | 'influencers' | 'redemptions' | 'coupons' | 'metrics';
+  format: 'csv' | 'json';
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 const CHART_COLORS = {
@@ -65,40 +95,83 @@ const CHART_COLORS = {
 
 export default function AdminDashboardPage() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [usersLoading, setUsersLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCouponModal, setShowCouponModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   const [couponForm, setCouponForm] = useState<CouponFormData>({
     type: 'AFFILIATE',
     bizId: '',
     infId: ''
   });
+  const [exportForm, setExportForm] = useState<ExportFormData>({
+    type: 'users',
+    format: 'csv'
+  });
   const [isCreating, setIsCreating] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [roleFilter, setRoleFilter] = useState<string>('all');
 
   useEffect(() => {
-    async function fetchMetrics() {
+    async function fetchData() {
       try {
         setLoading(true);
-        const response = await fetch('/api/control-center/metrics');
-        if (!response.ok) {
-          throw new Error(`Failed to fetch metrics: ${response.status}`);
+        const [metricsResponse, usersResponse] = await Promise.all([
+          fetch('/api/admin/metrics'),
+          fetch('/api/admin/users?limit=50')
+        ]);
+        
+        if (!metricsResponse.ok) {
+          throw new Error(`Failed to fetch metrics: ${metricsResponse.status}`);
         }
-        const data = await response.json();
-        setMetrics(data);
+        
+        const metricsData = await metricsResponse.json();
+        setMetrics(metricsData);
+        
+        if (usersResponse.ok) {
+          const usersData = await usersResponse.json();
+          setUsers(usersData.users || []);
+        }
       } catch (err) {
-        console.error('Error fetching metrics:', err);
-        setError('Failed to load metrics data');
+        console.error('Error fetching data:', err);
+        setError('Failed to load dashboard data');
       } finally {
         setLoading(false);
       }
     }
 
-    fetchMetrics();
+    fetchData();
   }, []);
+
+  const fetchUsers = async (filters?: { role?: string; status?: string; q?: string }) => {
+    try {
+      setUsersLoading(true);
+      const params = new URLSearchParams();
+      if (filters?.role && filters.role !== 'all') params.set('role', filters.role);
+      if (filters?.status && filters.status !== 'all') params.set('status', filters.status);
+      if (filters?.q) params.set('q', filters.q);
+      params.set('limit', '50');
+      
+      const response = await fetch(`/api/admin/users?${params}`);
+      if (response.ok) {
+        const data = await response.json();
+        setUsers(data.users || []);
+      }
+    } catch (err) {
+      console.error('Error fetching users:', err);
+      toast.error('Failed to load users');
+    } finally {
+      setUsersLoading(false);
+    }
+  };
 
   const handleCreateCoupon = async () => {
     if (!couponForm.bizId || !couponForm.infId) {
-      alert('Please fill in all required fields');
+      toast.error('Please fill in all required fields');
       return;
     }
 
@@ -116,24 +189,113 @@ export default function AdminDashboardPage() {
       }
 
       const created = await res.json();
-      alert(`Coupon created: ${created.couponId} (code: ${created.code})`);
+      toast.success(`Coupon created: ${created.couponId} (code: ${created.code})`);
       
       // Reset form and close modal
       setCouponForm({ type: 'AFFILIATE', bizId: '', infId: '' });
       setShowCouponModal(false);
       
       // Refresh metrics
-      const response = await fetch('/api/control-center/metrics');
+      const response = await fetch('/api/admin/metrics');
       if (response.ok) {
         const data = await response.json();
         setMetrics(data);
       }
     } catch (err: any) {
-      alert(`Create failed: ${err?.message || 'Unknown error'}`);
+      toast.error(`Create failed: ${err?.message || 'Unknown error'}`);
     } finally {
       setIsCreating(false);
     }
   };
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const response = await fetch('/api/admin/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: exportForm.type,
+          format: exportForm.format,
+          filters: {
+            dateFrom: exportForm.dateFrom,
+            dateTo: exportForm.dateTo,
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+
+      if (exportForm.format === 'csv') {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${exportForm.type}_export_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        toast.success('Export downloaded successfully');
+      } else {
+        const data = await response.json();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${exportForm.type}_export_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        toast.success('Export downloaded successfully');
+      }
+      
+      setShowExportModal(false);
+    } catch (err: any) {
+      toast.error(`Export failed: ${err?.message || 'Unknown error'}`);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleUserStatusChange = async (userId: string, newStatus: string) => {
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update user status');
+      }
+
+      toast.success(`User status updated to ${newStatus}`);
+      fetchUsers({ role: roleFilter, status: statusFilter, q: searchTerm });
+    } catch (err: any) {
+      toast.error(`Failed to update user: ${err?.message || 'Unknown error'}`);
+    }
+  };
+
+  const handleSearch = () => {
+    fetchUsers({ role: roleFilter, status: statusFilter, q: searchTerm });
+  };
+
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = !searchTerm || 
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.handle && user.handle.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (user.businessName && user.businessName.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
+    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+    
+    return matchesSearch && matchesStatus && matchesRole;
+  });
 
   // Generate mock chart data
   const revenueData = Array.from({ length: 7 }, (_, i) => ({
@@ -158,62 +320,132 @@ export default function AdminDashboardPage() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">System Dashboard</h1>
-        <Dialog open={showCouponModal} onOpenChange={setShowCouponModal}>
-          <DialogTrigger asChild>
-            <Button>Create System Coupon</Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Create System Coupon</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="type">Coupon Type</Label>
-                <Select value={couponForm.type} onValueChange={(value) => setCouponForm(prev => ({ ...prev, type: value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="AFFILIATE">Affiliate</SelectItem>
-                    <SelectItem value="CONTENT_MEAL">Content Meal</SelectItem>
-                  </SelectContent>
-                </Select>
+        <h1 className="text-3xl font-bold">Admin Control Center</h1>
+        <div className="flex gap-2">
+          <Dialog open={showExportModal} onOpenChange={setShowExportModal}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Download className="w-4 h-4 mr-2" />
+                Export Data
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Export Data</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Data Type</Label>
+                  <Select value={exportForm.type} onValueChange={(value: any) => setExportForm(prev => ({ ...prev, type: value }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="users">All Users</SelectItem>
+                      <SelectItem value="businesses">Businesses</SelectItem>
+                      <SelectItem value="influencers">Influencers</SelectItem>
+                      <SelectItem value="redemptions">Redemptions</SelectItem>
+                      <SelectItem value="coupons">Coupons</SelectItem>
+                      <SelectItem value="metrics">System Metrics</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Format</Label>
+                  <Select value={exportForm.format} onValueChange={(value: any) => setExportForm(prev => ({ ...prev, format: value }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="csv">CSV</SelectItem>
+                      <SelectItem value="json">JSON</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-2">
+                    <Label>Date From</Label>
+                    <Input
+                      type="date"
+                      value={exportForm.dateFrom || ''}
+                      onChange={(e) => setExportForm(prev => ({ ...prev, dateFrom: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Date To</Label>
+                    <Input
+                      type="date"
+                      value={exportForm.dateTo || ''}
+                      onChange={(e) => setExportForm(prev => ({ ...prev, dateTo: e.target.value }))}
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button variant="outline" onClick={() => setShowExportModal(false)} disabled={isExporting}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleExport} disabled={isExporting}>
+                    {isExporting ? 'Exporting...' : 'Export'}
+                  </Button>
+                </div>
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="bizId">Business ID</Label>
-                <Input
-                  id="bizId"
-                  value={couponForm.bizId}
-                  onChange={(e) => setCouponForm(prev => ({ ...prev, bizId: e.target.value }))}
-                  placeholder="Enter business ID"
-                />
+            </DialogContent>
+          </Dialog>
+          
+          <Dialog open={showCouponModal} onOpenChange={setShowCouponModal}>
+            <DialogTrigger asChild>
+              <Button>Create System Coupon</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Create System Coupon</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="type">Coupon Type</Label>
+                  <Select value={couponForm.type} onValueChange={(value) => setCouponForm(prev => ({ ...prev, type: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="AFFILIATE">Affiliate</SelectItem>
+                      <SelectItem value="CONTENT_MEAL">Content Meal</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="bizId">Business ID</Label>
+                  <Input
+                    id="bizId"
+                    value={couponForm.bizId}
+                    onChange={(e) => setCouponForm(prev => ({ ...prev, bizId: e.target.value }))}
+                    placeholder="Enter business ID"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="infId">Influencer ID</Label>
+                  <Input
+                    id="infId"
+                    value={couponForm.infId}
+                    onChange={(e) => setCouponForm(prev => ({ ...prev, infId: e.target.value }))}
+                    placeholder="Enter influencer ID"
+                  />
+                </div>
+                
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button variant="outline" onClick={() => setShowCouponModal(false)} disabled={isCreating}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleCreateCoupon} disabled={isCreating}>
+                    {isCreating ? 'Creating...' : 'Create Coupon'}
+                  </Button>
+                </div>
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="infId">Influencer ID</Label>
-                <Input
-                  id="infId"
-                  value={couponForm.infId}
-                  onChange={(e) => setCouponForm(prev => ({ ...prev, infId: e.target.value }))}
-                  placeholder="Enter influencer ID"
-                />
-              </div>
-              
-              {/* Offer ID is auto-generated based on business and influencer */}
-              
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button variant="outline" onClick={() => setShowCouponModal(false)} disabled={isCreating}>
-                  Cancel
-                </Button>
-                <Button onClick={handleCreateCoupon} disabled={isCreating}>
-                  {isCreating ? 'Creating...' : 'Create Coupon'}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
       
       {loading && (
@@ -479,6 +711,150 @@ export default function AdminDashboardPage() {
                     Create Demo Business & Influencer
                   </Button>
                 </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* User Management Section */}
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-semibold">User Management</h2>
+              <div className="flex gap-2">
+                <div className="flex items-center space-x-2">
+                  <Search className="w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder="Search users..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-64"
+                  />
+                </div>
+                <Select value={roleFilter} onValueChange={setRoleFilter}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Roles</SelectItem>
+                    <SelectItem value="influencer">Influencers</SelectItem>
+                    <SelectItem value="business">Businesses</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="suspended">Suspended</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button onClick={handleSearch} disabled={usersLoading}>
+                  <Filter className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+
+            <Card>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>User</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead>Last Login</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {usersLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8">
+                          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600 mx-auto"></div>
+                        </TableCell>
+                      </TableRow>
+                    ) : filteredUsers.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                          No users found
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredUsers.slice(0, 10).map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{user.displayName}</div>
+                              <div className="text-sm text-gray-500">{user.email}</div>
+                              {user.handle && <div className="text-sm text-blue-600">{user.handle}</div>}
+                              {user.businessName && <div className="text-sm text-purple-600">{user.businessName}</div>}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={user.role === 'influencer' ? 'default' : 'secondary'}>
+                              {user.role}
+                            </Badge>
+                            {user.followers && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                {user.followers.toLocaleString()} followers
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant={user.status === 'active' ? 'default' : user.status === 'pending' ? 'secondary' : 'destructive'}
+                            >
+                              {user.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm text-gray-500">
+                            {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                          </TableCell>
+                          <TableCell className="text-sm text-gray-500">
+                            {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString() : 'Never'}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center space-x-2">
+                              {user.status === 'pending' && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleUserStatusChange(user.id, 'active')}
+                                >
+                                  <UserCheck className="w-3 h-3" />
+                                </Button>
+                              )}
+                              {user.status === 'active' && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleUserStatusChange(user.id, 'suspended')}
+                                >
+                                  <UserX className="w-3 h-3" />
+                                </Button>
+                              )}
+                              {user.status === 'suspended' && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleUserStatusChange(user.id, 'active')}
+                                >
+                                  <UserCheck className="w-3 h-3" />
+                                </Button>
+                              )}
+                              <Button size="sm" variant="ghost">
+                                <Eye className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
           </div>

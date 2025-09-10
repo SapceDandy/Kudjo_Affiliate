@@ -8,6 +8,7 @@ import { GlobalKPIs } from '@/components/charts/admin/global-kpis';
 import { LifecycleFunnel } from '@/components/charts/admin/lifecycle-funnel';
 import { ExceptionMonitoring } from '@/components/charts/admin/exception-monitoring';
 import { CouponsTable } from '@/components/admin/coupons-table';
+import { ApprovalQueue } from '@/components/admin/approval-queue';
 import { 
   Shield, 
   Settings, 
@@ -336,6 +337,9 @@ export default function AdminDashboard() {
           <ExceptionMonitoring />
         </div>
       </div>
+
+      {/* User Approval Section */}
+      <ApprovalQueue />
 
       {/* Coupon Management Section */}
       <div>

@@ -55,25 +55,35 @@ export function useRealtimeRequests() {
         (snapshot) => {
           console.log('Real-time listener triggered for business document');
           const data = snapshot.data();
-          const activeRequests = data?.activeRequests || [];
-              minSpendCents: data.minSpendCents,
-              createdAt: data.createdAt?.toDate?.() || new Date(),
-              status: data.status || 'pending',
-              discountAmount: data.discountAmount,
-              commissionSplit: data.commissionSplit,
-              updatedAt: data.updatedAt?.toDate?.()
-            });
-          });
+          const requestsData = data?.activeRequests || {};
+          
+          // Convert object to array - activeRequests is stored as {influencerId: requestData}
+          const requestsArray = Object.entries(requestsData).map(([influencerId, req]: [string, any]) => ({
+            id: req.id || influencerId,
+            influencer: req.influencerName || req.influencer || '',
+            followers: req.followers || 0,
+            tier: req.tier || 'Nano',
+            proposedSplitPct: req.proposedSplitPct || 0,
+            discountType: req.discountType || 'percentage',
+            userDiscountPct: req.userDiscountPct,
+            userDiscountCents: req.userDiscountCents,
+            minSpendCents: req.minSpendCents,
+            createdAt: req.createdAt?.toDate?.() || new Date(),
+            status: req.status || 'pending',
+            discountAmount: req.discountAmount,
+            commissionSplit: req.commissionSplit,
+            updatedAt: req.updatedAt?.toDate?.()
+          }));
 
           // Filter out closed/declined requests for UI display
-          const activeRequests = updatedRequests.filter(req => 
+          const activeRequests = requestsArray.filter((req: BusinessRequest) => 
             req.status !== 'closed' && req.status !== 'declined'
           );
 
           setRequests(activeRequests);
           setLoading(false);
-          console.log(`Found ${updatedRequests.length} total requests, ${activeRequests.length} active requests for business ${businessId}`);
-          console.log('All requests:', updatedRequests);
+          console.log(`Found ${requestsArray.length} total requests, ${activeRequests.length} active requests for business ${businessId}`);
+          console.log('All requests:', requestsArray);
           console.log('Active requests:', activeRequests);
         },
         (err) => {

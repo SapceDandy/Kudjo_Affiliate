@@ -214,6 +214,7 @@ export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: 
       });
 
       // Send request to API
+      console.log('Sending request with data:', requestData);
       const response = await fetch('/api/business/requests', {
         method: 'POST',
         headers: {
@@ -222,9 +223,18 @@ export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: 
         body: JSON.stringify(requestData),
       });
 
+      console.log('Response status:', response.status);
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('API Error:', errorData);
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { error: errorText };
+        }
+        console.error('Parsed API Error:', errorData);
         throw new Error(errorData.error || 'Failed to send request');
       }
 

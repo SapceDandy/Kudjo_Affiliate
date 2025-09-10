@@ -94,6 +94,9 @@ export async function POST(request: Request) {
         name: businessName,
         website,
         status: 'active',
+        approved: false,
+        approvalStatus: 'pending',
+        approvalHistory: [],
         createdAt: nowIso,
         updatedAt: nowIso,
       }, { merge: true });
@@ -103,7 +106,9 @@ export async function POST(request: Request) {
         ownerId: uid,
         handle: influencerName,
         pages,
-        approved: true,
+        approved: false,
+        approvalStatus: 'pending',
+        approvalHistory: [],
         createdAt: nowIso,
         updatedAt: nowIso,
       }, { merge: true });
