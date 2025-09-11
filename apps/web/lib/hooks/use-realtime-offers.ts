@@ -33,74 +33,65 @@ export function useRealtimeOffers() {
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
-  useEffect(() => {
+  const fetchOffers = async () => {
     if (!user) {
       setError('Please sign in to view offers.');
       setLoading(false);
       return;
     }
 
-    let unsubscribe: Unsubscribe;
-
     try {
       setError(null);
-      
-      // Query all offers for this business using bizId field
       const businessId = user.uid;
-      console.log('Setting up offers query for businessId:', businessId);
-      const offersRef = collection(db, 'offers');
-      const offersQuery = query(offersRef, where('businessId', '==', businessId));
+      console.log('Fetching offers for businessId:', businessId);
+      
+      const response = await fetch(`/api/business/offers?businessId=${businessId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch offers');
+      }
 
-      // Set up real-time listener for offers collection
-      unsubscribe = onSnapshot(
-        offersQuery,
-        (snapshot) => {
-          console.log('Real-time offers update - found docs:', snapshot.docs.length);
-          const updatedOffers: BusinessOffer[] = [];
-          
-          snapshot.docs.forEach((doc) => {
-            const data = doc.data();
-            console.log('Offer doc data:', data);
-            updatedOffers.push({
-              id: doc.id,
-              title: data.title || 'Untitled Offer',
-              description: data.description || '',
-              discountType: data.discountType || 'percentage',
-              splitPct: data.discountValue || 0,
-              budgetCents: data.budgetCents || 0,
-              eligibleTiers: data.eligibleTiers || [],
-              active: data.active ?? true,
-              status: data.status || 'active',
-              createdAt: data.createdAt?.toDate?.() || new Date(),
-              activeInfluencers: data.activeInfluencers || 0,
-              totalRedemptions: data.totalRedemptions || 0,
-              totalRevenue: data.totalRevenue || 0
-            });
-          });
+      const data = await response.json();
+      console.log('API offers response:', data);
+      
+      const transformedOffers: BusinessOffer[] = data.offers.map((offer: any) => ({
+        id: offer.id,
+        title: offer.title || 'Untitled Offer',
+        description: offer.description || '',
+        discountType: offer.discountType || 'percentage',
+        splitPct: offer.splitPct || 0,
+        userDiscountPct: offer.userDiscountPct,
+        userDiscountCents: offer.userDiscountCents,
+        minSpendCents: offer.minSpendCents,
+        budgetCents: offer.budgetCents || 0,
+        status: offer.status || 'active',
+        createdAt: new Date(offer.createdAt),
+        updatedAt: offer.updatedAt ? new Date(offer.updatedAt) : undefined,
+        maxInfluencers: offer.maxInfluencers,
+        currentInfluencers: offer.currentInfluencers || 0,
+        eligibleTiers: offer.eligibleTiers || [],
+        active: offer.status === 'active',
+        activeInfluencers: offer.activeInfluencers || 0,
+        totalRedemptions: offer.totalRedemptions || 0,
+        totalRevenue: offer.totalRevenue || 0
+      }));
 
-          console.log('Setting offers:', updatedOffers.length);
-          setOffers(updatedOffers);
-          setLoading(false);
-        },
-        (err) => {
-          console.error('Error in real-time offers listener:', err);
-          setError('Failed to load offers. Please try again.');
-          setLoading(false);
-        }
-      );
-
+      console.log('Setting offers:', transformedOffers.length);
+      setOffers(transformedOffers);
+      setLoading(false);
     } catch (err) {
-      console.error('Error setting up real-time offers listener:', err);
-      setError('Failed to set up real-time updates.');
+      console.error('Error fetching offers:', err);
+      setError('Failed to load offers. Please try again.');
       setLoading(false);
     }
+  };
 
-    // Cleanup listener on unmount
-    return () => {
-      if (unsubscribe) {
-        unsubscribe();
-      }
-    };
+  useEffect(() => {
+    fetchOffers();
+    
+    // Set up polling for real-time updates every 30 seconds
+    const interval = setInterval(fetchOffers, 30000);
+    
+    return () => clearInterval(interval);
   }, [user]);
 
   const pauseOffer = async (offerId: string) => {
@@ -198,6 +189,7 @@ export function useRealtimeOffers() {
     pauseOffer,
     resumeOffer,
     endOffer,
-    createOffer
+    createOffer,
+    refetch: fetchOffers
   };
 }

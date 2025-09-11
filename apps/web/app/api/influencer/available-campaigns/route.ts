@@ -172,26 +172,52 @@ export async function GET(request: NextRequest) {
       businessIds.add((offer as any).bizId);
     }
 
-    const campaigns = paginatedOffers.map((offer: any) => ({
-      id: offer.id,
-      title: offer.title,
-      description: offer.description,
-      businessName: offer.businessName,
-      businessId: offer.bizId,
-      splitPct: offer.splitPct,
-      discountType: offer.discountType,
-      userDiscountPct: offer.userDiscountPct,
-      userDiscountCents: offer.userDiscountCents,
-      minSpendCents: offer.minSpendCents,
-      eligibleTiers: offer.eligibleTiers,
-      maxInfluencers: offer.maxInfluencers,
-      currentInfluencers: 0, // Will be calculated if needed
-      maxRedemptions: offer.maxRedemptions,
-      currentRedemptions: 0, // Will be calculated if needed
-      endAt: offer.endAt ? (offer.endAt.toDate ? offer.endAt.toDate() : new Date(offer.endAt)) : null,
-      status: 'active',
-      createdAt: offer.createdAt ? (offer.createdAt.toDate ? offer.createdAt.toDate() : new Date(offer.createdAt)) : new Date(),
-    }));
+    const campaigns = paginatedOffers.map((offer: any) => {
+      // Calculate tier-specific split percentage
+      let splitPct = offer.splitPct || 0;
+      
+      // If offer has tierSplits, use the appropriate tier split
+      if (offer.tierSplits && typeof offer.tierSplits === 'object') {
+        // Map influencer tier to tierSplits key
+        const tierMapping: { [key: string]: string } = {
+          'S': 'Small',
+          'M': 'Medium', 
+          'L': 'Large',
+          'XL': 'XL',
+          'H': 'Huge',
+          'Small': 'Small',
+          'Medium': 'Medium',
+          'Large': 'Large',
+          'Huge': 'Huge'
+        };
+        
+        const tierKey = tierMapping[influencerTier] || influencerTier;
+        if (offer.tierSplits[tierKey] !== undefined) {
+          splitPct = offer.tierSplits[tierKey];
+        }
+      }
+
+      return {
+        id: offer.id,
+        title: offer.title,
+        description: offer.description,
+        businessName: offer.businessName,
+        businessId: offer.bizId,
+        splitPct: splitPct,
+        discountType: offer.discountType,
+        userDiscountPct: offer.userDiscountPct,
+        userDiscountCents: offer.userDiscountCents,
+        minSpendCents: offer.minSpendCents,
+        eligibleTiers: offer.eligibleTiers,
+        maxInfluencers: offer.maxInfluencers,
+        currentInfluencers: 0, // Will be calculated if needed
+        maxRedemptions: offer.maxRedemptions,
+        currentRedemptions: 0, // Will be calculated if needed
+        endAt: offer.endAt ? (offer.endAt.toDate ? offer.endAt.toDate() : new Date(offer.endAt)) : null,
+        status: 'active',
+        createdAt: offer.createdAt ? (offer.createdAt.toDate ? offer.createdAt.toDate() : new Date(offer.createdAt)) : new Date(),
+      };
+    });
 
     const hasMore = allEligibleOffers.length > offset + limit;
     const nextOffset = hasMore ? offset + limit : null;

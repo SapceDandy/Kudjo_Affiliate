@@ -52,7 +52,14 @@ export function CreateOfferDialog({ open, onClose, onOfferCreated }: CreateOffer
           userDiscountCents: formData.discountType === 'dollar' ? formData.userDiscountCents : undefined,
           minSpendCents: formData.minSpendCents || undefined,
           terms: formData.terms,
-          splitPct: 25 // Default split percentage for general offers
+          splitPct: 25, // Default split percentage for general offers
+          tierSplits: {
+            Small: 15,
+            Medium: 20,
+            Large: 25,
+            XL: 30,
+            Huge: 35
+          }
         }),
       });
 
@@ -178,8 +185,18 @@ export function CreateOfferDialog({ open, onClose, onOfferCreated }: CreateOffer
               <Input
                 id="minSpendCents"
                 type="number"
-                value={formData.minSpendCents / 100}
-                onChange={(e) => setFormData(prev => ({ ...prev, minSpendCents: Number(e.target.value) * 100 }))}
+                value={formData.minSpendCents === 0 ? '' : (formData.minSpendCents / 100).toString()}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '' || value === '0') {
+                    setFormData(prev => ({ ...prev, minSpendCents: 0 }));
+                  } else {
+                    const numValue = parseFloat(value);
+                    if (!isNaN(numValue)) {
+                      setFormData(prev => ({ ...prev, minSpendCents: Math.round(numValue * 100) }));
+                    }
+                  }
+                }}
                 min={0}
                 step={0.01}
                 className="mt-1"

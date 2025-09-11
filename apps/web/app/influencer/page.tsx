@@ -379,6 +379,15 @@ export default function InfluencerDashboard() {
                     </span>
                   ))}
                 </div>
+                <Button
+                  onClick={() => setSocialVerificationOpen(true)}
+                  variant="outline"
+                  size="sm"
+                  className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                >
+                  <Shield className="w-4 h-4 mr-2" />
+                  Add More
+                </Button>
               </div>
             ) : (
               <Button

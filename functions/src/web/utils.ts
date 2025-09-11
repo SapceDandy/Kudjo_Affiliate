@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 
 export function asyncHandler(
-  handler: (req: Request, res: Response) => Promise<void> | void,
+  handler: (req: Request, res: Response) => Promise<void | Response> | void | Response,
   bodySchema?: z.ZodTypeAny
 ) {
   return async (req: Request, res: Response, next: NextFunction) => {

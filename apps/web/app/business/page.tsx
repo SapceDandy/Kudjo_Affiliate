@@ -14,7 +14,7 @@ import { useBusinessPrograms } from '@/lib/hooks/use-business-programs';
 import { useBusinessMetrics } from '@/lib/hooks/use-business-metrics';
 import { CreateOfferDialog } from '@/components/business/create-offer-dialog';
 import { MessageCenter } from '@/components/messaging/message-center';
-import { FindInfluencersDialog } from '@/components/find-influencers-dialog';
+import { FindInfluencersDialog } from '@/components/business/find-influencers-dialog';
 import { ApprovalStatusBanner } from '@/components/approval-status-banner';
 import { useAuth } from '@/lib/auth';
 import { 
@@ -597,8 +597,9 @@ export default function BusinessHome() {
 
       <FindInfluencersDialog 
         open={findDialogOpen} 
-        onClose={() => setFindDialogOpen(false)}
-        onSendRequest={() => {
+        onOpenChange={setFindDialogOpen}
+        businessId={user.uid}
+        onRequestSent={() => {
           // Dialog will close automatically, no need to refresh as useRealtimeRequests handles updates
         }}
       />

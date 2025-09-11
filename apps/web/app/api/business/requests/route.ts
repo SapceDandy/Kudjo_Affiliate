@@ -8,8 +8,10 @@ import { UpdateRequestSchema } from '@/lib/schemas/business';
 const CreateRequestSchema = z.object({
   businessId: z.string(),
   influencerId: z.string(),
-  influencerName: z.string(),
-  proposedSplitPct: z.number().min(5).max(50),
+  influencer: z.string().optional(), // Accept both influencer and influencerName
+  influencerName: z.string().optional(),
+  title: z.string(),
+  proposedSplitPct: z.number().min(0).max(50),
   description: z.string().optional(),
   offerId: z.string().optional(),
   followers: z.number().min(0).optional(),
@@ -18,6 +20,15 @@ const CreateRequestSchema = z.object({
   userDiscountCents: z.number().min(0).nullable().optional(),
   minSpendCents: z.number().min(0).nullable().optional(),
   discountType: z.enum(['percentage', 'fixed', 'bogo', 'student', 'happy_hour', 'free_appetizer', 'first_time']).optional()
+}).transform((data) => {
+  // Handle both influencer and influencerName fields
+  const influencerName = data.influencerName || data.influencer;
+  return {
+    ...data,
+    influencerName,
+    // Remove undefined values
+    ...JSON.parse(JSON.stringify({ ...data, influencerName }))
+  };
 });
 import { QueryDocumentSnapshot } from 'firebase-admin/firestore';
 
@@ -166,6 +177,7 @@ export async function POST(request: NextRequest) {
       businessId,
       influencerId,
       influencerName,
+      title,
       proposedSplitPct,
       description,
       offerId,
@@ -283,7 +295,7 @@ export async function POST(request: NextRequest) {
       influencerId: finalInfluencerId,
       influencerName: finalInfluencerName,
       businessName: businessName,
-      title: `Collaboration Request from ${businessName}`,
+      title: title || `Collaboration Request from ${businessName}`,
       description: description || `${businessName} would like to collaborate with you on a campaign.`,
       followers: followers || 0,
       tier: tier || 'Nano',
@@ -311,20 +323,30 @@ export async function POST(request: NextRequest) {
     const requestRef = await adminDb!.collection('influencerRequests').add(requestData);
     
     // Also update business document with active request tracking
+    const activeRequestData: any = {
+      id: requestRef.id,
+      influencerName: finalInfluencerName,
+      status: 'pending',
+      createdAt: new Date(),
+      tier: tier || 'Nano',
+      followers: followers || 0,
+      proposedSplitPct: proposedSplitPct || 20,
+      discountType: discountType || 'percentage'
+    };
+
+    // Only add optional fields if they have values
+    if (userDiscountPct !== undefined && userDiscountPct !== null) {
+      activeRequestData.userDiscountPct = userDiscountPct;
+    }
+    if (userDiscountCents !== undefined && userDiscountCents !== null) {
+      activeRequestData.userDiscountCents = userDiscountCents;
+    }
+    if (minSpendCents !== undefined && minSpendCents !== null) {
+      activeRequestData.minSpendCents = minSpendCents;
+    }
+
     await adminDb!.collection('businesses').doc(businessId).update({
-      [`activeRequests.${finalInfluencerId}`]: {
-        id: requestRef.id,
-        influencerName: finalInfluencerName,
-        status: 'pending',
-        createdAt: new Date(),
-        tier: tier || 'Nano',
-        followers: followers || 0,
-        proposedSplitPct: proposedSplitPct || 20,
-        discountType: discountType || 'percentage',
-        userDiscountPct,
-        userDiscountCents,
-        minSpendCents
-      },
+      [`activeRequests.${finalInfluencerId}`]: activeRequestData,
       updatedAt: new Date()
     });
     

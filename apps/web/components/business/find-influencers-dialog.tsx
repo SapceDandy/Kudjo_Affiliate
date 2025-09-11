@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Search, Users, MapPin, Instagram, MessageCircle, Star, Verified } from 'lucide-react';
+import { Search, Users, MapPin, Instagram, MessageCircle, Verified } from 'lucide-react';
 import { Loading } from '@/components/ui/loading';
 import toast from 'react-hot-toast';
 
@@ -26,6 +26,23 @@ interface Influencer {
   engagementRate: number;
   categories: string[];
   lastActive: Date;
+  socialMedia?: {
+    [platform: string]: {
+      handle: string;
+      followers: number;
+      verified: boolean;
+    };
+  };
+}
+
+interface Offer {
+  id: string;
+  title: string;
+  splitPct: number;
+  discountType: string;
+  userDiscountPct?: number;
+  userDiscountCents?: number;
+  minSpendCents?: number;
 }
 
 interface FindInfluencersDialogProps {
@@ -44,6 +61,7 @@ export function FindInfluencersDialog({
   const [step, setStep] = useState<'search' | 'request'>('search');
   const [selectedInfluencer, setSelectedInfluencer] = useState<Influencer | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
   const [filters, setFilters] = useState({
     tier: 'all',
     minFollowers: '',
@@ -56,30 +74,36 @@ export function FindInfluencersDialog({
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [sending, setSending] = useState(false);
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [selectedOfferId, setSelectedOfferId] = useState<string>('');
   
   // Request form data
   const [requestData, setRequestData] = useState({
     title: '',
     description: '',
-    proposedSplitPct: 25,
+    proposedSplitPct: '',
     discountType: 'percentage' as 'percentage' | 'fixed',
-    userDiscountPct: 20,
-    userDiscountCents: 500,
-    minSpendCents: 2000
+    userDiscountPct: '',
+    userDiscountCents: '',
+    minSpendCents: ''
   });
 
-  const searchInfluencers = async () => {
+  const searchInfluencers = async (loadMore = false) => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
       
-      if (searchQuery) params.append('query', searchQuery);
+      if (searchQuery) params.append('search', searchQuery);
       if (filters.tier !== 'all') params.append('tier', filters.tier);
       if (filters.minFollowers) params.append('minFollowers', filters.minFollowers);
       if (filters.maxFollowers) params.append('maxFollowers', filters.maxFollowers);
       if (filters.location) params.append('location', filters.location);
       if (filters.verified) params.append('verified', 'true');
       params.append('limit', '20');
+      
+      if (loadMore) {
+        params.append('offset', influencers.length.toString());
+      }
 
       // Add businessId parameter for the correct endpoint
       params.append('businessId', businessId);
@@ -90,7 +114,31 @@ export function FindInfluencersDialog({
       }
 
       const data = await response.json();
-      setInfluencers(data.influencers || []);
+      const newInfluencers = data.influencers || [];
+      
+      // Map API response to component interface
+      const mappedInfluencers = newInfluencers.map((inf: any) => ({
+        id: inf.id,
+        name: inf.name || inf.displayName || 'Unknown',
+        username: inf.handle || inf.username,
+        followers: inf.followers || 0,
+        tier: inf.tier || 'Nano',
+        verified: inf.verified || false,
+        location: inf.location,
+        bio: inf.bio,
+        profileImage: inf.profileImage,
+        platforms: inf.platforms || ['instagram'],
+        engagementRate: 0, // Remove engagement rate display
+        categories: inf.categories || [],
+        lastActive: inf.lastActive ? new Date(inf.lastActive) : new Date(),
+        socialMedia: inf.socialMedia
+      }));
+      
+      if (loadMore) {
+        setInfluencers(prev => [...prev, ...mappedInfluencers]);
+      } else {
+        setInfluencers(mappedInfluencers);
+      }
       setHasMore(data.hasMore || false);
     } catch (error) {
       console.error('Error searching influencers:', error);
@@ -100,11 +148,31 @@ export function FindInfluencersDialog({
     }
   };
 
+  const debouncedSearch = () => {
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    
+    const timeout = setTimeout(() => {
+      searchInfluencers();
+    }, 300);
+    
+    setSearchTimeout(timeout);
+  };
+
   const sendRequest = async () => {
     if (!selectedInfluencer) return;
     
     setSending(true);
     try {
+      // Convert string inputs to numbers, defaulting to 0 for empty values
+      const sanitizeNumber = (value: string | number) => {
+        if (typeof value === 'number') return value;
+        const cleaned = value.replace(/^0+/, '') || '0'; // Remove leading zeros
+        const num = parseFloat(cleaned);
+        return isNaN(num) ? 0 : num;
+      };
+
       const response = await fetch('/api/business/requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -116,11 +184,11 @@ export function FindInfluencersDialog({
           tier: selectedInfluencer.tier,
           title: requestData.title,
           description: requestData.description,
-          proposedSplitPct: requestData.proposedSplitPct,
+          proposedSplitPct: sanitizeNumber(requestData.proposedSplitPct),
           discountType: requestData.discountType,
-          userDiscountPct: requestData.discountType === 'percentage' ? requestData.userDiscountPct : undefined,
-          userDiscountCents: requestData.discountType === 'fixed' ? requestData.userDiscountCents : undefined,
-          minSpendCents: requestData.minSpendCents
+          userDiscountPct: requestData.discountType === 'percentage' ? sanitizeNumber(requestData.userDiscountPct) : undefined,
+          userDiscountCents: requestData.discountType === 'fixed' ? sanitizeNumber(requestData.userDiscountCents) * 100 : undefined,
+          minSpendCents: sanitizeNumber(requestData.minSpendCents) * 100
         })
       });
 
@@ -136,14 +204,15 @@ export function FindInfluencersDialog({
       // Reset form
       setStep('search');
       setSelectedInfluencer(null);
+      setSelectedOfferId('');
       setRequestData({
         title: '',
         description: '',
-        proposedSplitPct: 25,
+        proposedSplitPct: '',
         discountType: 'percentage',
-        userDiscountPct: 20,
-        userDiscountCents: 500,
-        minSpendCents: 2000
+        userDiscountPct: '',
+        userDiscountCents: '',
+        minSpendCents: ''
       });
     } catch (error: any) {
       console.error('Error sending request:', error);
@@ -170,10 +239,54 @@ export function FindInfluencersDialog({
     return colors[tier as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
+  const fetchOffers = async () => {
+    try {
+      const response = await fetch(`/api/business/offers?businessId=${businessId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setOffers(data.offers || []);
+      }
+    } catch (error) {
+      console.error('Error fetching offers:', error);
+    }
+  };
+
+  const handleOfferSelection = (offerId: string) => {
+    setSelectedOfferId(offerId);
+    const selectedOffer = offers.find(offer => offer.id === offerId);
+    if (selectedOffer) {
+      setRequestData({
+        title: selectedOffer.title,
+        description: `Collaboration opportunity for ${selectedOffer.title}`,
+        proposedSplitPct: selectedOffer.splitPct.toString(),
+        discountType: selectedOffer.discountType as 'percentage' | 'fixed',
+        userDiscountPct: selectedOffer.userDiscountPct?.toString() || '',
+        userDiscountCents: selectedOffer.userDiscountCents ? (selectedOffer.userDiscountCents / 100).toString() : '',
+        minSpendCents: selectedOffer.minSpendCents ? (selectedOffer.minSpendCents / 100).toString() : ''
+      });
+    }
+  };
+
+  const handleNumericInput = (value: string, field: string) => {
+    // Remove non-numeric characters except decimal point
+    const cleaned = value.replace(/[^0-9.]/g, '');
+    // Remove leading zeros but keep single zero
+    const sanitized = cleaned.replace(/^0+(?=\d)/, '');
+    setRequestData(prev => ({ ...prev, [field]: sanitized }));
+  };
+
   useEffect(() => {
     if (open) {
       searchInfluencers();
+      fetchOffers();
     }
+    
+    // Cleanup timeout on unmount
+    return () => {
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+    };
   }, [open]);
 
   return (
@@ -195,11 +308,14 @@ export function FindInfluencersDialog({
                   <Input
                     placeholder="Search by name, username, or bio..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      debouncedSearch();
+                    }}
                     className="pl-10"
                   />
                 </div>
-                <Button onClick={searchInfluencers} disabled={loading}>
+                <Button onClick={() => searchInfluencers()} disabled={loading}>
                   Search
                 </Button>
               </div>
@@ -268,80 +384,99 @@ export function FindInfluencersDialog({
                   Found {influencers.length} influencers
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
-                  {influencers.map((influencer) => (
-                    <Card key={influencer.id} className="hover:shadow-md transition-shadow cursor-pointer"
-                          onClick={() => {
-                            setSelectedInfluencer(influencer);
-                            setStep('request');
-                          }}>
-                      <CardHeader className="pb-2">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-3">
-                            {influencer.profileImage ? (
-                              <img 
-                                src={influencer.profileImage} 
-                                alt={influencer.name}
-                                className="w-12 h-12 rounded-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
-                                <Users className="w-6 h-6 text-gray-500" />
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+                    {influencers.map((influencer) => (
+                      <Card key={influencer.id} className="hover:shadow-md transition-shadow cursor-pointer"
+                            onClick={() => {
+                              setSelectedInfluencer(influencer);
+                              setStep('request');
+                            }}>
+                        <CardHeader className="pb-2">
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center gap-3">
+                              {influencer.profileImage ? (
+                                <img 
+                                  src={influencer.profileImage} 
+                                  alt={influencer.name}
+                                  className="w-12 h-12 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
+                                  <Users className="w-6 h-6 text-gray-500" />
+                                </div>
+                              )}
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <CardTitle className="text-base">{influencer.name}</CardTitle>
+                                  {influencer.verified && <Verified className="w-4 h-4 text-blue-500" />}
+                                </div>
+                                {influencer.username && (
+                                  <p className="text-sm text-muted-foreground font-mono">{influencer.username.startsWith('@') ? influencer.username : `@${influencer.username}`}</p>
+                                )}
+                              </div>
+                            </div>
+                            <Badge className={getTierColor(influencer.tier)}>
+                              {influencer.tier}
+                            </Badge>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          <div className="space-y-2">
+                            <div className="flex items-center text-sm">
+                              <span className="flex items-center gap-1">
+                                <Users className="w-4 h-4" />
+                                {formatFollowers(influencer.followers)} followers
+                              </span>
+                            </div>
+                            
+                            {influencer.location && (
+                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                <MapPin className="w-4 h-4" />
+                                {influencer.location}
                               </div>
                             )}
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <CardTitle className="text-base">{influencer.name}</CardTitle>
-                                {influencer.verified && <Verified className="w-4 h-4 text-blue-500" />}
-                              </div>
-                              {influencer.username && (
-                                <p className="text-sm text-muted-foreground">@{influencer.username}</p>
+                            
+                            {influencer.bio && (
+                              <p className="text-sm text-muted-foreground line-clamp-2">
+                                {influencer.bio}
+                              </p>
+                            )}
+                            
+                            <div className="flex gap-1 flex-wrap">
+                              {influencer.socialMedia ? (
+                                Object.entries(influencer.socialMedia).map(([platform, data]: [string, any]) => (
+                                  <Badge key={platform} variant="outline" className="text-xs">
+                                    {platform === 'instagram' && <Instagram className="w-3 h-3 mr-1" />}
+                                    @{data.handle}
+                                  </Badge>
+                                ))
+                              ) : (
+                                (influencer.platforms || ['instagram']).map((platform) => (
+                                  <Badge key={platform} variant="outline" className="text-xs">
+                                    {platform === 'instagram' && <Instagram className="w-3 h-3 mr-1" />}
+                                    {platform}
+                                  </Badge>
+                                ))
                               )}
                             </div>
                           </div>
-                          <Badge className={getTierColor(influencer.tier)}>
-                            {influencer.tier}
-                          </Badge>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="flex items-center gap-1">
-                              <Users className="w-4 h-4" />
-                              {formatFollowers(influencer.followers)} followers
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Star className="w-4 h-4" />
-                              {(influencer.engagementRate * 100).toFixed(1)}% engagement
-                            </span>
-                          </div>
-                          
-                          {influencer.location && (
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <MapPin className="w-4 h-4" />
-                              {influencer.location}
-                            </div>
-                          )}
-                          
-                          {influencer.bio && (
-                            <p className="text-sm text-muted-foreground line-clamp-2">
-                              {influencer.bio}
-                            </p>
-                          )}
-                          
-                          <div className="flex gap-1 flex-wrap">
-                            {(influencer.platforms || ['instagram']).map((platform) => (
-                              <Badge key={platform} variant="outline" className="text-xs">
-                                {platform === 'instagram' && <Instagram className="w-3 h-3 mr-1" />}
-                                {platform}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                  
+                  {hasMore && (
+                    <div className="flex justify-center">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => searchInfluencers(true)}
+                        disabled={loading}
+                      >
+                        {loading ? 'Loading...' : 'Load More'}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -372,14 +507,37 @@ export function FindInfluencersDialog({
                           {selectedInfluencer.tier}
                         </Badge>
                       </div>
+                      {selectedInfluencer.username && (
+                        <p className="text-sm text-muted-foreground font-mono mb-1">{selectedInfluencer.username.startsWith('@') ? selectedInfluencer.username : `@${selectedInfluencer.username}`}</p>
+                      )}
                       <p className="text-muted-foreground">
-                        {formatFollowers(selectedInfluencer.followers)} followers • {(selectedInfluencer.engagementRate * 100).toFixed(1)}% engagement
+                        {formatFollowers(selectedInfluencer.followers)} followers
                       </p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             )}
+
+            {/* Use Existing Offer */}
+            <div className="space-y-4">
+              <div>
+                <Label>Use Existing Offer (Optional)</Label>
+                <Select value={selectedOfferId} onValueChange={handleOfferSelection}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select an existing offer or create new" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Create New Offer</SelectItem>
+                    {offers.map((offer) => (
+                      <SelectItem key={offer.id} value={offer.id}>
+                        {offer.title} - {offer.splitPct}% split
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
             {/* Request Form */}
             <div className="space-y-4">
@@ -409,11 +567,10 @@ export function FindInfluencersDialog({
                   <Label htmlFor="splitPct">Influencer Split (%)</Label>
                   <Input
                     id="splitPct"
-                    type="number"
-                    min="1"
-                    max="50"
+                    type="text"
+                    placeholder="25"
                     value={requestData.proposedSplitPct}
-                    onChange={(e) => setRequestData(prev => ({ ...prev, proposedSplitPct: parseInt(e.target.value) || 25 }))}
+                    onChange={(e) => handleNumericInput(e.target.value, 'proposedSplitPct')}
                   />
                 </div>
 
@@ -440,11 +597,10 @@ export function FindInfluencersDialog({
                     <Label htmlFor="userDiscountPct">Customer Discount (%)</Label>
                     <Input
                       id="userDiscountPct"
-                      type="number"
-                      min="1"
-                      max="50"
+                      type="text"
+                      placeholder="20"
                       value={requestData.userDiscountPct}
-                      onChange={(e) => setRequestData(prev => ({ ...prev, userDiscountPct: parseInt(e.target.value) || 20 }))}
+                      onChange={(e) => handleNumericInput(e.target.value, 'userDiscountPct')}
                     />
                   </div>
                 ) : (
@@ -452,11 +608,10 @@ export function FindInfluencersDialog({
                     <Label htmlFor="userDiscountCents">Customer Discount ($)</Label>
                     <Input
                       id="userDiscountCents"
-                      type="number"
-                      min="100"
-                      step="100"
-                      value={requestData.userDiscountCents / 100}
-                      onChange={(e) => setRequestData(prev => ({ ...prev, userDiscountCents: (parseInt(e.target.value) || 5) * 100 }))}
+                      type="text"
+                      placeholder="5.00"
+                      value={requestData.userDiscountCents}
+                      onChange={(e) => handleNumericInput(e.target.value, 'userDiscountCents')}
                     />
                   </div>
                 )}
@@ -465,11 +620,10 @@ export function FindInfluencersDialog({
                   <Label htmlFor="minSpend">Minimum Spend ($)</Label>
                   <Input
                     id="minSpend"
-                    type="number"
-                    min="0"
-                    step="5"
-                    value={requestData.minSpendCents / 100}
-                    onChange={(e) => setRequestData(prev => ({ ...prev, minSpendCents: (parseInt(e.target.value) || 20) * 100 }))}
+                    type="text"
+                    placeholder="20.00"
+                    value={requestData.minSpendCents}
+                    onChange={(e) => handleNumericInput(e.target.value, 'minSpendCents')}
                   />
                 </div>
               </div>
