@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
     // Query influencer requests for this business
     const requestsRef = adminDb!.collection('influencerRequests');
     const requestsQuery = requestsRef
-      .where('bizId', '==', businessId)
+      .where('businessId', '==', businessId)
       .limit(limit);
 
     const requestsSnapshot = await requestsQuery.get();
@@ -146,7 +146,108 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Firebase not configured' }, { status: 500 });
     }
 
-    await adminDb!.collection('influencerRequests').doc(requestId).update(updateData);
+    // Get the request document to find businessId and influencerId
+    const requestDoc = await adminDb!.collection('influencerRequests').doc(requestId).get();
+    if (!requestDoc.exists) {
+      return NextResponse.json({ error: 'Request not found' }, { status: 404 });
+    }
+
+    const requestData = requestDoc.data();
+    const businessId = requestData?.businessId;
+    const influencerId = requestData?.influencerId;
+
+    // If request is closed or declined, permanently delete it
+    if (status === 'closed' || status === 'declined') {
+      console.log(`Permanently deleting ${status} request ${requestId}`);
+      
+      // Delete from influencerRequests collection
+      await adminDb!.collection('influencerRequests').doc(requestId).delete();
+      console.log(`Deleted request ${requestId} from influencerRequests collection`);
+      
+      // Remove from business activeRequests
+      if (businessId && influencerId) {
+        try {
+          await adminDb!.collection('businesses').doc(businessId).update({
+            [`activeRequests.${influencerId}`]: null, // Remove the field
+            updatedAt: new Date()
+          });
+          console.log(`Removed request ${requestId} from business ${businessId} activeRequests`);
+        } catch (error) {
+          console.error('Error removing request from business activeRequests:', error);
+          // Don't fail the main operation if this fails
+        }
+      }
+    } else {
+      // For other status updates (approved, countered), just update the status
+      await adminDb!.collection('influencerRequests').doc(requestId).update(updateData);
+      console.log(`Updated request ${requestId} status to ${status}`);
+      
+      // If request is approved, create an active offer
+      if (status === 'approved' && requestData) {
+        console.log(`Creating active offer for approved request ${requestId}`);
+        
+        try {
+          const now = new Date();
+          const offerData = {
+            businessId: businessId,
+            bizId: businessId,
+            title: requestData.title || `Collaboration with ${requestData.influencerName || 'Influencer'}`,
+            description: requestData.description || requestData.message || '',
+            discountType: requestData.discountType || 'percentage',
+            discountValue: requestData.discountType === 'percentage' ? requestData.userDiscountPct : requestData.userDiscountCents,
+            splitPct: requestData.splitPct || 25,
+            userDiscountPct: requestData.userDiscountPct,
+            userDiscountCents: requestData.userDiscountCents,
+            minSpendCents: requestData.minSpendCents || 0,
+            redemptionLimit: null, // Default to unlimited for request-based offers
+            budgetCents: 0,
+            eligibleTiers: ['S', 'M', 'L', 'XL'],
+            active: true,
+            status: 'active',
+            createdAt: now,
+            activeInfluencers: 0,
+            updatedAt: now,
+            createdBy: businessId,
+            startAt: now,
+            endAt: new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000)), // 30 days default
+            createdFromRequest: requestId, // Track that this offer came from a request
+            exclusive: requestData.makeExclusive || false // Set exclusive based on request data
+          };
+
+          const newOfferRef = await adminDb!.collection('offers').add(offerData);
+          console.log(`Created active offer ${newOfferRef.id} for approved request ${requestId}`);
+          
+          // Log the creation
+          await adminDb.collection('campaignLogs').add({
+            campaignId: businessId,
+            action: 'create',
+            performedBy: businessId,
+            performedAt: now,
+            businessId,
+            offerId: newOfferRef.id,
+            source: 'approved_request'
+          });
+          
+        } catch (error) {
+          console.error('Error creating offer for approved request:', error);
+          // Don't fail the request update if offer creation fails
+        }
+      }
+      
+      if (businessId && influencerId) {
+        try {
+          await adminDb!.collection('businesses').doc(businessId).update({
+            [`activeRequests.${influencerId}.status`]: status,
+            [`activeRequests.${influencerId}.updatedAt`]: new Date(),
+            updatedAt: new Date()
+          });
+          console.log(`Updated request ${requestId} status to ${status} in business ${businessId} activeRequests`);
+        } catch (error) {
+          console.error('Error updating request status in business activeRequests:', error);
+          // Don't fail the main update if this fails
+        }
+      }
+    }
     
     return NextResponse.json({ success: true });
 
@@ -272,20 +373,70 @@ export async function POST(request: NextRequest) {
       console.warn('Could not fetch business details:', error);
     }
 
-    // Check for existing active requests to this influencer
-    const existingRequestsQuery = adminDb!.collection('influencerRequests')
+    // First, clean up any existing closed/declined requests for this influencer
+    const allRequestsQuery = adminDb!.collection('influencerRequests')
       .where('businessId', '==', businessId)
-      .where('influencerId', '==', finalInfluencerId)
-      .where('status', 'in', ['pending', 'countered']);
+      .where('influencerId', '==', finalInfluencerId);
 
-    const existingRequestsSnapshot = await existingRequestsQuery.get();
+    const allRequestsSnapshot = await allRequestsQuery.get();
+    console.log(`Found ${allRequestsSnapshot.docs.length} existing requests for influencer ${finalInfluencerId}`);
     
-    if (!existingRequestsSnapshot.empty) {
-      console.log('Active request already exists for this influencer');
+    const closedRequests = [];
+    const activeRequests = [];
+    
+    for (const doc of allRequestsSnapshot.docs) {
+      const data = doc.data();
+      const status = data.status;
+      console.log(`Request ${doc.id}: status=${status}`);
+      
+      if (status === 'closed' || status === 'declined') {
+        closedRequests.push(doc.id);
+      } else if (status === 'pending' || status === 'countered' || status === 'approved') {
+        activeRequests.push({ id: doc.id, status });
+      }
+    }
+    
+    // Delete closed/declined requests permanently
+    if (closedRequests.length > 0) {
+      console.log(`Deleting ${closedRequests.length} closed/declined requests:`, closedRequests);
+      const batch = adminDb!.batch();
+      for (const requestId of closedRequests) {
+        batch.delete(adminDb!.collection('influencerRequests').doc(requestId));
+      }
+      await batch.commit();
+      console.log('Successfully deleted closed/declined requests');
+    }
+    
+    // Check for remaining active requests
+    if (activeRequests.length > 0) {
+      console.log(`Found ${activeRequests.length} active requests blocking new request:`, activeRequests);
       return NextResponse.json({ 
         error: 'You already have an active request with this influencer. Please wait for them to respond or close the existing request before sending a new one.',
-        code: 'DUPLICATE_REQUEST'
+        code: 'DUPLICATE_REQUEST',
+        activeRequests: activeRequests
       }, { status: 409 });
+    }
+    
+    console.log('No active requests found, proceeding with new request creation');
+    
+    // Additional safety check: verify the influencer isn't in business activeRequests
+    try {
+      const businessDoc = await adminDb!.collection('businesses').doc(businessId).get();
+      if (businessDoc.exists) {
+        const businessData = businessDoc.data();
+        const activeRequestsData = businessData?.activeRequests || {};
+        
+        if (activeRequestsData[finalInfluencerId]) {
+          console.log(`Found orphaned request in business activeRequests for influencer ${finalInfluencerId}, cleaning up`);
+          await adminDb!.collection('businesses').doc(businessId).update({
+            [`activeRequests.${finalInfluencerId}`]: null,
+            updatedAt: new Date()
+          });
+          console.log('Cleaned up orphaned business activeRequest');
+        }
+      }
+    } catch (error) {
+      console.warn('Error checking business activeRequests:', error);
     }
 
     // Create new influencer request

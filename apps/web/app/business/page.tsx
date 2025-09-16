@@ -22,12 +22,18 @@ import {
   MessageSquare, 
   Store,
   Percent,
-  MapPin,
+  TrendingUp,
   Users,
   Clock,
   Download,
   Settings,
-  BarChart3
+  BarChart3,
+  Eye,
+  Edit,
+  Pause,
+  Play,
+  Square,
+  MapPin
 } from 'lucide-react';
 
 type DiscountType = 'percentage' | 'dollar' | 'bogo' | 'student' | 'happy_hour' | 'free_appetizer' | 'first_time';
@@ -73,7 +79,8 @@ export default function BusinessHome() {
   const [tierLoading, setTierLoading] = useState(false);
 
   const filteredOffers = realOffers?.filter((offer: any) => 
-    offer.title?.toLowerCase().includes(offersSearch.toLowerCase())
+    offer.title?.toLowerCase().includes(offersSearch.toLowerCase()) && 
+    !offer.exclusive
   ) || [];
 
   const filteredRequests = realRequests?.filter((request: any) => 
@@ -234,7 +241,10 @@ export default function BusinessHome() {
               <Settings className="w-4 h-4 mr-2" />
               Profile
             </Button>
-            <Button onClick={() => setCreateDialogOpen(true)}>Create Offer</Button>
+            <Button onClick={() => {
+              console.log('Create Offer button clicked, setting dialog open to true');
+              setCreateDialogOpen(true);
+            }}>Create Offer</Button>
           </div>
         </div>
 
@@ -579,6 +589,85 @@ export default function BusinessHome() {
                       >
                         End Offer
                       </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Exclusive Offers */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Exclusive Offers</h2>
+            <Badge variant="outline">{realOffers?.filter((offer: any) => offer.exclusive === true).length || 0} exclusive</Badge>
+          </div>
+          
+          {offersLoading ? (
+            <div className="text-center py-8">Loading exclusive offers...</div>
+          ) : realOffers?.filter((offer: any) => offer.exclusive === true).length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">No exclusive offers yet. Exclusive offers are created when you approve influencer requests with the "Make Exclusive" option.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {realOffers?.filter((offer: any) => offer.exclusive === true).map((o: any) => (
+                <Card key={o.id} className="hover:shadow-md transition-shadow border-purple-200">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          {o.title}
+                          <Badge variant="secondary" className="bg-purple-100 text-purple-800">Exclusive</Badge>
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <MapPin className="w-4 h-4 text-blue-600" /> Austin, TX
+                        </p>
+                      </div>
+                      <Badge variant={o.status === 'active' ? 'default' : 'outline'}>{o.status}</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Influencer Split</p>
+                        <p className="font-semibold text-green-600">{o.splitPct}%</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Discount</p>
+                        <p className="font-semibold text-blue-600">
+                          {o.discountType === 'percentage' ? `${o.userDiscountPct}%` : `$${(o.userDiscountCents/100).toFixed(2)}`} off
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Min Spend</p>
+                        <p className="font-semibold">${(o.minSpendCents/100).toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Redemptions</p>
+                        <p className="font-semibold">{o.redemptionLimit || 'Unlimited'}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      {o.status === 'active' && (
+                        <>
+                          <Button size="sm" variant="outline" onClick={() => pauseOffer(o.id)}>
+                            <Pause className="w-4 h-4 mr-1" />
+                            Pause
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => endOffer(o.id)}>
+                            <Square className="w-4 h-4 mr-1" />
+                            End Offer
+                          </Button>
+                        </>
+                      )}
+                      {o.status === 'paused' && (
+                        <Button size="sm" onClick={() => resumeOffer(o.id)}>
+                          <Play className="w-4 h-4 mr-1" />
+                          Resume
+                        </Button>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

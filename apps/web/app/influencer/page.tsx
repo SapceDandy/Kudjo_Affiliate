@@ -296,6 +296,31 @@ export default function InfluencerDashboard() {
       toast.error(error.message || 'Failed to update request');
     }
   };
+
+  const handleCounterOffer = async () => {
+    if (!selectedRequest) return;
+    
+    const counterSplitInput = document.getElementById('counterSplit') as HTMLInputElement;
+    const counterMessageInput = document.getElementById('counterMessage') as HTMLTextAreaElement;
+    
+    const splitPct = parseInt(counterSplitInput.value);
+    const message = counterMessageInput.value.trim();
+    
+    if (!splitPct || splitPct < 1 || splitPct > 50) {
+      toast.error('Please enter a valid commission percentage (1-50%)');
+      return;
+    }
+    
+    if (!message) {
+      toast.error('Please provide a message explaining your counter offer');
+      return;
+    }
+    
+    await handleRequestResponse(selectedRequest.id, 'counter', {
+      splitPct,
+      message
+    });
+  };
   
   const formatDiscount = (campaign: AvailableCampaign) => {
     switch (campaign.discountType) {
@@ -802,6 +827,17 @@ export default function InfluencerDashboard() {
                         </Button>
                         <Button 
                           size="sm" 
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedRequest(request);
+                            setRequestDialogOpen(true);
+                          }}
+                          className="border-orange-500 text-orange-600 hover:bg-orange-50"
+                        >
+                          Counter
+                        </Button>
+                        <Button 
+                          size="sm" 
                           onClick={() => handleRequestResponse(request.id, 'accept')}
                           className="bg-green-600 hover:bg-green-700"
                         >
@@ -896,6 +932,77 @@ export default function InfluencerDashboard() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Counter Offer Dialog */}
+      <Dialog open={requestDialogOpen} onOpenChange={setRequestDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Counter Offer</DialogTitle>
+            <DialogDescription>
+              Negotiate terms with {selectedRequest?.businessName}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedRequest && (
+            <div className="space-y-4">
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-medium mb-2">Current Offer:</h4>
+                <div className="space-y-1 text-sm">
+                  <p><strong>Commission:</strong> {selectedRequest.splitPct}%</p>
+                  {selectedRequest.userDiscountPct && (
+                    <p><strong>User Discount:</strong> {selectedRequest.userDiscountPct}% off</p>
+                  )}
+                  {selectedRequest.userDiscountCents && (
+                    <p><strong>User Discount:</strong> ${(selectedRequest.userDiscountCents / 100).toFixed(2)} off</p>
+                  )}
+                  {selectedRequest.minSpendCents && (
+                    <p><strong>Minimum Spend:</strong> ${(selectedRequest.minSpendCents / 100).toFixed(2)}</p>
+                  )}
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="counterSplit">Your Counter Commission (%)</Label>
+                  <Input
+                    id="counterSplit"
+                    type="number"
+                    min="1"
+                    max="50"
+                    defaultValue={selectedRequest.splitPct}
+                    placeholder="Enter commission percentage"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="counterMessage">Message to Business</Label>
+                  <textarea
+                    id="counterMessage"
+                    className="w-full p-2 border rounded-md resize-none"
+                    rows={3}
+                    placeholder="Explain your counter offer..."
+                  />
+                </div>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setRequestDialogOpen(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={() => handleCounterOffer()}
+                  className="flex-1 bg-orange-600 hover:bg-orange-700"
+                >
+                  Send Counter
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

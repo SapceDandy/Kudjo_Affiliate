@@ -85,7 +85,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         if (process.env.NODE_ENV === 'development') {
           console.log('Initializing auth state');
+          // Development bypass - create a mock influencer user for testing
+          setTimeout(() => {
+            if (isMounted) {
+              setUser({ 
+                uid: 'inf_1', 
+                email: 'sarah@foodieexplorer.com', 
+                displayName: 'Sarah - Foodie Explorer', 
+                photoURL: 'https://lh3.googleusercontent.com/a/ACg8ocKn7hYZ3mkcYYiwp7ajSEiNBqyR7DqGfvIv45381i19VLRCPh8=s96-c', 
+                role: 'influencer' 
+              });
+              setLoading(false);
+            }
+          }, 1000);
+          return;
         }
+        
         // First, try to resolve admin session once
         const adminSession = await checkAdminSession();
         if (!isMounted) return;

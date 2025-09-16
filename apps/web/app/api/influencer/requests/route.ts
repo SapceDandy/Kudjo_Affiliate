@@ -50,15 +50,15 @@ export async function GET(request: NextRequest) {
     let requestsSnapshot;
     
     try {
-      // Try with ordering first
+      // Try with ordering first - using 'influencerId' field to match what business API stores
       const requestsQuery = requestsRef
-        .where('infId', '==', infId)
+        .where('influencerId', '==', infId)
         .orderBy('createdAt', 'desc');
       requestsSnapshot = await requestsQuery.get();
     } catch (indexError: any) {
       console.log('Index not ready, using simple query:', indexError?.message || 'Index error');
       // Fallback to simple query without ordering
-      const simpleQuery = requestsRef.where('infId', '==', infId);
+      const simpleQuery = requestsRef.where('influencerId', '==', infId);
       requestsSnapshot = await simpleQuery.get();
     }
     

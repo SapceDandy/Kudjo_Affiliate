@@ -138,23 +138,45 @@ export async function GET(request: NextRequest) {
     const assignmentsSnapshot = await assignmentsQuery.get();
     const activeAssignments = assignmentsSnapshot.size;
     
-    // Query pending requests for this business
+    // Query pending requests for this business - count all active statuses
     const requestsRef = adminDb!.collection('influencerRequests');
-    const requestsQuery = requestsRef.where('businessId', '==', businessId).where('status', '==', 'pending');
+    const requestsQuery = requestsRef.where('businessId', '==', businessId);
     const requestsSnapshot = await requestsQuery.get();
-    let pendingRequests = requestsSnapshot.size;
     
-    // Also check business document activeRequests as fallback
+    // Filter and count only truly active requests
+    let pendingRequests = 0;
+    requestsSnapshot.forEach((doc) => {
+      const data = doc.data();
+      const status = data.status;
+      console.log(`Request ${doc.id}: status=${status}`);
+      
+      if (status === 'pending' || status === 'countered' || status === 'approved') {
+        pendingRequests++;
+      }
+    });
+    
+    console.log(`Total requests found: ${requestsSnapshot.size}, Active requests: ${pendingRequests}`);
+    
+    // Also check business document activeRequests for comparison
     const businessDocRef = await adminDb!.collection('businesses').doc(businessId).get();
     if (businessDocRef.exists) {
       const businessData = businessDocRef.data();
       const activeRequests = businessData?.activeRequests || {};
-      const businessRequestsCount = Object.keys(activeRequests).length;
-      console.log('Business activeRequests count:', businessRequestsCount);
-      console.log('Collection requests count:', pendingRequests);
       
-      // Use the higher count as it's more likely to be accurate
-      pendingRequests = Math.max(pendingRequests, businessRequestsCount);
+      // Count valid requests in business document
+      const validActiveRequests = Object.entries(activeRequests)
+        .filter(([_, requestData]) => requestData && typeof requestData === 'object')
+        .length;
+      
+      console.log('Business activeRequests count (valid):', validActiveRequests);
+      console.log('Collection active requests count:', pendingRequests);
+      
+      // If business document has more valid requests, use that count
+      // This handles cases where the UI shows requests from business document
+      if (validActiveRequests > pendingRequests) {
+        console.log('Using business document count as it has more valid requests:', validActiveRequests);
+        pendingRequests = validActiveRequests;
+      }
     }
     
     console.log('Found pending requests:', pendingRequests);

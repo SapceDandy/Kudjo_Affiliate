@@ -34,70 +34,49 @@ export function useRealtimeInfluencerRequests() {
       return;
     }
 
-    let unsubscribe: Unsubscribe;
-
-    try {
-      setError(null);
-      
-      // Create real-time query for influencer requests
-      const requestsRef = collection(db, 'influencerRequests');
-      const requestsQuery = query(
-        requestsRef,
-        where('infId', '==', user.uid),
-        orderBy('createdAt', 'desc')
-      );
-
-      // Set up real-time listener
-      unsubscribe = onSnapshot(
-        requestsQuery,
-        (snapshot) => {
-          const updatedRequests: InfluencerRequest[] = [];
-          
-          snapshot.forEach((doc) => {
-            const data = doc.data();
-            updatedRequests.push({
-              id: doc.id,
-              title: data.title || 'Business Request',
-              description: data.description,
-              businessName: data.businessName || 'Unknown Business',
-              businessId: data.bizId,
-              splitPct: data.proposedSplitPct || 20,
-              userDiscountPct: data.userDiscountPct,
-              userDiscountCents: data.userDiscountCents,
-              minSpendCents: data.minSpendCents,
-              status: data.status || 'pending',
-              createdAt: data.createdAt?.toDate?.() || new Date(),
-              updatedAt: data.updatedAt?.toDate?.(),
-              businessResponse: data.businessResponse
-            });
-          });
-
-          // Filter out closed/declined requests for UI display
-          const activeRequests = updatedRequests.filter(req => 
+    console.log('🔍 Fetching influencer requests for user:', user.uid);
+    
+    const fetchRequests = async () => {
+      try {
+        setError(null);
+        setLoading(true);
+        
+        const response = await fetch(`/api/influencer/requests?infId=${user.uid}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('📨 API response:', data);
+        
+        if (data.requests) {
+          const activeRequests = data.requests.filter((req: any) =>
             req.status !== 'closed' && req.status !== 'declined'
           );
-
+          
+          console.log('✅ Active requests for influencer:', activeRequests.length);
           setRequests(activeRequests);
-          setLoading(false);
-        },
-        (err) => {
-          console.error('Error in real-time influencer requests listener:', err);
-          setError('Failed to load requests. Please try again.');
-          setLoading(false);
+        } else {
+          setRequests([]);
         }
-      );
-
-    } catch (err) {
-      console.error('Error setting up real-time influencer requests listener:', err);
-      setError('Failed to set up real-time updates.');
-      setLoading(false);
-    }
-
-    // Cleanup listener on unmount
-    return () => {
-      if (unsubscribe) {
-        unsubscribe();
+        
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching influencer requests:', err);
+        setError('Failed to load requests. Please try again.');
+        setLoading(false);
       }
+    };
+
+    // Initial fetch
+    fetchRequests();
+    
+    // Set up polling for real-time updates (every 30 seconds)
+    const interval = setInterval(fetchRequests, 30000);
+    
+    return () => {
+      clearInterval(interval);
     };
   }, [user]);
 

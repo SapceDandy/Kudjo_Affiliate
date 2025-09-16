@@ -75,18 +75,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Firebase not configured' }, { status: 500 });
     }
 
-    // Query business offers from Firestore - simplified to avoid index issues
+    // Query business offers from Firestore - use simple query to avoid index issues
     const offersRef = adminDb.collection('offers');
-    let offersQuery = offersRef.where('businessId', '==', businessId);
+    let offersQuery = offersRef.where('businessId', '==', businessId).limit(limit);
     
-    // Try with ordering, fall back to simple query if index not ready
-    let offersSnapshot;
-    try {
-      offersSnapshot = await offersQuery.orderBy('createdAt', 'desc').limit(limit).get();
-    } catch (indexError) {
-      console.log('Index not ready, using simple query:', indexError);
-      offersSnapshot = await offersQuery.limit(limit).get();
-    }
+    const offersSnapshot = await offersQuery.get();
     
     const offers = offersSnapshot.docs.map((doc: QueryDocumentSnapshot) => {
       const data = doc.data();
@@ -101,7 +94,8 @@ export async function GET(request: NextRequest) {
         minSpendCents: data.minSpendCents,
         createdAt: data.createdAt?.toDate?.() || new Date(),
         description: data.description,
-        terms: data.terms
+        terms: data.terms,
+        exclusive: data.exclusive || false
       };
     });
 
@@ -165,7 +159,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const parsed = CreateOfferSchema.parse(body);
-    const { businessId, title, discountType, splitPct, userDiscountPct, userDiscountCents, minSpendCents, description, terms } = parsed;
+    const { businessId, title, discountType, splitPct, userDiscountPct, userDiscountCents, minSpendCents, redemptionLimit, description, terms, exclusive } = parsed;
 
 
     const adminDb = getAdminDb();
@@ -194,6 +188,7 @@ export async function POST(request: NextRequest) {
       userDiscountPct: userDiscountPct,
       userDiscountCents: userDiscountCents,
       minSpendCents: minSpendCents,
+      redemptionLimit: redemptionLimit, // null for unlimited, number for limited
       budgetCents: 0,
       eligibleTiers: ['S', 'M', 'L', 'XL'],
       active: true,
@@ -203,7 +198,8 @@ export async function POST(request: NextRequest) {
       updatedAt: now,
       createdBy: businessId,
       startAt: now,
-      endAt: new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000)) // 30 days default
+      endAt: new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000)), // 30 days default
+      exclusive: exclusive || false
     };
 
     const newOfferRef = await adminDb!.collection('offers').add(offerData);

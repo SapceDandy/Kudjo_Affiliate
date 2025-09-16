@@ -75,17 +75,19 @@ export function FindInfluencersDialog({
   const [hasMore, setHasMore] = useState(false);
   const [sending, setSending] = useState(false);
   const [offers, setOffers] = useState<Offer[]>([]);
-  const [selectedOfferId, setSelectedOfferId] = useState<string>('');
+  const [selectedOfferId, setSelectedOfferId] = useState<string>('new');
+  const [tierDefaults, setTierDefaults] = useState<any>({});
   
   // Request form data
   const [requestData, setRequestData] = useState({
     title: '',
     description: '',
     proposedSplitPct: '',
-    discountType: 'percentage' as 'percentage' | 'fixed',
+    discountType: 'percentage' as 'percentage' | 'fixed' | 'dollar' | 'bogo' | 'student' | 'happy_hour' | 'free_appetizer' | 'first_time',
     userDiscountPct: '',
     userDiscountCents: '',
-    minSpendCents: ''
+    minSpendCents: '',
+    makeExclusive: false
   });
 
   const searchInfluencers = async (loadMore = false) => {
@@ -188,7 +190,8 @@ export function FindInfluencersDialog({
           discountType: requestData.discountType,
           userDiscountPct: requestData.discountType === 'percentage' ? sanitizeNumber(requestData.userDiscountPct) : undefined,
           userDiscountCents: requestData.discountType === 'fixed' ? sanitizeNumber(requestData.userDiscountCents) * 100 : undefined,
-          minSpendCents: sanitizeNumber(requestData.minSpendCents) * 100
+          minSpendCents: sanitizeNumber(requestData.minSpendCents) * 100,
+          makeExclusive: requestData.makeExclusive
         })
       });
 
@@ -204,7 +207,7 @@ export function FindInfluencersDialog({
       // Reset form
       setStep('search');
       setSelectedInfluencer(null);
-      setSelectedOfferId('');
+      setSelectedOfferId('new');
       setRequestData({
         title: '',
         description: '',
@@ -212,7 +215,8 @@ export function FindInfluencersDialog({
         discountType: 'percentage',
         userDiscountPct: '',
         userDiscountCents: '',
-        minSpendCents: ''
+        minSpendCents: '',
+        makeExclusive: false
       });
     } catch (error: any) {
       console.error('Error sending request:', error);
@@ -251,18 +255,45 @@ export function FindInfluencersDialog({
     }
   };
 
+  const fetchTierDefaults = async () => {
+    try {
+      const response = await fetch(`/api/business/tier-defaults?businessId=${businessId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setTierDefaults(data.tierDefaults || {});
+      }
+    } catch (error) {
+      console.error('Error fetching tier defaults:', error);
+    }
+  };
+
   const handleOfferSelection = (offerId: string) => {
     setSelectedOfferId(offerId);
+    if (offerId === 'new') {
+      // Reset form for new offer
+      setRequestData({
+        title: '',
+        description: '',
+        proposedSplitPct: '',
+        discountType: 'percentage',
+        userDiscountPct: '',
+        userDiscountCents: '',
+        minSpendCents: '',
+        makeExclusive: false
+      });
+      return;
+    }
     const selectedOffer = offers.find(offer => offer.id === offerId);
     if (selectedOffer) {
       setRequestData({
         title: selectedOffer.title,
         description: `Collaboration opportunity for ${selectedOffer.title}`,
         proposedSplitPct: selectedOffer.splitPct.toString(),
-        discountType: selectedOffer.discountType as 'percentage' | 'fixed',
+        discountType: selectedOffer.discountType as 'percentage' | 'fixed' | 'dollar' | 'bogo' | 'student' | 'happy_hour' | 'free_appetizer' | 'first_time',
         userDiscountPct: selectedOffer.userDiscountPct?.toString() || '',
         userDiscountCents: selectedOffer.userDiscountCents ? (selectedOffer.userDiscountCents / 100).toString() : '',
-        minSpendCents: selectedOffer.minSpendCents ? (selectedOffer.minSpendCents / 100).toString() : ''
+        minSpendCents: selectedOffer.minSpendCents ? (selectedOffer.minSpendCents / 100).toString() : '',
+        makeExclusive: false
       });
     }
   };
@@ -275,10 +306,51 @@ export function FindInfluencersDialog({
     setRequestData(prev => ({ ...prev, [field]: sanitized }));
   };
 
+  // Set default split based on influencer tier when tier defaults are loaded
+  useEffect(() => {
+    if (selectedInfluencer?.tier && tierDefaults && step === 'request') {
+      console.log('Setting tier defaults for:', selectedInfluencer.tier, 'Available defaults:', tierDefaults);
+      
+      // First try direct tier name match (new format)
+      let defaultSplit = null;
+      if (tierDefaults[selectedInfluencer.tier]) {
+        defaultSplit = tierDefaults[selectedInfluencer.tier].defaultSplit;
+      } else {
+        // Fallback to old API format mapping
+        const tierMapping: Record<string, string> = {
+          'Bronze': 'S',
+          'Silver': 'S', 
+          'Gold': 'M',
+          'Platinum': 'L',
+          'Nano': 'S',
+          'Micro': 'S',
+          'Mid': 'M',
+          'Macro': 'L',
+          'Mega': 'L'
+        };
+        
+        const apiKey = tierMapping[selectedInfluencer.tier];
+        if (apiKey && tierDefaults[apiKey]) {
+          defaultSplit = tierDefaults[apiKey].defaultSplit;
+        }
+      }
+      
+      console.log('Found default split:', defaultSplit, 'for tier:', selectedInfluencer.tier);
+      
+      if (defaultSplit && !requestData.proposedSplitPct) {
+        setRequestData(prev => ({
+          ...prev,
+          proposedSplitPct: defaultSplit.toString()
+        }));
+      }
+    }
+  }, [selectedInfluencer?.tier, tierDefaults, step]);
+
   useEffect(() => {
     if (open) {
       searchInfluencers();
       fetchOffers();
+      fetchTierDefaults();
     }
     
     // Cleanup timeout on unmount
@@ -523,12 +595,12 @@ export function FindInfluencersDialog({
             <div className="space-y-4">
               <div>
                 <Label>Use Existing Offer (Optional)</Label>
-                <Select value={selectedOfferId} onValueChange={handleOfferSelection}>
+                <Select value={selectedOfferId || 'new'} onValueChange={handleOfferSelection}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select an existing offer or create new" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Create New Offer</SelectItem>
+                    <SelectItem value="new">Create New Offer</SelectItem>
                     {offers.map((offer) => (
                       <SelectItem key={offer.id} value={offer.id}>
                         {offer.title} - {offer.splitPct}% split
@@ -572,60 +644,124 @@ export function FindInfluencersDialog({
                     value={requestData.proposedSplitPct}
                     onChange={(e) => handleNumericInput(e.target.value, 'proposedSplitPct')}
                   />
+                  {selectedInfluencer?.tier && tierDefaults && (() => {
+                    // First try direct tier name match (new format)
+                    let defaultSplit = null;
+                    if (tierDefaults[selectedInfluencer.tier]) {
+                      defaultSplit = tierDefaults[selectedInfluencer.tier].defaultSplit;
+                    } else {
+                      // Fallback to old API format mapping
+                      const tierMapping: Record<string, string> = {
+                        'Bronze': 'S',
+                        'Silver': 'S', 
+                        'Gold': 'M',
+                        'Platinum': 'L',
+                        'Nano': 'S',
+                        'Micro': 'S',
+                        'Mid': 'M',
+                        'Macro': 'L',
+                        'Mega': 'L'
+                      };
+                      const apiKey = tierMapping[selectedInfluencer.tier];
+                      if (apiKey && tierDefaults[apiKey]) {
+                        defaultSplit = tierDefaults[apiKey].defaultSplit;
+                      }
+                    }
+                    
+                    return defaultSplit ? (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Default for {selectedInfluencer.tier}: {defaultSplit}%
+                      </p>
+                    ) : null;
+                  })()}
                 </div>
 
                 <div>
                   <Label>Discount Type</Label>
                   <Select 
                     value={requestData.discountType} 
-                    onValueChange={(value: 'percentage' | 'fixed') => setRequestData(prev => ({ ...prev, discountType: value }))}
+                    onValueChange={(value: 'percentage' | 'fixed' | 'dollar' | 'bogo' | 'student' | 'happy_hour' | 'free_appetizer' | 'first_time') => setRequestData(prev => ({ ...prev, discountType: value }))}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="percentage">Percentage</SelectItem>
-                      <SelectItem value="fixed">Fixed Amount</SelectItem>
+                      <SelectItem value="percentage">Percentage Off</SelectItem>
+                      <SelectItem value="fixed">Fixed Dollar Amount Off</SelectItem>
+                      <SelectItem value="dollar">Dollar Amount Off</SelectItem>
+                      <SelectItem value="bogo">Buy One Get One</SelectItem>
+                      <SelectItem value="student">Student Discount</SelectItem>
+                      <SelectItem value="happy_hour">Happy Hour Special</SelectItem>
+                      <SelectItem value="free_appetizer">Free Appetizer</SelectItem>
+                      <SelectItem value="first_time">First-Time Customer</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                {requestData.discountType === 'percentage' ? (
-                  <div>
-                    <Label htmlFor="userDiscountPct">Customer Discount (%)</Label>
-                    <Input
-                      id="userDiscountPct"
-                      type="text"
-                      placeholder="20"
-                      value={requestData.userDiscountPct}
-                      onChange={(e) => handleNumericInput(e.target.value, 'userDiscountPct')}
-                    />
-                  </div>
-                ) : (
-                  <div>
-                    <Label htmlFor="userDiscountCents">Customer Discount ($)</Label>
-                    <Input
-                      id="userDiscountCents"
-                      type="text"
-                      placeholder="5.00"
-                      value={requestData.userDiscountCents}
-                      onChange={(e) => handleNumericInput(e.target.value, 'userDiscountCents')}
-                    />
-                  </div>
-                )}
-
+              {requestData.discountType === 'percentage' ? (
                 <div>
-                  <Label htmlFor="minSpend">Minimum Spend ($)</Label>
+                  <Label htmlFor="userDiscountPct">Customer Discount (%)</Label>
                   <Input
-                    id="minSpend"
+                    id="userDiscountPct"
                     type="text"
-                    placeholder="20.00"
-                    value={requestData.minSpendCents}
-                    onChange={(e) => handleNumericInput(e.target.value, 'minSpendCents')}
+                    placeholder="20"
+                    value={requestData.userDiscountPct}
+                    onChange={(e) => handleNumericInput(e.target.value, 'userDiscountPct')}
                   />
                 </div>
+              ) : (requestData.discountType === 'dollar' || requestData.discountType === 'fixed') ? (
+                <div>
+                  <Label htmlFor="userDiscountCents">Customer Discount ($)</Label>
+                  <Input
+                    id="userDiscountCents"
+                    type="text"
+                    placeholder="5.00"
+                    value={requestData.userDiscountCents}
+                    onChange={(e) => handleNumericInput(e.target.value, 'userDiscountCents')}
+                  />
+                </div>
+              ) : (
+                <div>
+                  <Label>Special Offer Type</Label>
+                  <div className="mt-1 p-3 bg-gray-50 rounded-md text-sm text-gray-600">
+                    {requestData.discountType === 'bogo' && 'Buy one item, get another free or discounted'}
+                    {requestData.discountType === 'student' && 'Special discount for students with valid ID'}
+                    {requestData.discountType === 'happy_hour' && 'Time-based promotional pricing'}
+                    {requestData.discountType === 'free_appetizer' && 'Complimentary appetizer with purchase'}
+                    {requestData.discountType === 'first_time' && 'Special offer for first-time customers'}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <Label htmlFor="minSpend">Minimum Spend ($)</Label>
+                <Input
+                  id="minSpend"
+                  type="text"
+                  placeholder="20.00"
+                  value={requestData.minSpendCents}
+                  onChange={(e) => handleNumericInput(e.target.value, 'minSpendCents')}
+                />
+              </div>
+
+              {/* Make Exclusive Option */}
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="makeExclusive"
+                    checked={requestData.makeExclusive}
+                    onChange={(e) => setRequestData(prev => ({ ...prev, makeExclusive: e.target.checked }))}
+                    className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                  />
+                  <Label htmlFor="makeExclusive" className="text-sm font-medium">
+                    Make this offer exclusive to this influencer
+                  </Label>
+                </div>
+                <p className="text-xs text-gray-500 ml-6">
+                  Exclusive offers will appear in a separate "Exclusive Offers" section and won't be visible to other influencers.
+                </p>
               </div>
             </div>
 
