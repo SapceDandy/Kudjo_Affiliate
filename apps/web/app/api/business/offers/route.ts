@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const parsed = CreateOfferSchema.parse(body);
-    const { businessId, title, discountType, splitPct, userDiscountPct, userDiscountCents, minSpendCents, redemptionLimit, description, terms, exclusive } = parsed;
+    const { businessId, name, discountType, splitPct, userDiscountPct, userDiscountCents, minSpendCents, redemptionLimit, description, terms, exclusive } = parsed;
 
 
     const adminDb = getAdminDb();
@@ -180,7 +180,7 @@ export async function POST(request: NextRequest) {
     const offerData = {
       businessId: businessId,
       bizId: businessId, // Keep both for compatibility
-      title: title,
+      title: name,
       description: description || '',
       discountType: discountType,
       discountValue: discountType === 'percentage' ? userDiscountPct : userDiscountCents,
