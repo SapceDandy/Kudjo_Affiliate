@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const infId = searchParams.get('infId') || searchParams.get('influencerId');
     
+    
     if (!infId) {
       return NextResponse.json({ error: 'Influencer ID required' }, { status: 400 });
     }
@@ -56,7 +57,6 @@ export async function GET(request: NextRequest) {
         .orderBy('createdAt', 'desc');
       requestsSnapshot = await requestsQuery.get();
     } catch (indexError: any) {
-      console.log('Index not ready, using simple query:', indexError?.message || 'Index error');
       // Fallback to simple query without ordering
       const simpleQuery = requestsRef.where('influencerId', '==', infId);
       requestsSnapshot = await simpleQuery.get();
@@ -64,7 +64,8 @@ export async function GET(request: NextRequest) {
     
     const requests = requestsSnapshot.docs.map((doc) => {
       const data = doc.data();
-      return {
+      
+      const processedRequest = {
         id: doc.id,
         title: data.title || 'Business Request',
         description: data.description,
@@ -79,6 +80,8 @@ export async function GET(request: NextRequest) {
         updatedAt: data.updatedAt?.toDate?.(),
         businessResponse: data.businessResponse
       };
+      
+      return processedRequest;
     });
 
     return NextResponse.json({ requests });

@@ -8,33 +8,44 @@ export interface ServerUser {
 
 export async function getCurrentUser(request?: NextRequest): Promise<ServerUser | null> {
   try {
-    // Check for user ID in headers (passed from frontend)
-    const userId = request?.headers.get('x-user-id');
-    const userRole = request?.headers.get('x-user-role') as 'admin' | 'business' | 'influencer' | undefined;
-    const userEmail = request?.headers.get('x-user-email');
-    
-    if (userId && userId !== 'mock-user-id') {
+    // Development mode fallback - return mock influencer user
+    if (process.env.NODE_ENV === 'development') {
+      // Check for user ID in headers (passed from frontend)
+      const userId = request?.headers.get('x-user-id');
+      const userRole = request?.headers.get('x-user-role') as 'admin' | 'business' | 'influencer' | undefined;
+      const userEmail = request?.headers.get('x-user-email');
+      
+      if (userId && userId !== 'mock-user-id') {
+        return {
+          uid: userId,
+          email: userEmail || undefined,
+          role: userRole || 'influencer'
+        };
+      }
+      
+      // Check for user ID in query parameters as fallback
+      const url = new URL(request?.url || '');
+      const queryUserId = url.searchParams.get('uid') || url.searchParams.get('userId');
+      const queryUserRole = url.searchParams.get('userRole') as 'admin' | 'business' | 'influencer' | undefined;
+      const queryUserEmail = url.searchParams.get('userEmail');
+      
+      if (queryUserId && queryUserId !== 'mock-user-id') {
+        return {
+          uid: queryUserId,
+          email: queryUserEmail || undefined,
+          role: queryUserRole || 'influencer'
+        };
+      }
+      
+      // Development fallback - return mock influencer user
       return {
-        uid: userId,
-        email: userEmail || undefined,
-        role: userRole || 'business'
+        uid: 'testhandleinfluencer2',
+        email: 'testhandleinfluencer2@example.com',
+        role: 'influencer'
       };
     }
     
-    // Check for user ID in query parameters as fallback
-    const url = new URL(request?.url || '');
-    const queryUserId = url.searchParams.get('userId');
-    const queryUserRole = url.searchParams.get('userRole') as 'admin' | 'business' | 'influencer' | undefined;
-    const queryUserEmail = url.searchParams.get('userEmail');
-    
-    if (queryUserId && queryUserId !== 'mock-user-id') {
-      return {
-        uid: queryUserId,
-        email: queryUserEmail || undefined,
-        role: queryUserRole || 'business'
-      };
-    }
-    
+    // Production auth logic would go here
     return null;
   } catch (error) {
     console.error('Auth error:', error);
@@ -65,6 +76,28 @@ export async function getAuth(request: NextRequest): Promise<{ user: ServerUser 
           role: 'admin'
         }
       };
+    }
+    
+    // Check for admin token cookie
+    const adminToken = request.cookies.get('admin_token')?.value;
+    if (adminToken) {
+      try {
+        const jwt = require('jsonwebtoken');
+        const secret = process.env.JWT_SECRET || 'kudjo_admin_jwt_secret';
+        const decoded = jwt.verify(adminToken, secret) as any;
+        
+        if (decoded.isAdmin) {
+          return {
+            user: {
+              uid: 'admin-user',
+              email: decoded.email,
+              role: 'admin'
+            }
+          };
+        }
+      } catch (error) {
+        console.error('Admin token verification failed:', error);
+      }
     }
   }
   

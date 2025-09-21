@@ -85,16 +85,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         if (process.env.NODE_ENV === 'development') {
           console.log('Initializing auth state');
-          // Development bypass - create a mock influencer user for testing
+          // Check URL for role override in development
+          const url = new URL(window.location.href);
+          const roleOverride = url.searchParams.get('role') as 'admin' | 'business' | 'influencer' | null;
+          
+          // Development bypass - create mock users based on role
           setTimeout(() => {
             if (isMounted) {
-              setUser({ 
-                uid: 'inf_1', 
-                email: 'sarah@foodieexplorer.com', 
-                displayName: 'Sarah - Foodie Explorer', 
-                photoURL: 'https://lh3.googleusercontent.com/a/ACg8ocKn7hYZ3mkcYYiwp7ajSEiNBqyR7DqGfvIv45381i19VLRCPh8=s96-c', 
-                role: 'influencer' 
-              });
+              let mockUser;
+              switch (roleOverride) {
+                case 'admin':
+                  mockUser = {
+                    uid: 'admin_1',
+                    email: 'admin@kudjo.app',
+                    displayName: 'Admin User',
+                    photoURL: null,
+                    role: 'admin' as const
+                  };
+                  break;
+                case 'business':
+                  mockUser = {
+                    uid: 'biz_1',
+                    email: 'owner@pizzapalace.com',
+                    displayName: 'Pizza Palace Owner',
+                    photoURL: null,
+                    role: 'business' as const
+                  };
+                  break;
+                default:
+                  mockUser = {
+                    uid: 'testhandleinfluencer2',
+                    email: 'testhandleinfluencer2@example.com',
+                    displayName: 'Test Handle Influencer 2',
+                    photoURL: 'https://lh3.googleusercontent.com/a/ACg8ocKn7hYZ3mkcYYiwp7ajSEiNBqyR7DqGfvIv45381i19VLRCPh8=s96-c',
+                    role: 'influencer' as const
+                  };
+              }
+              setUser(mockUser);
               setLoading(false);
             }
           }, 1000);

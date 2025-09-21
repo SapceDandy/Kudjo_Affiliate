@@ -34,7 +34,6 @@ export function useRealtimeInfluencerRequests() {
       return;
     }
 
-    console.log('🔍 Fetching influencer requests for user:', user.uid);
     
     const fetchRequests = async () => {
       try {
@@ -44,18 +43,20 @@ export function useRealtimeInfluencerRequests() {
         const response = await fetch(`/api/influencer/requests?infId=${user.uid}`);
         
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          const errorText = await response.text();
+          console.error('❌ API error response:', response.status, errorText);
+          throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
         }
         
         const data = await response.json();
-        console.log('📨 API response:', data);
         
         if (data.requests) {
+          
+          // Filter to show only active requests (pending, accepted, counter)
           const activeRequests = data.requests.filter((req: any) =>
-            req.status !== 'closed' && req.status !== 'declined'
+            ['pending', 'accepted', 'counter', 'countered'].includes(req.status)
           );
           
-          console.log('✅ Active requests for influencer:', activeRequests.length);
           setRequests(activeRequests);
         } else {
           setRequests([]);

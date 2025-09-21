@@ -1,0 +1,50 @@
+{
+  "suite": "seed",
+  "id": "smoke01",
+  "timestamp": "2025-09-20T17:37:04.808Z",
+  "ok": true,
+  "inputs": {
+    "profile": "smoke01"
+  },
+  "outputs": {
+    "campaigns": 1,
+    "affiliateLinks": 1,
+    "coupons": 1,
+    "redemptions": 1,
+    "payouts": 1,
+    "totalRedeemedCoupons": 1
+  },
+  "logs": [
+    {
+      "level": "info",
+      "msg": "Applying Smoke-01 overlay: Full redemption journey",
+      "timestamp": "2025-09-20T17:37:03.989Z"
+    },
+    {
+      "level": "info",
+      "msg": "Created campaign: b359afdc-388a-5e3d-a073-52a932b1bbaf",
+      "timestamp": "2025-09-20T17:37:04.115Z"
+    },
+    {
+      "level": "info",
+      "msg": "Created affiliate link: C34B59",
+      "timestamp": "2025-09-20T17:37:04.254Z"
+    },
+    {
+      "level": "info",
+      "msg": "Created redeemed coupon: BB5D37",
+      "timestamp": "2025-09-20T17:37:04.372Z"
+    },
+    {
+      "level": "info",
+      "msg": "Created redemption record: c0d4b7a4-094d-5361-acb9-28091417ec14",
+      "timestamp": "2025-09-20T17:37:04.475Z"
+    },
+    {
+      "level": "info",
+      "msg": "Created payout record: 668274b5-cd68-5de1-ade6-f74241c9421d",
+      "timestamp": "2025-09-20T17:37:04.705Z"
+    }
+  ],
+  "durationMs": 819
+}

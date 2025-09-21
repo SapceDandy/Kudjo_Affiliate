@@ -6,7 +6,10 @@ describe('BasicInfoForm', () => {
   const initialData = {
     name: '',
     address: '',
+    website: '',
+    overview: '',
     defaultSplitPct: 20,
+    posProvider: 'manual' as const,
   };
 
   beforeEach(() => {
@@ -61,7 +64,10 @@ describe('BasicInfoForm', () => {
     const prefilledData = {
       name: 'Existing Biz',
       address: '456 Old St',
+      website: 'https://existing.com',
+      overview: 'Test overview',
       defaultSplitPct: 30,
+      posProvider: 'manual' as const,
     };
     render(<BasicInfoForm onNext={mockOnNext} initialData={prefilledData} />);
     

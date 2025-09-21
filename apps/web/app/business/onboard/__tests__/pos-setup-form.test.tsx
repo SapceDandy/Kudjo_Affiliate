@@ -20,7 +20,14 @@ describe('PosSetupForm', () => {
   });
 
   describe('Square setup', () => {
-    const squareData = { posProvider: 'square' };
+    const squareData = {
+      name: 'Test Business',
+      address: '123 Test St',
+      website: 'https://test.com',
+      overview: 'Test overview',
+      defaultSplitPct: 20,
+      posProvider: 'square' as const,
+    };
 
     it('renders Square connection UI', () => {
       render(<PosSetupForm onNext={mockOnNext} initialData={squareData} />);
@@ -41,7 +48,14 @@ describe('PosSetupForm', () => {
   });
 
   describe('Manual Mode setup', () => {
-    const manualData = { posProvider: 'manual' };
+    const manualData = {
+      name: 'Test Business',
+      address: '123 Test St',
+      website: 'https://test.com',
+      overview: 'Test overview',
+      defaultSplitPct: 20,
+      posProvider: 'manual' as const,
+    };
 
     it('renders manual mode setup UI', () => {
       render(<PosSetupForm onNext={mockOnNext} initialData={manualData} />);
@@ -91,7 +105,14 @@ describe('PosSetupForm', () => {
   });
 
   describe('Clover setup', () => {
-    const cloverData = { posProvider: 'clover' };
+    const cloverData = {
+      name: 'Test Business',
+      address: '123 Test St',
+      website: 'https://test.com',
+      overview: 'Test overview',
+      defaultSplitPct: 20,
+      posProvider: 'clover' as const,
+    };
 
     it('shows unavailable message for Clover', () => {
       render(<PosSetupForm onNext={mockOnNext} initialData={cloverData} />);
