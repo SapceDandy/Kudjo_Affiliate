@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
       ownerId: uid,
       handle: String(profileData?.handle || profileData?.displayName || 'user'),
       displayName: String(profileData?.displayName || profileData?.handle || 'User'),
-      email: String(profileData?.email || ''),
+      email: profileData?.email && profileData.email.trim() !== '' ? String(profileData.email) : undefined,
       followerCount: Number(profileData?.followerCount) || 0,
       tier: (profileData?.tier && ['bronze', 'silver', 'gold', 'platinum', 'Small', 'Medium', 'Large', 'XL', 'Huge'].includes(profileData.tier)) ? profileData.tier : 'bronze',
       approved: Boolean(profileData?.approved || profileData?.status === 'approved'),

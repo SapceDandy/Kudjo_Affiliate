@@ -40,6 +40,7 @@ export function useRealtimeInfluencerRequests() {
         setError(null);
         setLoading(true);
         
+        console.log('🚀 Fetching requests for user:', user.uid);
         const response = await fetch(`/api/influencer/requests?infId=${user.uid}`);
         
         if (!response.ok) {
@@ -51,14 +52,19 @@ export function useRealtimeInfluencerRequests() {
         const data = await response.json();
         
         if (data.requests) {
+          console.log('🔍 Raw requests from API:', data.requests);
           
           // Filter to show only active requests (pending, accepted, counter)
           const activeRequests = data.requests.filter((req: any) =>
             ['pending', 'accepted', 'counter', 'countered'].includes(req.status)
           );
           
+          console.log('✅ Filtered active requests:', activeRequests);
+          console.log('📊 Setting requests count:', activeRequests.length);
+          
           setRequests(activeRequests);
         } else {
+          console.log('❌ No requests data in response');
           setRequests([]);
         }
         

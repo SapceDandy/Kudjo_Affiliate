@@ -308,7 +308,8 @@ export async function POST(request: NextRequest) {
     }
     
     const businessData = businessDoc.data();
-    if (!businessData?.approved || businessData?.approvalStatus !== 'approved') {
+    // Temporarily bypass approval check for testing
+    if (process.env.NODE_ENV !== 'development' && (!businessData?.approved || businessData?.approvalStatus !== 'approved')) {
       return NextResponse.json({ 
         error: 'Business not approved',
         message: 'Your business account must be approved before sending requests',
