@@ -30,7 +30,7 @@ describe('Authentication Unit Tests', () => {
       };
 
       // Test role resolution logic
-      const role = await resolveUserRole(mockRequest, mockJwt);
+      const role = await resolveUserRole(mockRequest, undefined, mockJwt);
       expect(role).toBe('admin');
     });
 
@@ -40,12 +40,15 @@ describe('Authentication Unit Tests', () => {
         data: jest.fn().mockReturnValue({ role: 'business' })
       };
       
+      const getMock = jest.fn() as jest.MockedFunction<any>;
+      getMock.mockResolvedValue(mockDoc);
+      
       const mockFirestore: MockFirestore = {
         collection: jest.fn().mockReturnValue({
           doc: jest.fn().mockReturnValue({
-            get: jest.fn().mockResolvedValue(mockDoc)
+            get: getMock
           })
-        })
+        }) as any
       };
 
       const mockUser = { uid: 'business-user-id' };
@@ -59,12 +62,15 @@ describe('Authentication Unit Tests', () => {
         data: jest.fn().mockReturnValue({ role: 'influencer' })
       };
       
+      const getMock = jest.fn() as jest.MockedFunction<any>;
+      getMock.mockResolvedValue(mockDoc);
+      
       const mockFirestore: MockFirestore = {
         collection: jest.fn().mockReturnValue({
           doc: jest.fn().mockReturnValue({
-            get: jest.fn().mockResolvedValue(mockDoc)
+            get: getMock
           })
-        })
+        }) as any
       };
 
       const mockUser = { uid: 'influencer-user-id' };
@@ -246,13 +252,13 @@ function shouldBlockRoute(request: any, user: any): boolean {
 function generateAdminToken(email: string, jwt: any): string {
   return jwt.sign(
     { role: 'admin', email },
-    process.env.JWT_SECRET,
+    process.env.JWT_SECRET || 'test-secret',
     { expiresIn: '12h' }
   );
 }
 
 function verifyAdminToken(token: string, jwt: any): any {
-  return jwt.verify(token, process.env.JWT_SECRET);
+  return jwt.verify(token, process.env.JWT_SECRET || 'test-secret');
 }
 
 function setAdminSessionCookie(response: any, token: string): void {

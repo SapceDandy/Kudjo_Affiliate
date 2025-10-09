@@ -77,7 +77,7 @@ export default function InfluencerDashboard() {
   const { user } = useAuth();
   const { trackEvent } = useAnalytics();
   const { metrics, loading: metricsLoading, error: metricsError } = useInfluencerMetrics();
-  const { requests, loading: requestsLoading } = useRealtimeInfluencerRequests();
+  const { requests, loading: requestsLoading, refetch } = useRealtimeInfluencerRequests();
   
   // Available campaigns state
   const [availableCampaigns, setAvailableCampaigns] = useState<AvailableCampaign[]>([]);
@@ -793,15 +793,26 @@ export default function InfluencerDashboard() {
 
         {/* Requests Tab */}
         <TabsContent value="requests" className="space-y-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Collaboration Requests</h3>
+            <button 
+              onClick={() => refetch()} 
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Refresh Requests
+            </button>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {requests.map((request) => (
-              <Card key={request.id} className="border-l-4 border-l-yellow-500">
-                <CardHeader>
+              <Card key={request.id} className="border-l-4 border-l-yellow-500 shadow-md hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-4">
                   <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-lg">{request.title}</CardTitle>
-                      <p className="text-gray-600">{request.businessName}</p>
-                      {request.description && <p className="text-sm text-gray-500 mt-1">{request.description}</p>}
+                    <div className="flex-1">
+                      <CardTitle className="text-xl font-semibold text-gray-900 mb-2">{request.title}</CardTitle>
+                      <p className="text-lg font-medium text-blue-600 mb-2">{request.businessName}</p>
+                      {request.description && (
+                        <p className="text-sm text-gray-600 leading-relaxed mb-3">{request.description}</p>
+                      )}
                     </div>
                     <div className="text-right">
                       <Badge variant={request.status === 'pending' ? 'default' : 'secondary'}>
@@ -811,7 +822,28 @@ export default function InfluencerDashboard() {
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-0">
+                  <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                    <h4 className="font-semibold text-gray-800 mb-3">Offer Details</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col">
+                        <span className="text-xs text-gray-500 uppercase tracking-wide">Your Split</span>
+                        <span className="text-lg font-bold text-green-600">{request.splitPct}%</span>
+                      </div>
+                      {request.userDiscountPct && (
+                        <div className="flex flex-col">
+                          <span className="text-xs text-gray-500 uppercase tracking-wide">Customer Discount</span>
+                          <span className="text-lg font-semibold text-blue-600">{request.userDiscountPct}%</span>
+                        </div>
+                      )}
+                      {request.minSpendCents && (
+                        <div className="flex flex-col col-span-2">
+                          <span className="text-xs text-gray-500 uppercase tracking-wide">Minimum Spend</span>
+                          <span className="text-lg font-semibold text-gray-800">${(request.minSpendCents / 100).toFixed(2)}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">
                       Received {new Date(request.createdAt).toLocaleDateString()}

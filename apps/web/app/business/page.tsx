@@ -43,7 +43,7 @@ export default function BusinessHome() {
   const { offers: realOffers, loading: offersLoading, pauseOffer, resumeOffer, endOffer, createOffer } = useRealtimeOffers();
   const { requests: realRequests, loading: requestsLoading, updateRequest, updateOfferTerms } = useRealtimeRequests();
   const { programs: realPrograms, loading: programsLoading, processPayout, refetch: refetchPrograms } = useBusinessPrograms();
-  const { metrics, loading: metricsLoading, error: metricsError } = useBusinessMetrics();
+  const { metrics, loading: metricsLoading, error: metricsError, refetch: refetchMetrics } = useBusinessMetrics();
 
   useEffect(() => {
     if (!authLoading && (!user || user.role !== 'business')) {
@@ -327,7 +327,8 @@ export default function BusinessHome() {
                     <div className="flex items-start justify-between">
                       <div>
                         <CardTitle className="text-lg">{request.influencer}</CardTitle>
-                        <p className="text-sm text-muted-foreground">{request.followers?.toLocaleString()} followers</p>
+                        <p className="text-sm text-muted-foreground">{request.title || 'Collaboration Request'}</p>
+                        <p className="text-xs text-muted-foreground">{request.followers?.toLocaleString()} followers</p>
                         <p className="text-xs text-blue-600">@{request.influencer?.toLowerCase().replace(/\s+/g, '')}</p>
                       </div>
                       <Badge variant={request.status === 'pending' ? 'default' : 
@@ -375,16 +376,25 @@ export default function BusinessHome() {
                           >
                             Update Offer
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => updateRequest(request.id, 'closed')}>
+                          <Button variant="outline" size="sm" onClick={async () => {
+                            await updateRequest(request.id, 'closed');
+                            refetchMetrics(); // Refresh metrics after closing request
+                          }}>
                             Close Request
                           </Button>
                         </>
                       )}
                       {request.status === 'countered' && (
                         <>
-                          <Button size="sm" onClick={() => updateRequest(request.id, 'approved')}>Approve</Button>
+                          <Button size="sm" onClick={async () => {
+                            await updateRequest(request.id, 'approved');
+                            refetchMetrics(); // Refresh metrics after approving request
+                          }}>Approve</Button>
                           <Button variant="outline" size="sm">Counter</Button>
-                          <Button variant="outline" size="sm" onClick={() => updateRequest(request.id, 'declined')}>
+                          <Button variant="outline" size="sm" onClick={async () => {
+                            await updateRequest(request.id, 'declined');
+                            refetchMetrics(); // Refresh metrics after declining request
+                          }}>
                             Decline
                           </Button>
                         </>
@@ -681,7 +691,10 @@ export default function BusinessHome() {
       <CreateOfferDialog 
         open={createDialogOpen} 
         onClose={() => setCreateDialogOpen(false)}
-        onOfferCreated={() => {}} // Real-time hook will update automatically
+        onOfferCreated={() => {
+          // Refresh metrics to update active offers count
+          refetchMetrics();
+        }}
       />
 
       <FindInfluencersDialog 
@@ -689,7 +702,8 @@ export default function BusinessHome() {
         onOpenChange={setFindDialogOpen}
         businessId={user.uid}
         onRequestSent={() => {
-          // Dialog will close automatically, no need to refresh as useRealtimeRequests handles updates
+          // Refresh metrics to update pending requests count
+          refetchMetrics();
         }}
       />
 

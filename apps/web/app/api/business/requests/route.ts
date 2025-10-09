@@ -3,6 +3,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { z } from 'zod';
 import { UpdateRequestSchema } from '@/lib/schemas/business';
+import { logger } from '@/lib/logger';
 
 // Request creation schema
 const CreateRequestSchema = z.object({
@@ -54,7 +55,7 @@ function getAdminDb() {
     
     return getFirestore();
   } catch (error) {
-    console.error('Firebase Admin initialization error:', error);
+    logger.error('Firebase Admin initialization error', error);
     return null;
   }
 }
@@ -90,6 +91,7 @@ export async function GET(request: NextRequest) {
         const data = doc.data();
         return {
           id: doc.id,
+          title: data.title || 'Collaboration Request', // Add missing title field
           influencer: data.influencerName || `Influencer ${data.infId?.slice(-4) || 'Unknown'}`,
           followers: data.followers || 0,
           tier: data.tier || 'Small',
