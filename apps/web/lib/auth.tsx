@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Check for admin cookie
   const checkAdminSession = async () => {
     try {
-      const response = await fetch('/api/control-center/session', {
+      const response = await fetch('/api/session/me', {
         method: 'GET',
         credentials: 'include',
       });
@@ -56,11 +56,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!contentType.includes('application/json')) return null;
 
       const data = await response.json();
-      if (data.isAdmin && data.email) {
-        return {
-          role: 'admin',
-          email: data.email,
-        } as const;
+      if (data?.ok === true && data?.role === 'admin') {
+        return { role: 'admin' } as const;
       }
       return null;
     } catch (error) {
@@ -90,41 +87,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const roleOverride = url.searchParams.get('role') as 'admin' | 'business' | 'influencer' | null;
           
           // Development bypass - create mock users based on role
-          setTimeout(() => {
-            if (isMounted) {
-              let mockUser;
-              switch (roleOverride) {
-                case 'admin':
-                  mockUser = {
-                    uid: 'admin_1',
-                    email: 'admin@kudjo.app',
-                    displayName: 'Admin User',
-                    photoURL: null,
-                    role: 'admin' as const
-                  };
-                  break;
-                case 'business':
-                  mockUser = {
-                    uid: 'biz_1',
-                    email: 'owner@pizzapalace.com',
-                    displayName: 'Pizza Palace Owner',
-                    photoURL: null,
-                    role: 'business' as const
-                  };
-                  break;
-                default:
-                  mockUser = {
-                    uid: 'testhandleinfluencer2',
-                    email: 'testhandleinfluencer2@example.com',
-                    displayName: 'Test Handle Influencer 2',
-                    photoURL: 'https://lh3.googleusercontent.com/a/ACg8ocKn7hYZ3mkcYYiwp7ajSEiNBqyR7DqGfvIv45381i19VLRCPh8=s96-c',
-                    role: 'influencer' as const
-                  };
-              }
-              setUser(mockUser);
-              setLoading(false);
+          if (isMounted) {
+            let mockUser;
+            switch (roleOverride) {
+              case 'admin':
+                mockUser = {
+                  uid: 'admin_1',
+                  email: 'admin@kudjo.app',
+                  displayName: 'Admin User',
+                  photoURL: null,
+                  role: 'admin' as const
+                };
+                break;
+              case 'business':
+                mockUser = {
+                  uid: 'biz_1',
+                  email: 'owner@pizzapalace.com',
+                  displayName: 'Pizza Palace Owner',
+                  photoURL: null,
+                  role: 'business' as const
+                };
+                break;
+              default:
+                mockUser = {
+                  uid: 'testhandleinfluencer2',
+                  email: 'testhandleinfluencer2@example.com',
+                  displayName: 'Test Handle Influencer 2',
+                  photoURL: 'https://lh3.googleusercontent.com/a/ACg8ocKn7hYZ3mkcYYiwp7ajSEiNBqyR7DqGfvIv45381i19VLRCPh8=s96-c',
+                  role: 'influencer' as const
+                };
             }
-          }, 1000);
+            setUser(mockUser);
+            setLoading(false);
+          }
           return;
         }
         
@@ -133,7 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!isMounted) return;
         if (adminSession) {
           console.log('Admin session detected');
-          setUser({ uid: 'admin', email: adminSession.email, displayName: 'Administrator', photoURL: null, role: 'admin' });
+          setUser({ uid: 'admin', email: null, displayName: 'Administrator', photoURL: null, role: 'admin' });
           setLoading(false);
           return; // Do not attach Firebase listener for admin session
         }
@@ -191,6 +186,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const auth = firebaseAuth;
       const result = await signInWithEmailAndPassword(auth, email, password);
+
+      try {
+        const idToken = await result.user.getIdToken();
+        await fetch('/api/session/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ idToken })
+        });
+      } catch (e) {
+        console.error('Failed to mint session cookie:', e);
+      }
+
       const role = await fetchUserRole(result.user);
       setUser({ uid: result.user.uid, email: result.user.email, displayName: result.user.displayName, photoURL: result.user.photoURL, role });
       return role;
@@ -256,6 +264,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       const result = await signInWithPopup(auth, googleProvider);
       console.log('Google sign-in successful, user:', result.user.uid);
+
+      try {
+        const idToken = await result.user.getIdToken();
+        await fetch('/api/session/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ idToken })
+        });
+      } catch (e) {
+        console.error('Failed to mint session cookie:', e);
+      }
 
       const businessDoc = await getDoc(doc(db, 'businesses', result.user.uid));
       const influencerDoc = await getDoc(doc(db, 'influencers', result.user.uid));
@@ -334,6 +354,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         const auth = firebaseAuth;
         await firebaseSignOut(auth);
+
+        try {
+          await fetch('/api/session/logout', { method: 'POST', credentials: 'include' });
+        } catch (e) {
+          console.error('Failed to clear session cookie:', e);
+        }
       }
       setUser(null);
       // Always send user back to home after sign-out

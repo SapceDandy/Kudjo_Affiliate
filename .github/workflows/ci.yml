@@ -7,16 +7,108 @@ on:
     branches: [ main ]
 
 jobs:
-  build-test:
+  lint-typecheck:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/web/node_modules
+            functions/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
-      - run: npm run test --workspaces=false
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/web/node_modules
+            functions/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - run: npm ci
+      - run: npm run test --workspaces=false -- --coverage
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 14
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [lint-typecheck]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/web/node_modules
+            functions/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - run: npm ci
+      - run: npm run build --if-present
+
+  security-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for sensitive files in git
+        run: |
+          FAIL=0
+          for pattern in "service-account.json" ".env.local" "functions/.env"; do
+            if git ls-files --error-unmatch "$pattern" 2>/dev/null; then
+              echo "ERROR: $pattern is tracked in git!"
+              FAIL=1
+            fi
+          done
+          if [ "$FAIL" -eq 1 ]; then
+            echo "Sensitive files found in repository. Please remove them."
+            exit 1
+          fi
+          echo "No sensitive files found in git."
+
+  emulator-tests:
+    runs-on: ubuntu-latest
+    needs: [unit-tests]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/web/node_modules
+            functions/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - run: npm ci
       - name: Emulator integration tests
-        run: npx firebase emulators:exec --project kudjo-affiliate-dev --only firestore,auth "npm --workspace functions run test:emu" 
+        run: npx firebase emulators:exec --project kudjo-affiliate-dev --only firestore,auth "npm --workspace functions run test:emu"

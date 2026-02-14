@@ -11,6 +11,10 @@ let firebaseAuth: Auth | null = null;
 let isInitialized = false;
 let initError: string | null = null;
 
+// Synchronous exports for backward compatibility (must stay in sync with firebaseDb/firebaseAuth)
+let adminDb: Firestore | null = null;
+let adminAuth: Auth | null = null;
+
 // Connection health tracking
 let lastHealthCheck = 0;
 let isHealthy = false;
@@ -114,6 +118,11 @@ async function initializeFirebase(): Promise<boolean> {
     if (firebaseApp) {
       firebaseDb = getFirestore(firebaseApp);
       firebaseAuth = getAuth(firebaseApp);
+
+      // Keep backward-compatible exports in sync
+      adminDb = firebaseDb;
+      adminAuth = firebaseAuth;
+
       isInitialized = true;
       initError = null;
       
@@ -128,6 +137,9 @@ async function initializeFirebase(): Promise<boolean> {
     firebaseApp = null;
     firebaseDb = null;
     firebaseAuth = null;
+
+    adminDb = null;
+    adminAuth = null;
     isInitialized = false;
   }
 
@@ -210,10 +222,6 @@ const generateMockCoupons = (count = 10) => {
   });
 };
 
-// Synchronous exports for backward compatibility
-const adminDb: Firestore | null = firebaseDb;
-const adminAuth: Auth | null = firebaseAuth;
-
 // Get initialization status
 function getFirebaseStatus() {
   return {
@@ -229,7 +237,8 @@ export async function initializeFirebaseAdmin(): Promise<{ db: Firestore; auth: 
   const initialized = await initializeFirebase();
   
   if (!initialized || !firebaseDb || !firebaseAuth) {
-    throw new Error('Firebase Admin initialization failed');
+    const details = initError ? `: ${initError}` : '';
+    throw new Error(`Firebase Admin initialization failed${details}`);
   }
   
   return { db: firebaseDb, auth: firebaseAuth };

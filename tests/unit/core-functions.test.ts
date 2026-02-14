@@ -52,11 +52,12 @@ describe('Core Functions - Unit Tests', () => {
     test('validates date windows', () => {
       const now = new Date();
       const future = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      const farFuture = new Date(now.getTime() + 48 * 60 * 60 * 1000);
       const past = new Date(now.getTime() - 24 * 60 * 60 * 1000);
       
-      expect(validateOffer({ startAt: now, endAt: future })).toBe(true);
-      expect(validateOffer({ startAt: future, endAt: now })).toBe(false);
-      expect(validateOffer({ startAt: past, endAt: now })).toBe(false);
+      expect(validateOffer({ startAt: future, endAt: farFuture })).toBe(true);
+      expect(validateOffer({ startAt: farFuture, endAt: future })).toBe(false);
+      expect(validateOffer({ startAt: past, endAt: future })).toBe(false);
     });
 
     test('validates max influencers logic', () => {

@@ -87,8 +87,7 @@ service cloud.firestore {
     match /admin/outreachCampaigns/{campaignId=**} {
       allow read, write: if isAdmin();
     }
-    // New collections access (basic dev-friendly rules; tighten in prod)
-    // Production-tight rules (adjust as needed)
+    // Production-tight rules
     match /coupons/{id} {
       allow read: if request.auth != null && (
         resource.data.infId == request.auth.uid ||
@@ -96,13 +95,18 @@ service cloud.firestore {
       );
       allow create, update: if isSeedingUser(); // allow seeding
     }
-    match /affiliateLinks/{id} {
+
+    match /ledgerEntries/{id} {
       allow read: if request.auth != null && (
-        resource.data.infId == request.auth.uid ||
-        resource.data.bizId == request.auth.uid
+        resource.data.influencerId == request.auth.uid || isAdmin()
       );
-      allow create, update: if false; // only via server
+      allow create, update: if false; // server-only
     }
+
+    match /webhooks/{provider}/{eventId} {
+      allow read, write: if false; // server-only
+    }
+
     match /posts/{id} {
       allow read: if request.auth != null && resource.data.influencerId == request.auth.uid;
       allow create: if request.auth != null && request.resource.data.influencerId == request.auth.uid;

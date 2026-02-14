@@ -6,12 +6,24 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Copy, ExternalLink, QrCode, DollarSign, TrendingUp, Users, Clock, MapPin, Share2, Eye, Target, Calendar } from 'lucide-react';
+import { Copy, ExternalLink, QrCode, DollarSign, TrendingUp, Users, Clock, MapPin, Share2, Eye, Target, Calendar, Lightbulb, Loader2 } from 'lucide-react';
 import { useDemoAuth } from '@/lib/demo-auth';
 import { useAnalytics } from '@/components/analytics';
 import { useInfluencerMetrics } from '@/lib/hooks/use-influencer-metrics';
 import { useInfluencerCampaigns } from '@/lib/hooks/use-influencer-campaigns';
 import Image from 'next/image';
+
+interface Recommendation {
+  offerId: string;
+  title: string;
+  businessName: string;
+  businessId: string;
+  splitPct: number;
+  score: number;
+  matchPct: number;
+  reasoning?: string;
+  endAt?: string;
+}
 
 interface Campaign {
   id: string;
@@ -50,6 +62,21 @@ export default function InfluencerDashboard() {
   const { metrics, loading: metricsLoading, error: metricsError } = useInfluencerMetrics();
   const { campaigns, loading, error, acceptCampaign, declineCampaign, requestPayout } = useInfluencerCampaigns('invited');
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [recsLoading, setRecsLoading] = useState(false);
+
+  // Fetch AI recommendations
+  useEffect(() => {
+    if (!user?.uid) return;
+    setRecsLoading(true);
+    fetch(`/api/influencer/recommendations?infId=${user.uid}`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.recommendations) setRecommendations(data.recommendations);
+      })
+      .catch(() => {})
+      .finally(() => setRecsLoading(false));
+  }, [user?.uid]);
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -128,6 +155,61 @@ export default function InfluencerDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Recommended For You */}
+      <Card className="mb-8 border-l-4 border-l-purple-500">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lightbulb className="w-5 h-5 text-purple-500" />
+            Recommended For You
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {recsLoading ? (
+            <div className="flex items-center gap-2 text-gray-500">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Finding deals that match your vibe...
+            </div>
+          ) : recommendations.length > 0 ? (
+            <div className="space-y-4">
+              {recommendations.map((rec) => (
+                <div key={rec.offerId} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <h4 className="font-medium">{rec.title}</h4>
+                      <p className="text-sm text-gray-500">{rec.businessName}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-purple-100 text-purple-700 border-purple-200">
+                        {rec.matchPct}% match
+                      </Badge>
+                      <Badge variant="outline">{rec.splitPct}% split</Badge>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3">{rec.reasoning}</p>
+                  <div className="flex items-center justify-between">
+                    {rec.endAt && (
+                      <span className="text-xs text-orange-600 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        Ends {new Date(rec.endAt).toLocaleDateString()}
+                      </span>
+                    )}
+                    <Button
+                      size="sm"
+                      className="bg-purple-600 hover:bg-purple-700 ml-auto"
+                      onClick={() => window.location.href = '/influencer'}
+                    >
+                      Join Campaign
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-sm">No recommendations yet. Complete your profile to get personalized campaign suggestions.</p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Campaigns Tabs */}
       <Tabs defaultValue="active" className="space-y-6">

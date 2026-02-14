@@ -263,10 +263,10 @@ export default function AdminDashboardPage() {
 
   const handleUserStatusChange = async (userId: string, newStatus: string) => {
     try {
-      const response = await fetch(`/api/admin/users/${userId}`, {
-        method: 'PATCH',
+      const response = await fetch('/api/control-center/users/update', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify({ id: userId, updates: { status: newStatus } }),
       });
 
       if (!response.ok) {

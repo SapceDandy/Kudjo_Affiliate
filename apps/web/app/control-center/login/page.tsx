@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { signInWithCustomToken } from 'firebase/auth';
+import { auth as firebaseAuth } from '@/lib/firebase';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -36,18 +38,24 @@ export default function AdminLoginPage() {
       console.log('Admin login response:', { status: response.status, data });
       
       if (response.ok) {
-        setSuccess('Login successful! Redirecting...');
-        // Set a soft cookie in dev immediately to avoid redirect race
-        if (process.env.NODE_ENV !== 'production') {
-          document.cookie = 'admin_session=1; Path=/; Max-Age=300';
+        const customToken = data.customToken as string | undefined;
+        if (!customToken) {
+          setError('Login failed: missing session token');
+          return;
         }
-        // First try using the Next.js router
+
+        const credential = await signInWithCustomToken(firebaseAuth, customToken);
+        const idToken = await credential.user.getIdToken();
+
+        await fetch('/api/session/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ idToken }),
+        });
+
+        setSuccess('Login successful! Redirecting...');
         router.replace('/control-center/dashboard');
-        
-        // Always force a redirect after a delay to ensure navigation happens
-        setTimeout(() => {
-          window.location.href = '/control-center/dashboard';
-        }, 500);
       } else {
         setError(data.error || 'Invalid credentials');
       }

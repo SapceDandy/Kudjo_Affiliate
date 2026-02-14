@@ -59,14 +59,21 @@ export default function ApprovalsPage() {
   const [socialActionMessage, setSocialActionMessage] = useState('');
   const [followerCount, setFollowerCount] = useState<number | undefined>(undefined);
   const [actionLoading, setActionLoading] = useState(false);
+  const [adminEmail, setAdminEmail] = useState<string>('');
+
+  // Fetch admin session to get admin email for audit trail
+  useEffect(() => {
+    fetch('/api/admin/session')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.email) setAdminEmail(data.email);
+      })
+      .catch(() => {});
+  }, []);
 
   const fetchPendingApprovals = async () => {
     try {
-      const response = await fetch('/api/admin/pending-approvals', {
-        headers: {
-          'x-admin-bypass': 'true'
-        }
-      });
+      const response = await fetch('/api/admin/pending-approvals');
       if (response.ok) {
         const data = await response.json();
         setPendingApprovals(data.approvals || []);
@@ -81,11 +88,7 @@ export default function ApprovalsPage() {
 
   const fetchSocialVerificationRequests = async () => {
     try {
-      const response = await fetch('/api/admin/social-verification', {
-        headers: {
-          'x-admin-bypass': 'true'
-        }
-      });
+      const response = await fetch('/api/admin/social-verification');
       if (response.ok) {
         const data = await response.json();
         setSocialVerificationRequests(data.requests || []);
@@ -118,12 +121,11 @@ export default function ApprovalsPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-bypass': 'true'
         },
         body: JSON.stringify({
           userId: approval.id,
           userType: approval.type,
-          adminId: 'admin-user', // TODO: Get from session
+          adminId: adminEmail || 'admin-user',
           reason: 'Approved by admin'
         }),
       });
@@ -155,12 +157,11 @@ export default function ApprovalsPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-bypass': 'true'
         },
         body: JSON.stringify({
           userId: selectedApproval.id,
           userType: selectedApproval.type,
-          adminId: 'admin-user', // TODO: Get from session
+          adminId: adminEmail || 'admin-user',
           reason: rejectionReason
         }),
       });
@@ -200,12 +201,11 @@ export default function ApprovalsPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-bypass': 'true'
         },
         body: JSON.stringify({
           requestId: selectedSocialRequest.id,
           action,
-          adminId: 'admin-user', // TODO: Get from session
+          adminId: adminEmail || 'admin-user',
           message: socialActionMessage || undefined,
           followerCount: action === 'approve' ? followerCount : undefined
         }),

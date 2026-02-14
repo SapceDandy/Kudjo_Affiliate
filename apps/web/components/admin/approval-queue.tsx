@@ -60,7 +60,6 @@ export function ApprovalQueue() {
         cache: 'no-store',
         headers: {
           'Cache-Control': 'no-cache',
-          'x-admin-bypass': 'true'
         }
       });
       
@@ -87,12 +86,11 @@ export function ApprovalQueue() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-bypass': 'true'
         },
         body: JSON.stringify({
           userId: user.id,
           userType: user.type,
-          adminId: 'admin-user-id', // TODO: Get from auth context
+          adminId: 'admin-user',
           reason: 'Approved via admin dashboard'
         })
       });
@@ -151,12 +149,11 @@ export function ApprovalQueue() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-bypass': 'true'
         },
         body: JSON.stringify({
           userId: selectedUser.id,
           userType: selectedUser.type,
-          adminId: 'admin-user-id', // TODO: Get from auth context
+          adminId: 'admin-user',
           reason: rejectionReason
         })
       });

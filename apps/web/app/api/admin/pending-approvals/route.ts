@@ -1,51 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth-server';
+import { getAuth } from '@/lib/auth-server';
 import { initializeFirebaseAdmin } from '@/lib/firebase-admin';
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser(request);
-    
-    // For development/testing, allow bypass with specific header
-    const isDev = process.env.NODE_ENV === 'development';
-    const bypassAuth = request.headers.get('x-admin-bypass') === 'true';
-    
-    // Verify admin access (bypass in dev mode with header)
-    if (!(isDev && bypassAuth)) {
-      if (!user || user.role !== 'admin') {
-        return NextResponse.json(
-          { error: { code: 'UNAUTHORIZED', message: 'Admin access required' } },
-          { status: 401 }
-        );
-      }
+    const { user } = await getAuth(request);
+
+    if (!user || user.role !== 'admin') {
+      return NextResponse.json(
+        { error: { code: 'UNAUTHORIZED', message: 'Admin access required' } },
+        { status: 401 }
+      );
     }
 
     const { db } = await initializeFirebaseAdmin();
-    
+
     // Get pending businesses (without orderBy to avoid index requirement)
     const businessesSnapshot = await db.collection('businesses')
       .where('approvalStatus', '==', 'pending')
       .limit(50)
       .get();
-    
+
     // Get pending influencers (without orderBy to avoid index requirement)
     const influencersSnapshot = await db.collection('influencers')
       .where('approvalStatus', '==', 'pending')
       .limit(50)
       .get();
-    
+
     const pendingBusinesses = businessesSnapshot.docs.map(doc => ({
       id: doc.id,
       type: 'business' as const,
       ...doc.data(),
     }));
-    
+
     const pendingInfluencers = influencersSnapshot.docs.map(doc => ({
       id: doc.id,
       type: 'influencer' as const,
       ...doc.data(),
     }));
-    
+
     return NextResponse.json({
       success: true,
       data: {
@@ -62,14 +55,14 @@ export async function GET(request: NextRequest) {
       stack: error instanceof Error ? error.stack : undefined,
       name: error instanceof Error ? error.name : undefined
     });
-    
+
     return NextResponse.json(
-      { 
-        error: { 
-          code: 'INTERNAL_ERROR', 
+      {
+        error: {
+          code: 'INTERNAL_ERROR',
           message: 'Failed to fetch pending approvals',
           details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined
-        } 
+        }
       },
       { status: 500 }
     );

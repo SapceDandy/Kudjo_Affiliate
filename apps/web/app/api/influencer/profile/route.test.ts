@@ -1,19 +1,27 @@
-import { NextRequest } from 'next/server';
-import { GET } from './route';
-import { getCurrentUser } from '@/lib/auth-server';
-import { initializeFirebaseAdmin } from '@/lib/firebase-admin';
-
 // Mock dependencies
-jest.mock('@/lib/auth-server');
-jest.mock('@/lib/firebase-admin');
+jest.mock('@/lib/auth-server', () => ({
+  getCurrentUser: jest.fn()
+}));
+
+jest.mock('@/lib/firebase-admin', () => ({
+  initializeFirebaseAdmin: jest.fn()
+}));
+
+const { NextRequest } = require('next/server');
+const { GET } = require('./route');
+const { getCurrentUser } = require('@/lib/auth-server');
+const { initializeFirebaseAdmin } = require('@/lib/firebase-admin');
 
 describe('/api/influencer/profile', () => {
+  const mockGet = jest.fn();
+  const mockDocRef = {
+    get: mockGet
+  };
+  const mockCollectionRef = {
+    doc: jest.fn(() => mockDocRef)
+  };
   const mockDb = {
-    collection: jest.fn(() => ({
-      doc: jest.fn(() => ({
-        get: jest.fn()
-      }))
-    }))
+    collection: jest.fn(() => mockCollectionRef)
   };
 
   beforeEach(() => {
@@ -40,7 +48,7 @@ describe('/api/influencer/profile', () => {
       })
     };
 
-    mockDb.collection().doc().get.mockResolvedValue(mockDoc);
+    mockGet.mockResolvedValue(mockDoc);
 
     const request = new NextRequest('http://localhost:3000/api/influencer/profile?uid=test-user');
     const response = await GET(request);
@@ -67,7 +75,7 @@ describe('/api/influencer/profile', () => {
       })
     };
 
-    mockDb.collection().doc().get.mockResolvedValue(mockDoc);
+    mockGet.mockResolvedValue(mockDoc);
 
     const request = new NextRequest('http://localhost:3000/api/influencer/profile?uid=test-user');
     const response = await GET(request);
@@ -90,7 +98,7 @@ describe('/api/influencer/profile', () => {
       })
     };
 
-    mockDb.collection().doc().get.mockResolvedValue(mockDoc);
+    mockGet.mockResolvedValue(mockDoc);
 
     const request = new NextRequest('http://localhost:3000/api/influencer/profile?uid=test-user');
     const response = await GET(request);

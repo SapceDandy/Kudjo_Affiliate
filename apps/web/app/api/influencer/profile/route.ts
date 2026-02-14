@@ -46,7 +46,11 @@ export async function GET(request: NextRequest) {
     const profileData = influencerDoc.data();
     
     // Log the raw data to debug the issue
-    console.log('Raw profile data:', JSON.stringify(profileData, null, 2));
+    try {
+      console.log('Raw profile data:', JSON.stringify(profileData, null, 2));
+    } catch (logError) {
+      console.log('Raw profile data (non-serializable)');
+    }
     
     // Helper functions for social media data
     function extractSocialAccounts(data: any): any[] {
@@ -116,11 +120,24 @@ export async function GET(request: NextRequest) {
     console.log('Transformed data:', JSON.stringify(transformedData, null, 2));
 
     // Validate the transformed data
-    const validatedProfile = InfluencerSchema.parse(transformedData);
+    const validatedProfile = InfluencerSchema.safeParse(transformedData);
+
+    if (!validatedProfile.success) {
+      return NextResponse.json(
+        {
+          error: {
+            code: 'PROFILE_VALIDATION_FAILED',
+            message: 'Influencer profile data is invalid',
+            issues: validatedProfile.error.issues
+          }
+        },
+        { status: 422 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      profile: validatedProfile
+      profile: validatedProfile.data
     });
 
   } catch (error) {
@@ -128,7 +145,7 @@ export async function GET(request: NextRequest) {
     
     if (error instanceof Error && error.message.includes('Firebase Admin')) {
       return NextResponse.json(
-        { error: { code: 'DATABASE_ERROR', message: 'Database connection failed' } },
+        { error: { code: 'DATABASE_ERROR', message: error.message } },
         { status: 500 }
       );
     }

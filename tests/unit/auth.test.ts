@@ -173,7 +173,7 @@ describe('Authentication Unit Tests', () => {
       setAdminSessionCookie(mockResponse, 'admin-jwt-token');
       
       expect(mockResponse.cookies.set).toHaveBeenCalledWith(
-        'admin_session',
+        'admin_token',
         'admin-jwt-token',
         {
           httpOnly: true,
@@ -193,7 +193,7 @@ describe('Authentication Unit Tests', () => {
 
       clearAdminSessionCookie(mockResponse);
       
-      expect(mockResponse.cookies.delete).toHaveBeenCalledWith('admin_session');
+      expect(mockResponse.cookies.delete).toHaveBeenCalledWith('admin_token');
     });
   });
 });
@@ -203,7 +203,7 @@ async function resolveUserRole(user: any, firestore?: any, jwt?: any): Promise<s
   if (!user) return null;
   
   if (user.cookies && jwt) {
-    const token = user.cookies.get('admin_session');
+    const token = user.cookies.get('admin_token');
     if (token) {
       const payload = jwt.verify(token.value);
       return payload.role;
@@ -262,7 +262,7 @@ function verifyAdminToken(token: string, jwt: any): any {
 }
 
 function setAdminSessionCookie(response: any, token: string): void {
-  response.cookies.set('admin_session', token, {
+  response.cookies.set('admin_token', token, {
     httpOnly: true,
     secure: true,
     sameSite: 'lax',
@@ -271,5 +271,5 @@ function setAdminSessionCookie(response: any, token: string): void {
 }
 
 function clearAdminSessionCookie(response: any): void {
-  response.cookies.delete('admin_session');
+  response.cookies.delete('admin_token');
 }

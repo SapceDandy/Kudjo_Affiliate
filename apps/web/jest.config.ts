@@ -5,6 +5,7 @@ const createJestConfig = nextJest({
 });
 
 const config = {
+  setupFiles: ['<rootDir>/jest.polyfills.ts'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   testEnvironment: 'jest-environment-jsdom',
   moduleNameMapper: {

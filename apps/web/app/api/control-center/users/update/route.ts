@@ -1,20 +1,12 @@
-import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
+import { NextRequest } from 'next/server';
+import { proxyToFunctions } from '@/lib/server/proxyToFunctions';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function POST(request: Request) {
-  try {
-    if (!adminDb) return NextResponse.json({ error: 'Admin DB not available' }, { status: 500 });
-    const { id, updates } = await request.json();
-    if (!id || typeof updates !== 'object') return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
-    await adminDb!.collection('users').doc(id).set({ ...updates, updatedAt: new Date().toISOString() }, { merge: true });
-    return NextResponse.json({ success: true });
-  } catch (e) {
-    return NextResponse.json({ error: 'Failed to update user' }, { status: 500 });
-  }
+export async function POST(req: NextRequest) {
+  return proxyToFunctions(req, {
+    path: '/api/control-center/users/update',
+    allowedMethods: ['POST'],
+  });
 }
-
-
-

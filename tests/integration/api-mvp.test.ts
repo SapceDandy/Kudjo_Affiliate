@@ -39,7 +39,7 @@ describe('MVP API Integration Tests', () => {
       
       // Should set admin session cookie
       const cookies = response.headers.get('set-cookie');
-      expect(cookies).toContain('admin_session');
+      expect(cookies).toContain('admin_token');
     });
 
     test('POST /api/control-center/login - invalid credentials', async () => {

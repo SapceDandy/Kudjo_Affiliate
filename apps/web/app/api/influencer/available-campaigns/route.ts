@@ -148,8 +148,25 @@ export async function GET(request: NextRequest) {
         continue;
       }
 
-      // Skip complex checks while indexes are building
-      // TODO: Re-enable max influencers and cooldown checks once indexes are ready
+      // Check max influencers: count affiliateLinks for this offer
+      if (data.maxInfluencers) {
+        const linksForOffer = await adminDb!.collection('affiliateLinks')
+          .where('offerId', '==', doc.id)
+          .get();
+        if (linksForOffer.size >= data.maxInfluencers) {
+          continue;
+        }
+      }
+
+      // Check already-joined: skip offers this influencer already has a link for
+      const existingLink = await adminDb!.collection('affiliateLinks')
+        .where('offerId', '==', doc.id)
+        .where('influencerId', '==', infId)
+        .limit(1)
+        .get();
+      if (!existingLink.empty) {
+        continue;
+      }
 
       allEligibleOffers.push({
         id: doc.id,

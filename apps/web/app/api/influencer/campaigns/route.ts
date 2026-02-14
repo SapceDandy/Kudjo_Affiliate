@@ -74,11 +74,21 @@ export async function GET(request: NextRequest) {
               url: affiliateLink.url,
               qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(affiliateLink.url)}`
             } : undefined,
-            contentCoupon: couponData ? {
-              code: affiliateLink.code,
-              qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(affiliateLink.code)}`,
-              used: false // TODO: Track usage
-            } : undefined,
+            contentCoupon: couponData ? await (async () => {
+              // Check actual coupon redemption status
+              const couponStatusQuery = await db.collection('coupons')
+                .where('code', '==', affiliateLink.code)
+                .limit(1)
+                .get();
+              const couponStatus = !couponStatusQuery.empty
+                ? couponStatusQuery.docs[0].data().status === 'redeemed'
+                : false;
+              return {
+                code: affiliateLink.code,
+                qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(affiliateLink.code)}`,
+                used: couponStatus,
+              };
+            })() : undefined,
             earnings: affiliateLink.lifetimeEarnings || 0,
             createdAt: (campaignData.createdAt?.toDate?.() || new Date(campaignData.createdAt)).toISOString(),
             deadline: campaignData.endAt ? (campaignData.endAt?.toDate?.() || new Date(campaignData.endAt)).toISOString() : undefined,

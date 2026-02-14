@@ -12,7 +12,8 @@ firebase-debug.*.log
 apps/web/.next
 apps/web/.vercel
 storage_export
-.emulator-data 
+.emulator-data
 scripts/firebase-service-account.json
-
-scripts/firebase-service-account.json
+service-account.json
+apps/web/.env.local
+functions/.env
