@@ -1,0 +1,20 @@
+{
+  "suite": "canary",
+  "id": "FST-001",
+  "timestamp": "2025-09-20T17:36:54.460Z",
+  "ok": true,
+  "inputs": {
+    "originalFields": 4
+  },
+  "outputs": {
+    "sanitizedFields": 2
+  },
+  "logs": [
+    {
+      "level": "info",
+      "msg": "Testing FST-001: Schema write guard",
+      "timestamp": "2025-09-20T17:36:54.200Z"
+    }
+  ],
+  "durationMs": 260
+}

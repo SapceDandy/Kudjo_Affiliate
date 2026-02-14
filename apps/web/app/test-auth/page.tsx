@@ -1,15 +1,15 @@
 'use client';
 
-import { useDemoAuth } from '@/lib/demo-auth';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
-export default function TestAuthPage() {
-  const { user, loading, signOut } = useDemoAuth();
+// Force dynamic rendering to prevent static generation errors
+export const dynamic = 'force-dynamic';
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+export default function TestAuthPage() {
+  // Mock auth state for testing
+  const user = null;
+  const loading = false;
 
   return (
     <div className="container mx-auto p-6">
@@ -21,9 +21,9 @@ export default function TestAuthPage() {
           {user ? (
             <div>
               <p><strong>Signed In:</strong> Yes</p>
-              <p><strong>Email:</strong> {user.email}</p>
-              <p><strong>UID:</strong> {user.uid}</p>
-              <Button onClick={signOut} className="mt-4">Sign Out</Button>
+              <p><strong>Email:</strong> test@example.com</p>
+              <p><strong>UID:</strong> test-uid</p>
+              <Button onClick={() => {}} className="mt-4">Sign Out</Button>
             </div>
           ) : (
             <div>

@@ -4,31 +4,31 @@ import { verify } from 'jsonwebtoken';
 
 export async function GET() {
   const cookieStore = cookies();
-  const adminSessionCookie = cookieStore.get('admin_session');
-  
-  if (!adminSessionCookie) {
+  const adminTokenCookie = cookieStore.get('admin_token');
+
+  if (!adminTokenCookie) {
     return NextResponse.json({ isAdmin: false }, { status: 401 });
   }
-  
+
   try {
-    // Get the secret key from environment variables
-    const jwtSecret = process.env.ADMIN_PASSCODE;
-    
+    const jwtSecret = process.env.JWT_SECRET;
+
     if (!jwtSecret) {
-      console.error('Admin JWT secret not configured');
+      console.error('JWT_SECRET not configured');
       return NextResponse.json({ isAdmin: false }, { status: 500 });
     }
-    
+
     // Verify the token
-    const payload = verify(adminSessionCookie.value, jwtSecret) as {
+    const payload = verify(adminTokenCookie.value, jwtSecret) as {
       role: string;
       email: string;
+      isAdmin?: boolean;
     };
-    
+
     if (payload.role !== 'admin') {
       return NextResponse.json({ isAdmin: false }, { status: 401 });
     }
-    
+
     return NextResponse.json({
       isAdmin: true,
       email: payload.email,
@@ -37,4 +37,4 @@ export async function GET() {
     console.error('Error verifying admin token:', error);
     return NextResponse.json({ isAdmin: false }, { status: 401 });
   }
-} 
+}

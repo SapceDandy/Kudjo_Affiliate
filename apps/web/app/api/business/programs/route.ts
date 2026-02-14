@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { QueryDocumentSnapshot } from 'firebase-admin/firestore';
-import { mockCampaigns, paginateMockData, shouldUseMockData } from '@/lib/mock-data';
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,57 +18,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'businessId required' }, { status: 400 });
     }
 
-    // Use mock data if quota exceeded or in development
-    if (shouldUseMockData()) {
-      console.log('Using mock data due to shouldUseMockData() = true');
-      const businessPrograms = mockCampaigns.filter(campaign => campaign.businessId === businessId);
-      const result = paginateMockData(businessPrograms, Math.floor(offset / limit) + 1, limit);
-      
-      return NextResponse.json({
-        programs: result.data.map(campaign => ({
-          id: campaign.id,
-          influencer: `Influencer ${campaign.id.slice(-4)}`,
-          offerTitle: campaign.title,
-          redemptions: campaign.totalRedemptions,
-          payoutCents: Math.round(campaign.spent * 100),
-          since: campaign.startDate,
-          infId: `inf-${campaign.id}`,
-          offerId: `offer-${campaign.id}`
-        })),
-        hasMore: result.pagination.hasNext,
-        nextOffset: result.pagination.hasNext ? offset + limit : null,
-        source: 'mock'
-      });
-    }
 
-    // Query active programs (redemptions grouped by influencer + offer)
     if (!adminDb) {
-      console.log('adminDb is null, falling back to mock data');
-      // Fallback to mock data when Firebase is not configured
-      const businessPrograms = mockCampaigns.filter(campaign => campaign.businessId === businessId);
-      const result = paginateMockData(businessPrograms, Math.floor(offset / limit) + 1, limit);
-      
-      return NextResponse.json({
-        programs: result.data.map(campaign => ({
-          id: campaign.id,
-          influencer: `Influencer ${campaign.id.slice(-4)}`,
-          offerTitle: campaign.title,
-          redemptions: campaign.totalRedemptions,
-          payoutCents: Math.round(campaign.spent * 100),
-          since: campaign.startDate,
-          infId: `inf-${campaign.id}`,
-          offerId: `offer-${campaign.id}`
-        })),
-        hasMore: result.pagination.hasNext,
-        nextOffset: result.pagination.hasNext ? offset + limit : null,
-        source: 'mock_firebase_not_configured'
-      });
+      return NextResponse.json({ error: 'Firebase not configured' }, { status: 500 });
     }
 
     console.log('Querying Firebase for redemptions...');
     const redemptionsRef = adminDb!.collection('redemptions');
     const redemptionsQuery = redemptionsRef
-      .where('bizId', '==', businessId);
+      .where('businessId', '==', businessId);
 
     const redemptionsSnapshot = await redemptionsQuery.get();
     console.log('Found redemptions:', redemptionsSnapshot.size);
@@ -79,7 +36,7 @@ export async function GET(request: NextRequest) {
     
     redemptionsSnapshot.forEach((doc: QueryDocumentSnapshot) => {
       const data = doc.data();
-      const infId = data.infId;
+      const infId = data.influencerId;
       const offerId = data.offerId;
       const key = `${infId}-${offerId}`;
       
@@ -97,7 +54,7 @@ export async function GET(request: NextRequest) {
       }
       
       programsMap[key].redemptions += 1;
-      programsMap[key].payoutCents += data.infEarnings || 0;
+      programsMap[key].payoutCents += data.influencerEarnings || 0;
       
       // Update 'since' to earliest date
       const createdAt = data.createdAt?.toDate?.() || new Date();
@@ -106,11 +63,11 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    const programs = Object.values(programsMap)
-      .sort((a: any, b: any) => b.redemptions - a.redemptions)
-      .slice(offset, offset + limit);
-
-    const hasMore = Object.keys(programsMap).length > offset + limit;
+    const allPrograms = Object.values(programsMap)
+      .sort((a: any, b: any) => b.redemptions - a.redemptions);
+    
+    const programs = allPrograms.slice(offset, offset + limit);
+    const hasMore = allPrograms.length > offset + limit;
     const nextOffset = hasMore ? offset + limit : null;
 
     console.log('Returning programs:', programs.length);
@@ -124,33 +81,12 @@ export async function GET(request: NextRequest) {
     console.error('Error fetching business programs:', error);
     console.error('Error stack:', error.stack);
     
-    // Handle quota exceeded errors with mock data fallback
+    // Handle quota exceeded errors
     if (error?.code === 8 || error?.message?.includes('Quota exceeded')) {
-      console.log('Quota exceeded, falling back to mock data');
-      
-      const { searchParams } = new URL(request.url);
-      const businessId = searchParams.get('businessId');
-      const limit = parseInt(searchParams.get('limit') || '20');
-      const offset = parseInt(searchParams.get('offset') || '0');
-      
-      const businessPrograms = mockCampaigns.filter(campaign => campaign.businessId === businessId);
-      const result = paginateMockData(businessPrograms, Math.floor(offset / limit) + 1, limit);
-      
-      return NextResponse.json({
-        programs: result.data.map(campaign => ({
-          id: campaign.id,
-          influencer: `Influencer ${campaign.id.slice(-4)}`,
-          offerTitle: campaign.title,
-          redemptions: campaign.totalRedemptions,
-          payoutCents: Math.round(campaign.spent * 100),
-          since: campaign.startDate,
-          infId: `inf-${campaign.id}`,
-          offerId: `offer-${campaign.id}`
-        })),
-        hasMore: result.pagination.hasNext,
-        nextOffset: result.pagination.hasNext ? offset + limit : null,
-        source: 'mock_fallback'
-      });
+      return NextResponse.json(
+        { error: 'Firebase quota exceeded. Please try again later.' },
+        { status: 503 }
+      );
     }
     
     return NextResponse.json(
@@ -169,14 +105,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    if (!adminDb) {
+      return NextResponse.json({ error: 'Firebase not configured' }, { status: 500 });
+    }
+
     if (action === 'payout') {
       // Create payout records for selected programs
-      const batch = adminDb!.batch();
+      const batch = adminDb.batch();
       
       for (const programId of programIds) {
-        const payoutRef = adminDb!.collection('payouts').doc();
+        const payoutRef = adminDb.collection('payouts').doc();
         batch.set(payoutRef, {
-          bizId: businessId,
+          businessId: businessId,
           programId,
           status: 'pending',
           createdAt: new Date(),

@@ -38,68 +38,86 @@ export function useRealtimeInfluencerRequests() {
 
     try {
       setError(null);
+      setLoading(true);
       
-      // Create real-time query for influencer requests
+      // Set up real-time Firestore listener
       const requestsRef = collection(db, 'influencerRequests');
-      const requestsQuery = query(
+      const q = query(
         requestsRef,
-        where('infId', '==', user.uid),
+        where('influencerId', '==', user.uid),
+        where('status', 'in', ['pending', 'countered', 'approved']), // Only show active requests
         orderBy('createdAt', 'desc')
       );
 
-      // Set up real-time listener
-      unsubscribe = onSnapshot(
-        requestsQuery,
-        (snapshot) => {
-          const updatedRequests: InfluencerRequest[] = [];
-          
-          snapshot.forEach((doc) => {
-            const data = doc.data();
-            updatedRequests.push({
-              id: doc.id,
-              title: data.title || 'Business Request',
-              description: data.description,
-              businessName: data.businessName || 'Unknown Business',
-              businessId: data.bizId,
-              splitPct: data.proposedSplitPct || 20,
-              userDiscountPct: data.userDiscountPct,
-              userDiscountCents: data.userDiscountCents,
-              minSpendCents: data.minSpendCents,
-              status: data.status || 'pending',
-              createdAt: data.createdAt?.toDate?.() || new Date(),
-              updatedAt: data.updatedAt?.toDate?.(),
-              businessResponse: data.businessResponse
-            });
-          });
+      unsubscribe = onSnapshot(q, (snapshot) => {
+        const requestsData = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            title: data.title || 'Business Request',
+            description: data.description,
+            businessName: data.businessName || 'Unknown Business',
+            businessId: data.businessId,
+            splitPct: data.proposedSplitPct || 20,
+            userDiscountPct: data.userDiscountPct,
+            userDiscountCents: data.userDiscountCents,
+            minSpendCents: data.minSpendCents,
+            status: data.status || 'pending',
+            createdAt: data.createdAt?.toDate() || new Date(),
+            updatedAt: data.updatedAt?.toDate(),
+            businessResponse: data.businessResponse
+          } as InfluencerRequest;
+        });
 
-          // Filter out closed/declined requests for UI display
-          const activeRequests = updatedRequests.filter(req => 
-            req.status !== 'closed' && req.status !== 'declined'
-          );
+        setRequests(requestsData);
+        setLoading(false);
+      }, (error) => {
+        console.error('❌ Firestore listener error:', error);
+        setError('Failed to load requests. Please try again.');
+        setLoading(false);
+      });
 
-          setRequests(activeRequests);
-          setLoading(false);
-        },
-        (err) => {
-          console.error('Error in real-time influencer requests listener:', err);
-          setError('Failed to load requests. Please try again.');
-          setLoading(false);
-        }
-      );
-
-    } catch (err) {
-      console.error('Error setting up real-time influencer requests listener:', err);
-      setError('Failed to set up real-time updates.');
+    } catch (error: any) {
+      console.error('❌ Error setting up requests listener:', error);
+      setError('Failed to load requests. Please try again.');
       setLoading(false);
     }
 
-    // Cleanup listener on unmount
     return () => {
       if (unsubscribe) {
         unsubscribe();
       }
     };
   }, [user]);
+
+  const fetchRequests = async () => {
+    // Keep this for manual refresh, but it's not needed with real-time listeners
+    if (!user) return;
+
+    try {
+      const response = await fetch(`/api/influencer/requests?infId=${user.uid}`);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ API error response:', response.status, errorText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.requests && Array.isArray(data.requests)) {
+        const activeRequests = data.requests.filter((req: any) =>
+          ['pending', 'accepted', 'counter', 'countered'].includes(req.status)
+        );
+        setRequests([...activeRequests]);
+      } else {
+        setRequests([]);
+      }
+    } catch (err) {
+      console.error('Error fetching influencer requests:', err);
+      setError('Failed to load requests. Please try again.');
+    }
+  };
 
   const respondToRequest = async (requestId: string, action: 'accept' | 'decline' | 'counter', counterOffer?: any) => {
     try {
@@ -137,6 +155,7 @@ export function useRealtimeInfluencerRequests() {
     requests, 
     loading, 
     error, 
-    respondToRequest
+    respondToRequest,
+    refetch: fetchRequests
   };
 }

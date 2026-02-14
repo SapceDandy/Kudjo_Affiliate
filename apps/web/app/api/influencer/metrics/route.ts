@@ -13,8 +13,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'influencerId required' }, { status: 400 });
     }
 
-    // Use mock data if quota exceeded or in development
-    if (mockMode || shouldUseMockData()) {
+    // Use mock data only if explicitly requested
+    if (mockMode) {
       return NextResponse.json({
         ...mockMetrics.influencer,
         totalEarnings: Math.round(mockMetrics.influencer.totalEarnings * 100), // Convert to cents

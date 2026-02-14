@@ -27,6 +27,9 @@ export async function POST(request: NextRequest) {
         id: validatedData.businessId,
         name: 'Demo Business',
         status: 'pending_approval',
+        approved: false,
+        approvalStatus: 'pending',
+        approvalHistory: [],
         createdAt: new Date(),
         posProvider: null,
         posStatus: 'not_connected'

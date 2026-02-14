@@ -2,6 +2,16 @@ import { z } from 'zod';
 
 export const UserRole = z.enum(['influencer', 'business', 'admin']);
 
+// NEW: Approval status schema
+export const ApprovalStatus = z.enum(['pending', 'approved', 'rejected']);
+
+export const ApprovalHistorySchema = z.object({
+  status: ApprovalStatus,
+  timestamp: z.string(),
+  adminId: z.string().optional(),
+  reason: z.string().optional(),
+});
+
 export const BusinessSchema = z.object({
   ownerUid: z.string(),
   name: z.string().min(2),
@@ -19,15 +29,42 @@ export const BusinessSchema = z.object({
     hours: z.array(z.string()).optional(),
   }).optional(),
   status: z.enum(['active', 'paused', 'closed']).default('active'),
+  // NEW: Approval fields
+  approved: z.boolean().default(false),
+  approvalStatus: ApprovalStatus.default('pending'),
+  approvalHistory: z.array(ApprovalHistorySchema).default([]),
+  canReapplyAt: z.string().optional(),
+});
+
+// NEW: Social media platform schema
+export const SocialPlatform = z.enum(['instagram', 'tiktok', 'youtube', 'twitter']);
+
+export const SocialAccountSchema = z.object({
+  platform: SocialPlatform,
+  handle: z.string(),
+  followerCount: z.number().int().nonnegative(),
+  verified: z.boolean().default(false),
+  verifiedAt: z.string().optional(),
+  verifiedBy: z.enum(['oauth', 'admin']).optional(),
+  profileUrl: z.string().url().optional(),
+  avatarUrl: z.string().url().optional(),
 });
 
 // NEW: Influencer schema additions for follower count and tier
 export const InfluencerSchema = z.object({
   ownerId: z.string(),
   handle: z.string().min(2),
+  displayName: z.string().optional(),
+  email: z.string().email().optional(),
   followerCount: z.number().int().nonnegative().default(0),
   tier: z.enum(['Small', 'Medium', 'Large', 'XL', 'Huge']).default('Small'),
   approved: z.boolean().default(false),
+  socialAccounts: z.array(SocialAccountSchema).default([]),
+  hasVerifiedSocial: z.boolean().default(false),
+  // NEW: Approval fields
+  approvalStatus: ApprovalStatus.default('pending'),
+  approvalHistory: z.array(ApprovalHistorySchema).default([]),
+  canReapplyAt: z.string().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
@@ -213,4 +250,44 @@ export const ApiCouponClaim = z.object({ offerId: z.string(), infId: z.string() 
 
 export const ApiLinkCreate = z.object({ offerId: z.string(), infId: z.string() });
 
-export const ApiOutreachSend = z.object({ campaignId: z.string() }); 
+export const ApiOutreachSend = z.object({ campaignId: z.string() });
+
+// NEW: Social media verification API schemas
+export const ApiSocialConnect = z.object({
+  platform: SocialPlatform,
+  code: z.string().optional(), // OAuth code
+  handle: z.string().optional(), // For manual verification
+});
+
+export const ApiSocialVerify = z.object({
+  infId: z.string(),
+  platform: SocialPlatform,
+  handle: z.string(),
+  followerCount: z.number().int().nonnegative(),
+  verified: z.boolean().default(true),
+  verifiedBy: z.enum(['oauth', 'admin']),
+  profileUrl: z.string().url().optional(),
+  avatarUrl: z.string().url().optional(),
+});
+
+export const ApiInfluencerUpdate = z.object({
+  displayName: z.string().optional(),
+  socialAccounts: z.array(SocialAccountSchema).optional(),
+  hasVerifiedSocial: z.boolean().optional(),
+  tier: z.enum(['Small', 'Medium', 'Large', 'XL', 'Huge']).optional(),
+});
+
+// NEW: Admin approval API schemas
+export const ApiApproveUser = z.object({
+  userId: z.string(),
+  userType: z.enum(['business', 'influencer']),
+  adminId: z.string(),
+  reason: z.string().optional(),
+});
+
+export const ApiRejectUser = z.object({
+  userId: z.string(),
+  userType: z.enum(['business', 'influencer']),
+  adminId: z.string(),
+  reason: z.string().min(1, 'Rejection reason is required'),
+}); 

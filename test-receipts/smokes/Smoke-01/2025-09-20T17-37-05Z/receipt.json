@@ -1,0 +1,76 @@
+{
+  "suite": "smoke",
+  "id": "Smoke-01",
+  "timestamp": "2025-09-20T17:37:05.674Z",
+  "ok": true,
+  "inputs": {
+    "journey": "merchant→affiliate→user→redemption→payout"
+  },
+  "outputs": {
+    "merchantApproved": true,
+    "campaignPublished": true,
+    "affiliateLinkActive": true,
+    "userRedeemed": true,
+    "payoutVisible": true,
+    "linkStatsUpdated": true,
+    "metricsDataReady": true
+  },
+  "logs": [
+    {
+      "level": "info",
+      "msg": "Running Smoke-01: Full redemption journey",
+      "timestamp": "2025-09-20T17:37:03.989Z"
+    },
+    {
+      "level": "info",
+      "msg": "Seed data applied successfully",
+      "timestamp": "2025-09-20T17:37:04.808Z"
+    },
+    {
+      "level": "info",
+      "msg": "✅ Merchant approval verified",
+      "timestamp": "2025-09-20T17:37:04.896Z"
+    },
+    {
+      "level": "info",
+      "msg": "✅ Published campaign verified",
+      "timestamp": "2025-09-20T17:37:04.988Z"
+    },
+    {
+      "level": "info",
+      "msg": "✅ Affiliate link verified: C34B59",
+      "timestamp": "2025-09-20T17:37:05.085Z"
+    },
+    {
+      "level": "info",
+      "msg": "✅ User redemption verified: $25.5",
+      "timestamp": "2025-09-20T17:37:05.173Z"
+    },
+    {
+      "level": "info",
+      "msg": "✅ Redemption record verified: $0.57 earned",
+      "timestamp": "2025-09-20T17:37:05.282Z"
+    },
+    {
+      "level": "info",
+      "msg": "✅ Payout visible: $0.57 pending",
+      "timestamp": "2025-09-20T17:37:05.372Z"
+    },
+    {
+      "level": "info",
+      "msg": "✅ Affiliate link stats updated",
+      "timestamp": "2025-09-20T17:37:05.466Z"
+    },
+    {
+      "level": "info",
+      "msg": "✅ Business metrics data verified",
+      "timestamp": "2025-09-20T17:37:05.578Z"
+    },
+    {
+      "level": "info",
+      "msg": "✅ Affiliate metrics data verified",
+      "timestamp": "2025-09-20T17:37:05.674Z"
+    }
+  ],
+  "durationMs": 1685
+}

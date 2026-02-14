@@ -2,15 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useDemoAuth } from '@/lib/demo-auth';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
+// Force dynamic rendering to prevent static generation errors
+export const dynamic = 'force-dynamic';
+
 export default function FirebaseDebugPage() {
-  const { user, signOut } = useDemoAuth();
   const router = useRouter();
   const [testResult, setTestResult] = useState<string>('');
   const [redirectTest, setRedirectTest] = useState<string>('');
+  
+  // Mock user for testing
+  const user = null;
 
   const testBusinessSignIn = async () => {
     setTestResult('Testing business sign-in...');
@@ -35,12 +39,8 @@ export default function FirebaseDebugPage() {
   };
 
   useEffect(() => {
-    if (user) {
-      setTestResult(`Already signed in as: ${user.role}`);
-    } else {
-      setTestResult('Not signed in');
-    }
-  }, [user]);
+    setTestResult('Debug page loaded - not signed in');
+  }, []);
 
   return (
     <div className="container mx-auto p-4">
@@ -67,7 +67,7 @@ export default function FirebaseDebugPage() {
           Test Influencer Sign-In
         </Button>
         {user && (
-          <Button onClick={() => signOut()} className="bg-red-500 hover:bg-red-600">
+          <Button onClick={() => router.push('/auth/signin')} className="bg-red-500 hover:bg-red-600">
             Sign Out
           </Button>
         )}

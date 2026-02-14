@@ -75,18 +75,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Firebase not configured' }, { status: 500 });
     }
 
-    // Query business offers from Firestore - simplified to avoid index issues
+    // Query business offers from Firestore - use simple query to avoid index issues
     const offersRef = adminDb.collection('offers');
-    let offersQuery = offersRef.where('bizId', '==', businessId);
+    let offersQuery = offersRef.where('businessId', '==', businessId).limit(limit);
     
-    // Try with ordering, fall back to simple query if index not ready
-    let offersSnapshot;
-    try {
-      offersSnapshot = await offersQuery.orderBy('createdAt', 'desc').limit(limit).get();
-    } catch (indexError) {
-      console.log('Index not ready, using simple query:', indexError);
-      offersSnapshot = await offersQuery.limit(limit).get();
-    }
+    const offersSnapshot = await offersQuery.get();
     
     const offers = offersSnapshot.docs.map((doc: QueryDocumentSnapshot) => {
       const data = doc.data();
@@ -101,17 +94,19 @@ export async function GET(request: NextRequest) {
         minSpendCents: data.minSpendCents,
         createdAt: data.createdAt?.toDate?.() || new Date(),
         description: data.description,
-        terms: data.terms
+        terms: data.terms,
+        exclusive: data.exclusive || false
       };
     });
 
     const hasMore = offersSnapshot.docs.length === limit;
     const nextOffset = hasMore ? offset + limit : null;
 
-    return NextResponse.json({ 
-      success: true, 
-      offerId: businessId,
-      message: 'Offer created successfully' 
+    return NextResponse.json({
+      offers,
+      hasMore,
+      nextOffset,
+      source: 'firestore'
     });
 
   } catch (error: any) {
@@ -164,7 +159,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const parsed = CreateOfferSchema.parse(body);
-    const { businessId, title, discountType, splitPct, userDiscountPct, userDiscountCents, minSpendCents, description, terms } = parsed;
+    const { businessId, name, discountType, splitPct, userDiscountPct, userDiscountCents, minSpendCents, redemptionLimit, description, terms, exclusive } = parsed;
 
 
     const adminDb = getAdminDb();
@@ -183,25 +178,31 @@ export async function POST(request: NextRequest) {
 
     // Create the offer document using bizId as document ID
     const offerData = {
-      bizId: businessId,
-      businessName: business.name || 'Unknown Business',
-      title: `${business.name || 'Business'} Partnership Offer`,
-      description: description || `Partner with ${business.name || 'us'} and earn commissions on every sale you generate.`,
-      discountType: discountType || 'percentage',
+      businessId: businessId,
+      bizId: businessId, // Keep both for compatibility
+      title: name,
+      description: description || '',
+      discountType: discountType,
       discountValue: discountType === 'percentage' ? userDiscountPct : userDiscountCents,
-      budgetCents: 100000,
+      splitPct: splitPct,
+      userDiscountPct: userDiscountPct,
+      userDiscountCents: userDiscountCents,
+      minSpendCents: minSpendCents,
+      redemptionLimit: redemptionLimit, // null for unlimited, number for limited
+      budgetCents: 0,
       eligibleTiers: ['S', 'M', 'L', 'XL'],
       active: true,
+      status: 'active',
       createdAt: new Date(),
       activeInfluencers: 0,
-      createdAt: now,
       updatedAt: now,
       createdBy: businessId,
       startAt: now,
-      endAt: new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000)) // 30 days default
+      endAt: new Date(now.getTime() + (30 * 24 * 60 * 60 * 1000)), // 30 days default
+      exclusive: exclusive || false
     };
 
-    await adminDb!.collection('offers').doc(businessId).set(offerData);
+    const newOfferRef = await adminDb!.collection('offers').add(offerData);
     
     // Log the creation
     await adminDb.collection('campaignLogs').add({
@@ -212,14 +213,11 @@ export async function POST(request: NextRequest) {
       businessId
     });
 
-    return NextResponse.json({
-      id: businessId,
-      ...offerData,
-      createdAt: offerData.createdAt.toISOString(),
-      updatedAt: offerData.updatedAt.toISOString(),
-      startAt: offerData.startAt.toISOString(),
-      endAt: offerData.endAt.toISOString()
-    }, { status: 201 });
+    return NextResponse.json({ 
+      success: true, 
+      offerId: newOfferRef.id,
+      message: 'Offer created successfully' 
+    });
 
   } catch (error) {
     console.error('Error creating offer:', error);

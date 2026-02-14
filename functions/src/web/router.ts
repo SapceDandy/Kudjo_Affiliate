@@ -16,7 +16,38 @@ import { handleSquareWebhook } from '../integrations/square/webhooks';
 import { handlePayoutSummary } from '../apis/payout.ledger';
 import { handleInfluencerOAuthStart } from '../apis/influencer.oauth.start';
 import { handleOfferSuggest } from '../apis/offer.suggest';
+import { handleCampaignJoin } from '../apis/campaign.join';
+import { handleRedemptionValidate } from '../apis/redemption.validate';
+import { handleRedemptionProcess } from '../apis/redemption.process';
+import { handlePayoutRequest } from '../apis/payout.request';
+import { handlePayoutLedger } from '../apis/payout.ledger';
+import { handleAdminPayoutProcess } from '../apis/payout.process';
 import admin from 'firebase-admin';
+import { handleSessionLogin } from '../apis/session.login';
+import { handleSessionLogout } from '../apis/session.logout';
+import { handleSessionMe } from '../apis/session.me';
+import { handleControlCenterSession } from '../apis/control-center.session';
+import { handleControlCenterLogout } from '../apis/control-center.logout';
+import { handleControlCenterLogin } from '../apis/control-center.login';
+import { handleControlCenterMetrics } from '../apis/control-center.metrics';
+import { handleControlCenterStatsSummary } from '../apis/control-center.stats.summary';
+import { handleControlCenterStatsFunnel } from '../apis/control-center.stats.funnel';
+import { handleControlCenterStatsRedemptions } from '../apis/control-center.stats.redemptions';
+import { handleControlCenterStatsPayouts } from '../apis/control-center.stats.payouts';
+import { handleControlCenterExportRedemptionsCsv } from '../apis/control-center.export.redemptions.csv';
+import { handleControlCenterExportPayoutsCsv } from '../apis/control-center.export.payouts.csv';
+import { handleControlCenterExport } from '../apis/control-center.export';
+import { handleAnalyticsRoas } from '../apis/analytics.roas';
+import { handleAnalyticsTierMix } from '../apis/analytics.tier-mix';
+import { handleAnalyticsTopBusinesses } from '../apis/analytics.top-businesses';
+import { handleAnalyticsEarningsOverTime } from '../apis/analytics.earnings-over-time';
+import { handleAnalyticsOffer } from '../apis/analytics.offer';
+import { handleControlCenterUsersList } from '../apis/control-center.users.list';
+import { handleControlCenterUsersUpdate } from '../apis/control-center.users.update';
+import { handleControlCenterUsersSeed } from '../apis/control-center.users.seed';
+import { handleControlCenterUsersCreate } from '../apis/control-center.users.create';
+import { handleBusinessRecommendations } from '../apis/business.recommendations';
+import { handleInfluencerRecommendations } from '../apis/influencer.recommendations';
 
 // Inline schemas for testing
 const ApiBusinessCreate = z.object({
@@ -35,6 +66,246 @@ const ApiBusinessPosConnect = z.object({
 
 export const router = Router();
 
+type HttpMethod = 'get' | 'post';
+type Role = 'public' | 'influencer' | 'business' | 'admin';
+
+type RouteDef = {
+  method: HttpMethod;
+  canonical: string;
+  aliases?: string[];
+  role: Role;
+  handler: (req: any, res: any) => any;
+};
+
+const DEPRECATION_SUNSET = '2026-04-01';
+
+function withDeprecationHeaders(handler: RouteDef['handler'], successorPath: string): RouteDef['handler'] {
+  return async (req: any, res: any) => {
+    res.set('Deprecation', 'true');
+    res.set('Sunset', DEPRECATION_SUNSET);
+    res.set('Link', `<${req.baseUrl}${successorPath}>; rel="successor-version"`);
+    return handler(req, res);
+  };
+}
+
+function authWrap(role: Role, handler: RouteDef['handler']) {
+  if (role === 'public') {
+    return [asyncHandler(handler)];
+  }
+  return [requireRole(role as any), asyncHandler(handler)];
+}
+
+function mount(app: typeof router, r: RouteDef) {
+  (app as any)[r.method](r.canonical, ...authWrap(r.role, r.handler));
+  (r.aliases ?? []).forEach((alias) => {
+    (app as any)[r.method](alias, ...authWrap(r.role, withDeprecationHeaders(r.handler, r.canonical)));
+  });
+}
+
+const routes: RouteDef[] = [
+  {
+    method: 'post',
+    canonical: '/session/login',
+    role: 'public',
+    handler: handleSessionLogin,
+  },
+  {
+    method: 'post',
+    canonical: '/session/logout',
+    role: 'public',
+    handler: handleSessionLogout,
+  },
+  {
+    method: 'get',
+    canonical: '/session/me',
+    role: 'public',
+    handler: handleSessionMe,
+  },
+  {
+    method: 'get',
+    canonical: '/control-center/session',
+    role: 'admin',
+    handler: handleControlCenterSession,
+  },
+  {
+    method: 'post',
+    canonical: '/control-center/login',
+    role: 'public',
+    handler: handleControlCenterLogin,
+  },
+  {
+    method: 'post',
+    canonical: '/control-center/logout',
+    role: 'public',
+    handler: handleControlCenterLogout,
+  },
+  {
+    method: 'get',
+    canonical: '/control-center/metrics',
+    role: 'admin',
+    handler: handleControlCenterMetrics,
+  },
+  {
+    method: 'get',
+    canonical: '/control-center/stats/summary',
+    role: 'admin',
+    handler: handleControlCenterStatsSummary,
+  },
+  {
+    method: 'get',
+    canonical: '/control-center/stats/funnel',
+    role: 'admin',
+    handler: handleControlCenterStatsFunnel,
+  },
+  {
+    method: 'get',
+    canonical: '/control-center/stats/redemptions',
+    role: 'admin',
+    handler: handleControlCenterStatsRedemptions,
+  },
+  {
+    method: 'get',
+    canonical: '/control-center/stats/payouts',
+    role: 'admin',
+    handler: handleControlCenterStatsPayouts,
+  },
+  {
+    method: 'get',
+    canonical: '/control-center/export/redemptions.csv',
+    role: 'admin',
+    handler: handleControlCenterExportRedemptionsCsv,
+  },
+  {
+    method: 'get',
+    canonical: '/control-center/export/payouts.csv',
+    role: 'admin',
+    handler: handleControlCenterExportPayoutsCsv,
+  },
+  {
+    method: 'post',
+    canonical: '/control-center/export',
+    role: 'admin',
+    handler: handleControlCenterExport,
+  },
+  {
+    method: 'get',
+    canonical: '/analytics/roas',
+    role: 'public',
+    handler: handleAnalyticsRoas,
+  },
+  {
+    method: 'get',
+    canonical: '/analytics/tier-mix',
+    role: 'public',
+    handler: handleAnalyticsTierMix,
+  },
+  {
+    method: 'get',
+    canonical: '/analytics/top-businesses',
+    role: 'public',
+    handler: handleAnalyticsTopBusinesses,
+  },
+  {
+    method: 'get',
+    canonical: '/analytics/earnings-over-time',
+    role: 'public',
+    handler: handleAnalyticsEarningsOverTime,
+  },
+  {
+    method: 'get',
+    canonical: '/analytics/offer',
+    role: 'public',
+    handler: handleAnalyticsOffer,
+  },
+  {
+    method: 'get',
+    canonical: '/control-center/users',
+    role: 'admin',
+    handler: handleControlCenterUsersList,
+  },
+  {
+    method: 'post',
+    canonical: '/control-center/users/update',
+    role: 'admin',
+    handler: handleControlCenterUsersUpdate,
+  },
+  {
+    method: 'post',
+    canonical: '/control-center/users/seed',
+    role: 'admin',
+    handler: handleControlCenterUsersSeed,
+  },
+  {
+    method: 'post',
+    canonical: '/control-center/users/create',
+    role: 'admin',
+    handler: handleControlCenterUsersCreate,
+  },
+  {
+    method: 'get',
+    canonical: '/business/recommendations',
+    role: 'business',
+    handler: handleBusinessRecommendations,
+  },
+  {
+    method: 'get',
+    canonical: '/influencer/recommendations',
+    role: 'influencer',
+    handler: handleInfluencerRecommendations,
+  },
+  {
+    method: 'post',
+    canonical: '/influencer/join-campaign',
+    aliases: ['/influencer.join-campaign'],
+    role: 'influencer',
+    handler: handleCampaignJoin,
+  },
+  {
+    method: 'post',
+    canonical: '/redemptions/validate',
+    aliases: ['/redemptions.validate'],
+    role: 'business',
+    handler: handleRedemptionValidate,
+  },
+  {
+    method: 'post',
+    canonical: '/redemptions/process',
+    aliases: ['/redemptions.process'],
+    role: 'business',
+    handler: handleRedemptionProcess,
+  },
+  {
+    method: 'post',
+    canonical: '/payouts/request',
+    aliases: ['/payouts.request'],
+    role: 'influencer',
+    handler: handlePayoutRequest,
+  },
+  {
+    method: 'get',
+    canonical: '/payouts/ledger',
+    aliases: ['/payouts.ledger'],
+    role: 'influencer',
+    handler: handlePayoutLedger,
+  },
+  {
+    method: 'get',
+    canonical: '/ledger/history',
+    aliases: ['/ledger.history'],
+    role: 'influencer',
+    handler: handlePayoutLedger,
+  },
+  {
+    method: 'post',
+    canonical: '/admin/payouts/process',
+    aliases: ['/admin.payouts.process'],
+    role: 'admin',
+    handler: handleAdminPayoutProcess,
+  },
+];
+
+routes.forEach((r) => mount(router, r));
+
 router.post('/business.create', requireRole('business'), asyncHandler(handleBusinessCreate, ApiBusinessCreate));
 router.post('/business.pos.connect', requireRole('business'), asyncHandler(handleBusinessPosConnect, ApiBusinessPosConnect));
 router.post('/offer.create', requireRole('business'), asyncHandler(handleOfferCreate));
@@ -47,42 +318,6 @@ router.get('/influencer.oauth.start', asyncHandler(handleInfluencerOAuthStart));
 router.get('/offer.suggest', requireRole('business'), asyncHandler(async (req, res) => {
   await handleOfferSuggest(req, res);
 }));
-
-// Affiliate click router: /a/:token -> logs event and redirects to app landing
-router.get('/a/:token', async (req, res, next) => {
-  try {
-    const token = req.params.token;
-    const db = admin.firestore();
-    const linkSnap = await db.collection('affiliateLinks').where('token', '==', token).limit(1).get();
-    if (linkSnap.empty) {
-      res.status(404).send('Not found');
-      return;
-    }
-    const link = linkSnap.docs[0].data();
-    // Log event
-    await db.collection('events').add({
-      event: 'affiliate_click',
-      userId: link.infId,
-      payload: {
-        token,
-        offerId: link.offerId,
-        bizId: link.bizId,
-        ua: req.headers['user-agent'] || '',
-        ip: (req.headers['x-forwarded-for'] as string) || req.ip,
-        utmSource: link.utmSource,
-        utmMedium: link.utmMedium,
-        utmCampaign: link.utmCampaign,
-      },
-      timestamp: new Date().toISOString(),
-    });
-    // Redirect to web app deal page (fallback to home)
-    const base = process.env.PUBLIC_URL || 'http://localhost:3000';
-    const dest = `${base}/r/${link.token}`;
-    res.redirect(302, dest);
-  } catch (e) {
-    next(e);
-  }
-});
 
 router.post('/redemption.webhook/square', asyncHandler(handleSquareWebhook));
 

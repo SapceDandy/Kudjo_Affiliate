@@ -26,12 +26,21 @@ export async function POST(request: NextRequest) {
     // Get environment variables
     const adminEmail = process.env.ADMIN_EMAIL;
     const adminPasscode = process.env.ADMIN_PASSCODE;
+    const jwtSecret = process.env.JWT_SECRET;
 
     // Check if environment variables are set
     if (!adminEmail || !adminPasscode) {
       console.error('Admin credentials not configured');
       return NextResponse.json(
         { error: 'Admin authentication not configured' },
+        { status: 500 }
+      );
+    }
+
+    if (!jwtSecret) {
+      console.error('JWT_SECRET not configured');
+      return NextResponse.json(
+        { error: 'Server authentication not configured' },
         { status: 500 }
       );
     }
@@ -44,20 +53,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create JWT token
+    // Create JWT token with isAdmin flag for getAuth() detection
     const token = sign(
-      { 
-        role: 'admin', 
+      {
+        role: 'admin',
+        isAdmin: true,
         email: adminEmail,
         iat: Math.floor(Date.now() / 1000),
       },
-      process.env.ADMIN_PASSCODE!, // Use passcode as JWT secret
+      jwtSecret,
       { expiresIn: '12h' }
     );
 
-    // Set secure cookie
+    // Set secure cookie using unified name 'admin_token'
     const cookieStore = cookies();
-    cookieStore.set('admin_session', token, {
+    cookieStore.set('admin_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -65,9 +75,9 @@ export async function POST(request: NextRequest) {
       path: '/',
     });
 
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Admin login successful' 
+    return NextResponse.json({
+      success: true,
+      message: 'Admin login successful'
     });
 
   } catch (error) {

@@ -1,127 +1,143 @@
-# Kudjo Affiliate & Content Coupon MVP
+Kudjo Affiliate
 
-Monorepo for the MVP: creators claim single-use content coupons, generate affiliate links/QRs, and earn on tracked redemptions. Businesses onboard and configure splits; Admin runs outreach via Outlook.
+Kudjo Affiliate is an affiliate marketing platform connecting businesses and influencers. Merchants define discount campaigns and budgets, influencers accept offers and receive coupon codes, and administrators manage accounts and payouts
+GitHub
+. The current MVP relies on Firebase for authentication and data storage, with Next.js for the front‑end and Firebase Functions for the API
+GitHub
+.
 
-## Stack
-- Frontend: Next.js 14 (App Router), Tailwind, shadcn/ui (opt-in later), React Query
-- Backend: Firebase (Auth, Firestore, Storage, Functions, Scheduler), Cloud Tasks (future), Secret Manager
-- POS: Square (OAuth, discounts, payments webhooks); Clover stub; Manual Mode fallback
-- Outreach: Microsoft Graph OAuth
-- Types/Validation: TypeScript, Zod
-- Authentication: Firebase Auth (Google OAuth + Email/Password) + Admin Session
+Features
 
-## Monorepo Layout
-- `apps/web` — Next.js app (dashboards and flows)
-- `functions` — Firebase Cloud Functions (Node 20, TypeScript)
-- `packages/shared` — Shared types, Zod schemas, and utils
-- `.github/workflows` — CI pipeline
+Businesses: create offers, set budgets, and track campaign performance.
 
-## Environment
-Create `apps/web/.env.local` from this sample:
-```
-# Firebase Configuration
-NEXT_PUBLIC_FIREBASE_API_KEY=...
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=...
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=...
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
-NEXT_PUBLIC_FIREBASE_APP_ID=...
+Influencers: browse available offers, accept campaigns, and receive affiliate codes and meal coupons.
 
-# Google OAuth (for Firebase)
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=...
+Admin: approve or deny businesses and influencers, manage coupons, and export reports.
 
-# Admin Authentication
-ADMIN_EMAIL=your_admin_email@example.com
-ADMIN_PASSCODE=your_secure_passcode
+Manual redemption: until POS integration, redemptions are entered manually.
 
-# App Configuration
-NEXT_PUBLIC_MAPS_API_KEY=...
-NEXT_PUBLIC_GA_ID=...
-```
+Messaging: 1:1 chat and announcements via Firestore and FCM.
 
-Functions use Secret Manager where possible. For local dev, export env vars as needed:
-```
-SQUARE_APP_ID=...
-SQUARE_APP_SECRET=...
-MS_GRAPH_CLIENT_ID=...
-MS_GRAPH_CLIENT_SECRET=...
-JWT_SIGNING_KEY=dev_only
-PUBLIC_URL=http://localhost:3000
-```
+Tech Stack
 
-## Authentication
+Frontend: Next.js 14 (app router), React 18, TypeScript, Tailwind CSS, shadcn/ui components, and Recharts
+GitHub
+.
 
-### User Authentication
-- **Google OAuth**: Users can sign in with Google accounts
-- **Email/Password**: Traditional email and password authentication
-- **Firebase Auth**: All user authentication handled by Firebase
+Backend: Firebase Auth, Firestore, and Cloud Functions (Express router)
+GitHub
+.
 
-### Admin Authentication
-- **Separate System**: Admin access is completely separate from user authentication
-- **Environment Variables**: Admin credentials stored in environment variables
-- **Session Cookies**: Secure HTTP-only cookies with JWT tokens
-- **Route Protection**: All `/admin/*` routes protected by middleware
+Build/QA: ESLint, Prettier, and Vitest/Jest (recommended), with Firebase emulators for local development.
 
-## Setup
-1. Install deps
-```
-npm ci
-```
-2. Firebase emulators
-```
-npx firebase emulators:start
-```
-3. Web (dev)
-```
-npm run dev:web
-```
-4. Functions (watch build)
-```
-npm run dev:functions
-```
+Prerequisites
 
-## Tests
-- Unit tests
-```
-npm run test
-```
-- Emulator tests
-```
-npx firebase emulators:exec --only firestore,auth "npm --workspace functions run test:emu"
-```
+Node.js ≥ 20 and npm ≥ 10
+GitHub
+.
 
-## Seed Data
-```
-npm run seed
-```
-Seeds: 1 admin, 2 businesses (one Square-connected mock), 3 offers, 3 influencers, 2 coupons, 2 affiliate links, 1 outreach campaign with 5 recipients.
+Firebase CLI installed globally (npm i -g firebase-tools)
+GitHub
+.
 
-## Deploy
-- Configure Firebase project in `.firebaserc`
-- Build and deploy functions/hosting
-```
-npm run build:functions
-npx firebase deploy --only functions,hosting
-```
+A Firebase project with Firestore, Auth, and Functions enabled.
 
-## Security Rules (MVP)
-- Users: own doc readable; Admin read all
-- Businesses: public read (limited fields enforced in UI), writes via CF
-- Offers: public read when `status=active`, writes via CF
-- Coupons/Links: read by owning influencer/business/admin; create/redeem via CF only
-- Redemptions: business owner reads; influencer reads own attributed
-- Admin collections: admin-only
+(Optional) Vercel account for hosting the web app.
 
-## Known Limitations
-- Toast is pending; Clover is stubbed
-- Fraud rules are minimal (hashing + allow/review/block scaffold)
-- Square Catalog/Discounts are stubbed; webhook attribution uses payment.note as offerRef (MVP simplification)
-- Map display is stubbed (list only)
+See INSTRUCTIONS.md
+ for a full build guide.
 
-## Security Notes
-- Never store raw PAN; card hashing uses SHA-256 over a salt
-- Manual Mode requires cashier consent; include in ToS
-- Enforce single-use coupons via CF; second redemption must block (to be strengthened)
-- Admin credentials stored in environment variables only
-- Admin sessions use secure HTTP-only cookies with JWT tokens
-- All admin routes protected by middleware validation 
+Getting Started
+
+Clone and install dependencies
+
+git clone https://github.com/<your‑org>/Kudjo_Affiliate.git
+cd Kudjo_Affiliate
+npm install
+
+
+Configure environment variables
+Copy .env.example to .env.local for the Next.js app and .env inside functions/ for Cloud Functions. Fill in the required values (do not commit secrets). See Section 2.3 of INSTRUCTIONS.md
+ for details
+GitHub
+.
+
+Run the development environment
+
+firebase login
+firebase use <your‑project>
+firebase emulators:start
+# in a separate terminal
+npm run dev
+
+
+The app should be available at http://localhost:3000. The Firebase emulators provide Firestore, Auth, and Functions locally
+GitHub
+.
+
+Testing
+Unit and integration tests live under tests/. Use:
+
+npm run test:unit       # unit tests
+npm run test:e2e        # end‑to‑end tests
+npm run test:all        # run all tests
+
+
+Lint and type‑check the code with:
+
+npm run lint
+npm run typecheck
+
+
+Seeding demo data
+To seed the local Firestore with demo users and campaigns, run:
+
+npm run seed          # or ./scripts/run-seed-no-prompt.sh
+
+
+Seeding creates sample admin, business, and influencer accounts. Use the credentials printed in the console.
+
+Deployment
+
+For production deployment, see DEPLOYMENT.md
+ and the checklist in deployment/production-checklist.md. Deployment generally involves:
+
+Building the Next.js app (npm run build) and deploying it to Vercel or Firebase Hosting.
+
+Deploying Firestore rules, indexes, and Cloud Functions with the Firebase CLI
+GitHub
+.
+
+Setting environment variables in Vercel and Firebase (do not commit them).
+
+Running smoke tests and verifying the core flows after deployment
+GitHub
+.
+
+Roles and Route Guarding
+
+Kudjo Affiliate defines three user roles
+GitHub
+:
+
+admin – accesses /control-center/* and can manage businesses, influencers, and campaigns.
+
+business – accesses /business/*, can create offers and view campaign performance.
+
+influencer – accesses /influencer/*, browses offers and sees affiliate codes.
+
+Authentication is via Firebase Email/Password or Google sign‑in
+GitHub
+. Admins log in via a custom session-cookie endpoint using the ADMIN_EMAIL and ADMIN_PASSCODE from your environment. Unauthenticated users are redirected to /auth/*.
+
+Contributing
+
+Use the Makefile commands (see below) to perform common tasks.
+
+Follow the code style enforced by ESLint and Prettier.
+
+Update the docs/delivery/backlog.md with new work items; each PBI should live in docs/delivery/pbis/.
+
+When adding new features, write unit tests and update the production checklist as needed.
+
+This README is a companion to INSTRUCTIONS.md. For a deeper explanation of the data model, API routes, security rules, and portal flows, refer to that document. Always keep secrets out of the repository.

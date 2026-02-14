@@ -22,34 +22,40 @@ export function useBusinessMetrics() {
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
 
-  useEffect(() => {
+  const fetchMetrics = async () => {
     if (!user) {
       setError('Please sign in to view metrics.');
       setLoading(false);
       return;
     }
 
-    const fetchMetrics = async () => {
-      try {
-        setError(null);
-        const params = new URLSearchParams();
-        params.set('businessId', user.uid);
-        const res = await fetch(`/api/business/metrics?${params.toString()}`);
-        if (!res.ok) {
-          throw new Error('Failed to fetch metrics');
-        }
-        const data = await res.json();
-        setMetrics(data);
-      } catch (err) {
-        console.error('Error fetching business metrics:', err);
-        setError('Failed to load metrics. Please try again.');
-      } finally {
-        setLoading(false);
+    try {
+      setError(null);
+      setLoading(true);
+      const params = new URLSearchParams();
+      params.set('businessId', user.uid);
+      const res = await fetch(`/api/business/metrics?${params.toString()}`);
+      if (!res.ok) {
+        throw new Error('Failed to fetch metrics');
       }
-    };
+      const data = await res.json();
+      setMetrics(data);
+    } catch (err) {
+      console.error('Error fetching business metrics:', err);
+      setError('Failed to load metrics. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchMetrics();
+    
+    // Set up polling for real-time updates (every 30 seconds)
+    const interval = setInterval(fetchMetrics, 30000);
+    
+    return () => clearInterval(interval);
   }, [user]);
 
-  return { metrics, loading, error };
+  return { metrics, loading, error, refetch: fetchMetrics };
 }

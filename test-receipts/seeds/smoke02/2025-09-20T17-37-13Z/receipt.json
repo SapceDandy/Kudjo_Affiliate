@@ -1,0 +1,47 @@
+{
+  "suite": "seed",
+  "id": "smoke02",
+  "timestamp": "2025-09-20T17:37:13.543Z",
+  "ok": true,
+  "inputs": {
+    "profile": "smoke02",
+    "initialCap": 20,
+    "finalCap": 12
+  },
+  "outputs": {
+    "campaigns": 1,
+    "conversations": 1,
+    "messages": 3,
+    "auditLogs": 1,
+    "currentMaxPctOff": 12,
+    "capChangeVerified": true
+  },
+  "logs": [
+    {
+      "level": "info",
+      "msg": "Applying Smoke-02 overlay: Cap change propagation",
+      "timestamp": "2025-09-20T17:37:12.626Z"
+    },
+    {
+      "level": "info",
+      "msg": "Set initial caps: maxPctOff=20%",
+      "timestamp": "2025-09-20T17:37:12.733Z"
+    },
+    {
+      "level": "info",
+      "msg": "Created campaign at cap limit: 20%",
+      "timestamp": "2025-09-20T17:37:12.857Z"
+    },
+    {
+      "level": "info",
+      "msg": "Lowered caps: maxPctOff=12%",
+      "timestamp": "2025-09-20T17:37:12.988Z"
+    },
+    {
+      "level": "info",
+      "msg": "Created 3 messages showing cap enforcement",
+      "timestamp": "2025-09-20T17:37:13.360Z"
+    }
+  ],
+  "durationMs": 917
+}

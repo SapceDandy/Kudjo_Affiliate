@@ -9,8 +9,17 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const infId = searchParams.get('infId');
     const limit = parseInt(searchParams.get('limit') || '20');
-    const page = parseInt(searchParams.get('page') || '1');
-    const offset = (page - 1) * limit;
+    
+    // Handle both page-based and offset-based pagination
+    let offset: number;
+    if (searchParams.has('offset')) {
+      // Direct offset parameter (used by influencer page)
+      offset = parseInt(searchParams.get('offset') || '0');
+    } else {
+      // Page-based parameter (used by hooks)
+      const page = parseInt(searchParams.get('page') || '1');
+      offset = (page - 1) * limit;
+    }
     
     // Search and filter parameters
     const searchQuery = searchParams.get('search')?.toLowerCase() || '';
@@ -36,6 +45,9 @@ export async function GET(request: NextRequest) {
         id: infId,
         tier: 'M',
         name: 'Demo Influencer',
+        approved: false,
+        approvalStatus: 'pending',
+        approvalHistory: [],
         handle: 'demo_influencer',
         followers: 25000,
         createdAt: new Date()
@@ -136,8 +148,25 @@ export async function GET(request: NextRequest) {
         continue;
       }
 
-      // Skip complex checks while indexes are building
-      // TODO: Re-enable max influencers and cooldown checks once indexes are ready
+      // Check max influencers: count affiliateLinks for this offer
+      if (data.maxInfluencers) {
+        const linksForOffer = await adminDb!.collection('affiliateLinks')
+          .where('offerId', '==', doc.id)
+          .get();
+        if (linksForOffer.size >= data.maxInfluencers) {
+          continue;
+        }
+      }
+
+      // Check already-joined: skip offers this influencer already has a link for
+      const existingLink = await adminDb!.collection('affiliateLinks')
+        .where('offerId', '==', doc.id)
+        .where('influencerId', '==', infId)
+        .limit(1)
+        .get();
+      if (!existingLink.empty) {
+        continue;
+      }
 
       allEligibleOffers.push({
         id: doc.id,
@@ -160,32 +189,59 @@ export async function GET(request: NextRequest) {
       businessIds.add((offer as any).bizId);
     }
 
-    const campaigns = paginatedOffers.map((offer: any) => ({
-      id: offer.id,
-      title: offer.title,
-      description: offer.description,
-      businessName: offer.businessName,
-      businessId: offer.bizId,
-      splitPct: offer.splitPct,
-      discountType: offer.discountType,
-      userDiscountPct: offer.userDiscountPct,
-      userDiscountCents: offer.userDiscountCents,
-      minSpendCents: offer.minSpendCents,
-      eligibleTiers: offer.eligibleTiers,
-      maxInfluencers: offer.maxInfluencers,
-      currentInfluencers: 0, // Will be calculated if needed
-      maxRedemptions: offer.maxRedemptions,
-      currentRedemptions: 0, // Will be calculated if needed
-      endAt: offer.endAt ? (offer.endAt.toDate ? offer.endAt.toDate() : new Date(offer.endAt)) : null,
-      status: 'active',
-      createdAt: offer.createdAt ? (offer.createdAt.toDate ? offer.createdAt.toDate() : new Date(offer.createdAt)) : new Date(),
-    }));
+    const campaigns = paginatedOffers.map((offer: any) => {
+      // Calculate tier-specific split percentage
+      let splitPct = offer.splitPct || 0;
+      
+      // If offer has tierSplits, use the appropriate tier split
+      if (offer.tierSplits && typeof offer.tierSplits === 'object') {
+        // Map influencer tier to tierSplits key
+        const tierMapping: { [key: string]: string } = {
+          'S': 'Small',
+          'M': 'Medium', 
+          'L': 'Large',
+          'XL': 'XL',
+          'H': 'Huge',
+          'Small': 'Small',
+          'Medium': 'Medium',
+          'Large': 'Large',
+          'Huge': 'Huge'
+        };
+        
+        const tierKey = tierMapping[influencerTier] || influencerTier;
+        if (offer.tierSplits[tierKey] !== undefined) {
+          splitPct = offer.tierSplits[tierKey];
+        }
+      }
+
+      return {
+        id: offer.id,
+        title: offer.title,
+        description: offer.description,
+        businessName: offer.businessName,
+        businessId: offer.bizId,
+        splitPct: splitPct,
+        discountType: offer.discountType,
+        userDiscountPct: offer.userDiscountPct,
+        userDiscountCents: offer.userDiscountCents,
+        minSpendCents: offer.minSpendCents,
+        eligibleTiers: offer.eligibleTiers,
+        maxInfluencers: offer.maxInfluencers,
+        currentInfluencers: 0, // Will be calculated if needed
+        maxRedemptions: offer.maxRedemptions,
+        currentRedemptions: 0, // Will be calculated if needed
+        endAt: offer.endAt ? (offer.endAt.toDate ? offer.endAt.toDate() : new Date(offer.endAt)) : null,
+        status: 'active',
+        createdAt: offer.createdAt ? (offer.createdAt.toDate ? offer.createdAt.toDate() : new Date(offer.createdAt)) : new Date(),
+      };
+    });
 
     const hasMore = allEligibleOffers.length > offset + limit;
     const nextOffset = hasMore ? offset + limit : null;
 
     return NextResponse.json({
       campaigns,
+      total: allEligibleOffers.length,
       hasMore,
       nextOffset,
       influencerTier,

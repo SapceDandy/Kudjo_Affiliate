@@ -37,7 +37,7 @@ interface SendRequestDialogProps {
 export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: SendRequestDialogProps) {
   const { user } = useAuth();
   const [programs, setPrograms] = useState<Program[]>([]);
-  const [selectedProgram, setSelectedProgram] = useState<string>('');
+  const [selectedProgram, setSelectedProgram] = useState<string>('new');
   const [customSplitPct, setCustomSplitPct] = useState(20);
   const [tierDefaults, setTierDefaults] = useState<any>({});
   const [message, setMessage] = useState('');
@@ -169,7 +169,7 @@ export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: 
         };
         
         console.log('Created offer with ID:', offerId);
-      } else if (selectedProgram) {
+      } else if (selectedProgram && selectedProgram !== 'new') {
         // Use existing program
         const program = programs.find(p => p.id === selectedProgram);
         if (program) {
@@ -214,6 +214,7 @@ export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: 
       });
 
       // Send request to API
+      console.log('Sending request with data:', requestData);
       const response = await fetch('/api/business/requests', {
         method: 'POST',
         headers: {
@@ -222,9 +223,18 @@ export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: 
         body: JSON.stringify(requestData),
       });
 
+      console.log('Response status:', response.status);
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('API Error:', errorData);
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { error: errorText };
+        }
+        console.error('Parsed API Error:', errorData);
         throw new Error(errorData.error || 'Failed to send request');
       }
 
@@ -280,13 +290,14 @@ export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: 
               {!createNewProgram ? (
                 <div>
                   <label className="text-sm font-medium">Select Program</label>
-                  <Select value={selectedProgram} onValueChange={setSelectedProgram}>
+                  <Select value={selectedProgram || 'new'} onValueChange={setSelectedProgram}>
                     <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Choose an existing program..." />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="new">Create New Program</SelectItem>
                       {programs.map(program => (
-                        <SelectItem key={program.id} value={program.id}>
+                        <SelectItem key={program.id} value={program.id || 'new'}>
                           {program.title} - {program.discountType === 'percentage' ? `${program.userDiscountPct}% off` : `$${program.userDiscountCents/100} off`}
                         </SelectItem>
                       ))}
@@ -329,7 +340,7 @@ export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium">Discount Type</label>
-                      <Select value={discountType} onValueChange={(value: any) => setDiscountType(value)}>
+                      <Select value={discountType || 'percentage'} onValueChange={(value: any) => setDiscountType(value)}>
                         <SelectTrigger className="mt-1">
                           <SelectValue />
                         </SelectTrigger>
@@ -486,7 +497,7 @@ export function SendRequestDialog({ open, onClose, influencer, onSendRequest }: 
               </Button>
               <Button 
                 onClick={handleSendRequest} 
-                disabled={loading || (!selectedProgram && !createNewProgram) || (createNewProgram && !newProgramTitle)}
+                disabled={loading || (!selectedProgram && !createNewProgram) || (createNewProgram && !newProgramTitle) || (selectedProgram === 'new' && !createNewProgram)}
                 className="flex-1"
               >
                 {loading ? 'Sending...' : 'Send Request'}

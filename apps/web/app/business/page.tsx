@@ -11,24 +11,39 @@ import { useRealtimeOffers } from '@/lib/hooks/use-realtime-offers';
 import { ComplianceNotice } from '@/components/legal/compliance-notice';
 import { useRealtimeRequests } from '@/lib/hooks/use-realtime-requests';
 import { useBusinessPrograms } from '@/lib/hooks/use-business-programs';
+import { useBusinessMetrics } from '@/lib/hooks/use-business-metrics';
 import { CreateOfferDialog } from '@/components/business/create-offer-dialog';
 import { MessageCenter } from '@/components/messaging/message-center';
-import { FindInfluencersDialog } from '@/components/find-influencers-dialog';
+import { FindInfluencersDialog } from '@/components/business/find-influencers-dialog';
+import { ApprovalStatusBanner } from '@/components/approval-status-banner';
 import { useAuth } from '@/lib/auth';
 import { 
   DollarSign, 
   MessageSquare, 
   Store,
   Percent,
-  MapPin,
+  TrendingUp,
   Users,
-  Clock
+  Clock,
+  Download,
+  Settings,
+  BarChart3,
+  Eye,
+  Edit,
+  Pause,
+  Play,
+  Square,
+  MapPin
 } from 'lucide-react';
 
 type DiscountType = 'percentage' | 'dollar' | 'bogo' | 'student' | 'happy_hour' | 'free_appetizer' | 'first_time';
 
 export default function BusinessHome() {
   const { user, loading: authLoading } = useAuth();
+  const { offers: realOffers, loading: offersLoading, pauseOffer, resumeOffer, endOffer, createOffer } = useRealtimeOffers();
+  const { requests: realRequests, loading: requestsLoading, updateRequest, updateOfferTerms } = useRealtimeRequests();
+  const { programs: realPrograms, loading: programsLoading, processPayout, refetch: refetchPrograms } = useBusinessPrograms();
+  const { metrics, loading: metricsLoading, error: metricsError, refetch: refetchMetrics } = useBusinessMetrics();
 
   useEffect(() => {
     if (!authLoading && (!user || user.role !== 'business')) {
@@ -39,16 +54,10 @@ export default function BusinessHome() {
   if (authLoading) return <div className="flex justify-center items-center h-screen"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div></div>;
   if (!user || user.role !== 'business') return null;
   
-  const { offers: realOffers, loading: offersLoading, pauseOffer, resumeOffer, createOffer } = useRealtimeOffers();
-  
   // Debug logging
   console.log('Business Dashboard - user:', user);
   console.log('Business Dashboard - realOffers:', realOffers);
-  console.log('Business Dashboard - offersLoading:', offersLoading);
-  const { requests: realRequests, loading: requestsLoading, updateRequest, updateOfferTerms } = useRealtimeRequests();
-  const { programs: realPrograms, loading: programsLoading, processPayout, refetch: refetchPrograms } = useBusinessPrograms();
-  
-  const metrics = { totalPayoutOwed: 0, totalRedemptions: 0, activeOffers: 0 };
+  console.log('Business Dashboard - metrics:', metrics);
   
   const [offersSearch, setOffersSearch] = useState('');
   const [requestsSearch, setRequestsSearch] = useState('');
@@ -70,7 +79,8 @@ export default function BusinessHome() {
   const [tierLoading, setTierLoading] = useState(false);
 
   const filteredOffers = realOffers?.filter((offer: any) => 
-    offer.title?.toLowerCase().includes(offersSearch.toLowerCase())
+    offer.title?.toLowerCase().includes(offersSearch.toLowerCase()) && 
+    !offer.exclusive
   ) || [];
 
   const filteredRequests = realRequests?.filter((request: any) => 
@@ -84,7 +94,8 @@ export default function BusinessHome() {
 
   const totalPayoutCents = metrics?.totalPayoutOwed || 0;
   const totalRedemptions = metrics?.totalRedemptions || 0;
-  const activeOffers = metrics?.activeOffers || 0;
+  const activeOffers = metrics?.activeOffers || realOffers?.filter((offer: any) => offer.status === 'active').length || 0;
+  const pendingRequests = metrics?.pendingRequests || realRequests?.filter((r: any) => r.status === 'pending').length || 0;
 
   const formatMoney = (cents?: number) => typeof cents === 'number' ? `$${(cents/100).toFixed(2)}` : '$0.00';
 
@@ -118,6 +129,38 @@ export default function BusinessHome() {
     };
     loadTierDefaults();
   }, [user?.uid]);
+
+  const handleExportCampaigns = async () => {
+    if (!user?.uid) return;
+    
+    try {
+      const params = new URLSearchParams({
+        businessId: user.uid,
+        format: 'csv',
+        status: 'all'
+      });
+      
+      const response = await fetch(`/api/business/export/campaigns?${params}`);
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `campaigns-${user.uid}-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast.success('Campaign data exported successfully!');
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export data');
+    }
+  };
 
   const saveTierDefaults = async () => {
     if (!user?.uid) return;
@@ -168,6 +211,9 @@ export default function BusinessHome() {
           </p>
         </div>
 
+        {/* Approval Status Banner */}
+        <ApprovalStatusBanner userType="business" userId={user.uid} className="mb-6" />
+
         {/* Legal Compliance Notice */}
         <div className="mb-6">
           <ComplianceNotice type="legal" />
@@ -187,7 +233,18 @@ export default function BusinessHome() {
               <MessageSquare className="w-4 h-4 mr-2" />
               Messages
             </Button>
-            <Button onClick={() => setCreateDialogOpen(true)}>Create Offer</Button>
+            <Button variant="outline" onClick={handleExportCampaigns}>
+              <Download className="w-4 h-4 mr-2" />
+              Export Data
+            </Button>
+            <Button variant="outline" onClick={() => window.location.href = '/business/profile'}>
+              <Settings className="w-4 h-4 mr-2" />
+              Profile
+            </Button>
+            <Button onClick={() => {
+              console.log('Create Offer button clicked, setting dialog open to true');
+              setCreateDialogOpen(true);
+            }}>Create Offer</Button>
           </div>
         </div>
 
@@ -232,7 +289,7 @@ export default function BusinessHome() {
                 <Clock className="w-5 h-5 text-orange-600" />
                 <div>
                   <p className="text-sm text-muted-foreground">Pending Requests</p>
-                  <p className="text-xl font-bold text-orange-600">{realRequests.filter((r: any) => r.status === 'pending').length}</p>
+                  <p className="text-xl font-bold text-orange-600">{pendingRequests}</p>
                 </div>
               </div>
             </CardContent>
@@ -270,7 +327,9 @@ export default function BusinessHome() {
                     <div className="flex items-start justify-between">
                       <div>
                         <CardTitle className="text-lg">{request.influencer}</CardTitle>
-                        <p className="text-sm text-muted-foreground">{request.followers?.toLocaleString()} followers</p>
+                        <p className="text-sm text-muted-foreground">{request.title || 'Collaboration Request'}</p>
+                        <p className="text-xs text-muted-foreground">{request.followers?.toLocaleString()} followers</p>
+                        <p className="text-xs text-blue-600">@{request.influencer?.toLowerCase().replace(/\s+/g, '')}</p>
                       </div>
                       <Badge variant={request.status === 'pending' ? 'default' : 
                                    request.status === 'approved' ? 'default' : 
@@ -317,16 +376,25 @@ export default function BusinessHome() {
                           >
                             Update Offer
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => updateRequest(request.id, 'closed')}>
+                          <Button variant="outline" size="sm" onClick={async () => {
+                            await updateRequest(request.id, 'closed');
+                            refetchMetrics(); // Refresh metrics after closing request
+                          }}>
                             Close Request
                           </Button>
                         </>
                       )}
                       {request.status === 'countered' && (
                         <>
-                          <Button size="sm" onClick={() => updateRequest(request.id, 'approved')}>Approve</Button>
+                          <Button size="sm" onClick={async () => {
+                            await updateRequest(request.id, 'approved');
+                            refetchMetrics(); // Refresh metrics after approving request
+                          }}>Approve</Button>
                           <Button variant="outline" size="sm">Counter</Button>
-                          <Button variant="outline" size="sm" onClick={() => updateRequest(request.id, 'declined')}>
+                          <Button variant="outline" size="sm" onClick={async () => {
+                            await updateRequest(request.id, 'declined');
+                            refetchMetrics(); // Refresh metrics after declining request
+                          }}>
                             Decline
                           </Button>
                         </>
@@ -358,6 +426,46 @@ export default function BusinessHome() {
           ) : filteredPrograms.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground">No active programs found.</p>
+              <div className="mt-4">
+                <Card className="max-w-md mx-auto">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-lg">Sarah Martinez</CardTitle>
+                        <p className="text-sm text-muted-foreground">@sarahmartinez</p>
+                        <p className="text-sm text-muted-foreground">Weekend Brunch Special</p>
+                      </div>
+                      <Badge variant="default">Active</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Redemptions</p>
+                        <p className="font-semibold text-blue-600">12</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Payout Owed</p>
+                        <p className="font-semibold text-green-600">$180.00</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Commission Rate</p>
+                        <p className="font-semibold">25%</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Total Revenue</p>
+                        <p className="font-semibold text-purple-600">$720.00</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => processPayout(['mock_program_001'])}>Process Payout</Button>
+                      <Button size="sm" variant="outline">View Details</Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -474,6 +582,102 @@ export default function BusinessHome() {
                       >
                         {o.status === 'active' ? 'Pause' : 'Resume'}
                       </Button>
+                      <Button 
+                        variant="destructive" 
+                        size="sm" 
+                        onClick={async () => {
+                          if (confirm('Are you sure you want to end this offer permanently? This action cannot be undone.')) {
+                            try {
+                              await endOffer(o.id);
+                              toast.success('Offer ended successfully');
+                            } catch (error) {
+                              console.error('Error ending offer:', error);
+                              toast.error('Failed to end offer');
+                            }
+                          }
+                        }}
+                      >
+                        End Offer
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Exclusive Offers */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Exclusive Offers</h2>
+            <Badge variant="outline">{realOffers?.filter((offer: any) => offer.exclusive === true).length || 0} exclusive</Badge>
+          </div>
+          
+          {offersLoading ? (
+            <div className="text-center py-8">Loading exclusive offers...</div>
+          ) : realOffers?.filter((offer: any) => offer.exclusive === true).length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">No exclusive offers yet. Exclusive offers are created when you approve influencer requests with the "Make Exclusive" option.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {realOffers?.filter((offer: any) => offer.exclusive === true).map((o: any) => (
+                <Card key={o.id} className="hover:shadow-md transition-shadow border-purple-200">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          {o.title}
+                          <Badge variant="secondary" className="bg-purple-100 text-purple-800">Exclusive</Badge>
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <MapPin className="w-4 h-4 text-blue-600" /> Austin, TX
+                        </p>
+                      </div>
+                      <Badge variant={o.status === 'active' ? 'default' : 'outline'}>{o.status}</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Influencer Split</p>
+                        <p className="font-semibold text-green-600">{o.splitPct}%</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Discount</p>
+                        <p className="font-semibold text-blue-600">
+                          {o.discountType === 'percentage' ? `${o.userDiscountPct}%` : `$${(o.userDiscountCents/100).toFixed(2)}`} off
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Min Spend</p>
+                        <p className="font-semibold">${(o.minSpendCents/100).toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Redemptions</p>
+                        <p className="font-semibold">{o.redemptionLimit || 'Unlimited'}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      {o.status === 'active' && (
+                        <>
+                          <Button size="sm" variant="outline" onClick={() => pauseOffer(o.id)}>
+                            <Pause className="w-4 h-4 mr-1" />
+                            Pause
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => endOffer(o.id)}>
+                            <Square className="w-4 h-4 mr-1" />
+                            End Offer
+                          </Button>
+                        </>
+                      )}
+                      {o.status === 'paused' && (
+                        <Button size="sm" onClick={() => resumeOffer(o.id)}>
+                          <Play className="w-4 h-4 mr-1" />
+                          Resume
+                        </Button>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -487,14 +691,19 @@ export default function BusinessHome() {
       <CreateOfferDialog 
         open={createDialogOpen} 
         onClose={() => setCreateDialogOpen(false)}
-        onOfferCreated={() => {}} // Real-time hook will update automatically
+        onOfferCreated={() => {
+          // Refresh metrics to update active offers count
+          refetchMetrics();
+        }}
       />
 
       <FindInfluencersDialog 
         open={findDialogOpen} 
-        onClose={() => setFindDialogOpen(false)}
-        onSendRequest={() => {
-          // Dialog will close automatically, no need to refresh as useRealtimeRequests handles updates
+        onOpenChange={setFindDialogOpen}
+        businessId={user.uid}
+        onRequestSent={() => {
+          // Refresh metrics to update pending requests count
+          refetchMetrics();
         }}
       />
 

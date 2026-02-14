@@ -24,9 +24,11 @@ export async function POST(request: NextRequest) {
 
     const now = new Date();
     
-    // Update influencer status to approved
+    // Update influencer status to approved and mark as having verified social
     await influencerRef.update({
       status: 'approved',
+      approved: true,
+      hasVerifiedSocial: true,
       reviewedAt: now,
       reviewedBy: 'admin',
       updatedAt: now

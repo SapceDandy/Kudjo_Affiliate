@@ -110,14 +110,14 @@ export function SearchFilter({
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Status</label>
                   <Select
-                    value={filters.status || ''}
-                    onValueChange={(value) => handleFilterChange('status', value)}
+                    value={filters.status || 'all'}
+                    onValueChange={(value) => handleFilterChange('status', value === 'all' ? undefined : value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="All statuses" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All statuses</SelectItem>
+                      <SelectItem value="all">All statuses</SelectItem>
                       {filterOptions.status.map((status) => (
                         <SelectItem key={status} value={status}>
                           {status?.charAt(0)?.toUpperCase() + status?.slice(1) || 'Unknown'}
@@ -133,14 +133,14 @@ export function SearchFilter({
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Tier</label>
                   <Select
-                    value={filters.tier || ''}
-                    onValueChange={(value) => handleFilterChange('tier', value)}
+                    value={filters.tier || 'all'}
+                    onValueChange={(value) => handleFilterChange('tier', value === 'all' ? undefined : value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="All tiers" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All tiers</SelectItem>
+                      <SelectItem value="all">All tiers</SelectItem>
                       {filterOptions.tier.map((tier) => (
                         <SelectItem key={tier} value={tier}>
                           {tier}
@@ -156,14 +156,14 @@ export function SearchFilter({
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Discount Type</label>
                   <Select
-                    value={filters.discountType || ''}
-                    onValueChange={(value) => handleFilterChange('discountType', value)}
+                    value={filters.discountType || 'all'}
+                    onValueChange={(value) => handleFilterChange('discountType', value === 'all' ? undefined : value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="All types" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All types</SelectItem>
+                      <SelectItem value="all">All types</SelectItem>
                       {filterOptions.discountType.map((type) => (
                         <SelectItem key={type} value={type}>
                           {type?.replace('_', ' ')?.charAt(0)?.toUpperCase() + type?.replace('_', ' ')?.slice(1) || 'Unknown'}

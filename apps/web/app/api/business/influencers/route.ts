@@ -22,6 +22,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Firebase not configured' }, { status: 500 });
     }
 
+    // Check if business exists (remove approval requirement for now)
+    const businessDoc = await adminDb.collection('businesses').doc(businessId).get();
+    if (!businessDoc.exists) {
+      return NextResponse.json({ error: 'Business not found' }, { status: 404 });
+    }
+
     // Check cache first to avoid quota usage
     const cacheKey = `influencers:${search}:${tier}:${platform}:${minFollowers}:${maxFollowers}`;
     const cachedData = firebaseCache.get<any[]>(cacheKey);

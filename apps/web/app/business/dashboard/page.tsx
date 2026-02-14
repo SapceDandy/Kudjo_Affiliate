@@ -5,13 +5,26 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BlockedInfluencers } from '@/components/business/blocked-influencers';
 // import { PricingTiers } from '@/components/business/pricing-tiers';
-import { 
+import {
   Building2,
   Plus,
   Search,
   RefreshCw,
   Settings,
+  Lightbulb,
+  TrendingUp,
+  Loader2,
 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+
+interface DealSuggestion {
+  title: string;
+  splitPct: number;
+  targetTiers: string[];
+  estimatedRoas: number;
+  confidence: number;
+  reasoning?: string;
+}
 
 export default function BusinessDashboard() {
   const [loading, setLoading] = useState(true);
@@ -20,6 +33,8 @@ export default function BusinessDashboard() {
   const [reqDesc, setReqDesc] = useState('');
   const [reqSplit, setReqSplit] = useState<number>(20);
   const [reqCap, setReqCap] = useState<number>(5000);
+  const [recommendations, setRecommendations] = useState<DealSuggestion[]>([]);
+  const [recsLoading, setRecsLoading] = useState(false);
 
   // Simulate loading user data
   useEffect(() => {
@@ -30,6 +45,19 @@ export default function BusinessDashboard() {
       setLoading(false);
     }, 500);
   }, []);
+
+  // Fetch AI recommendations when businessId is available
+  useEffect(() => {
+    if (!businessId) return;
+    setRecsLoading(true);
+    fetch(`/api/business/recommendations?bizId=${businessId}`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.suggestions) setRecommendations(data.suggestions);
+      })
+      .catch(() => {})
+      .finally(() => setRecsLoading(false));
+  }, [businessId]);
 
   if (loading) {
     return (
@@ -73,6 +101,55 @@ export default function BusinessDashboard() {
               </p>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* AI Deal Recommendations */}
+      <Card className="mb-6 border-l-4 border-l-amber-500">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lightbulb className="w-5 h-5 text-amber-500" />
+            AI Deal Recommendations
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {recsLoading ? (
+            <div className="flex items-center gap-2 text-gray-500">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Analyzing your business data...
+            </div>
+          ) : recommendations.length > 0 ? (
+            <div className="space-y-4">
+              {recommendations.map((rec, i) => (
+                <div key={i} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start justify-between mb-2">
+                    <h4 className="font-medium">{rec.title}</h4>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-green-700 border-green-300">
+                        <TrendingUp className="w-3 h-3 mr-1" />
+                        {rec.estimatedRoas}x ROAS
+                      </Badge>
+                      <Badge variant="secondary">{rec.confidence}% confidence</Badge>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-2">{rec.reasoning}</p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex gap-1">
+                      {rec.targetTiers.map(tier => (
+                        <Badge key={tier} variant="outline" className="text-xs">{tier}</Badge>
+                      ))}
+                      <span className="text-sm text-gray-500 ml-2">{rec.splitPct}% split</span>
+                    </div>
+                    <Button size="sm" className="bg-brand hover:bg-brand/90">
+                      Create This Deal
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-sm">No recommendations available yet. Create your first campaign to get AI-powered suggestions.</p>
+          )}
         </CardContent>
       </Card>
 

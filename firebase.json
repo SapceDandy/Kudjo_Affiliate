@@ -27,9 +27,15 @@
         "**/node_modules/**"
       ],
       "rewrites": [
+        { "source": "/", "function": "api" },
+        { "source": "/app", "function": "api" },
+        { "source": "/admin", "function": "api" },
+        { "source": "/admin/**", "function": "api" },
         { "source": "/api/**", "function": "api" },
-        { "source": "/u/**", "function": "api" }
+        { "source": "/u/**", "function": "api" },
+        { "source": "/r/**", "function": "api" },
+        { "source": "/a/**", "function": "api" }
       ]
     }
   ]
-} 
+}

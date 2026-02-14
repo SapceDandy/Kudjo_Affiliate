@@ -7,23 +7,31 @@ export async function handleLinkCreate(req: Request, res: Response): Promise<voi
   const { offerId, infId, utmSource = 'affiliate', utmMedium = 'influencer', utmCampaign = '' } = req.body as any;
   const shortCode = generateShortCode(7);
   const baseUrl = process.env.PUBLIC_URL || 'https://example.com';
-  const url = `${baseUrl}/a/${shortCode}?utm_source=${encodeURIComponent(utmSource)}&utm_medium=${encodeURIComponent(utmMedium)}&utm_campaign=${encodeURIComponent(utmCampaign)}`;
-  const qrUrl = await QRCode.toDataURL(url);
+  const shortUrl = `${baseUrl}/r/${shortCode}`;
+  const destinationUrl = `${baseUrl}/offer/${encodeURIComponent(offerId)}?i=${encodeURIComponent(infId)}&utm_source=${encodeURIComponent(
+    utmSource
+  )}&utm_medium=${encodeURIComponent(utmMedium)}&utm_campaign=${encodeURIComponent(utmCampaign)}`;
+  const qrUrl = await QRCode.toDataURL(shortUrl);
 
-  await admin.firestore().collection('shortUrls').doc(shortCode).set({ url, offerId, infId, createdAt: nowIso() });
-  const doc = await admin.firestore().collection('affiliateLinks').add({
-    bizId: (await admin.firestore().doc(`offers/${offerId}`).get()).get('bizId'),
-    infId,
-    offerId,
-    shortCode,
+  const offerSnap = await admin.firestore().doc(`offers/${offerId}`).get();
+  const businessId = String(offerSnap.get('bizId') || '');
+
+  await admin.firestore().collection('affiliateLinks').doc(shortCode).set({
     token: shortCode,
-    url,
-    qrUrl,
-    utmSource,
-    utmMedium,
-    utmCampaign,
-    status: 'active',
+    kind: 'campaign',
+    campaignId: offerId,
+    businessId,
+    influencerId: infId,
+    destinationUrl,
     createdAt: nowIso(),
+    status: 'active',
+    metadata: {
+      utmSource,
+      utmMedium,
+      utmCampaign,
+    },
   });
-  res.json({ shortUrl: url, qrUrl, token: shortCode });
-} 
+
+  res.json({ shortUrl, qrUrl, token: shortCode });
+}
+ 

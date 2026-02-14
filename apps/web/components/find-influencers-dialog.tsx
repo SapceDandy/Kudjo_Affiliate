@@ -206,20 +206,20 @@ export function FindInfluencersDialog({ open, onClose, onSendRequest }: FindInfl
               />
             </div>
             
-            <Select value={followerFilter} onValueChange={setFollowerFilter}>
+            <Select value={followerFilter || 'all'} onValueChange={setFollowerFilter}>
               <SelectTrigger>
                 <SelectValue placeholder="Followers" />
               </SelectTrigger>
               <SelectContent>
                 {followerRanges.map(range => (
-                  <SelectItem key={range.value} value={range.value}>
+                  <SelectItem key={range.value} value={range.value || 'all'}>
                     {range.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
-            <Select value={tierFilter} onValueChange={setTierFilter}>
+            <Select value={tierFilter || 'all'} onValueChange={setTierFilter}>
               <SelectTrigger>
                 <SelectValue placeholder="Tier" />
               </SelectTrigger>
@@ -232,7 +232,7 @@ export function FindInfluencersDialog({ open, onClose, onSendRequest }: FindInfl
               </SelectContent>
             </Select>
 
-            <Select value={platformFilter} onValueChange={setPlatformFilter}>
+            <Select value={platformFilter || 'all'} onValueChange={setPlatformFilter}>
               <SelectTrigger>
                 <SelectValue placeholder="Platform" />
               </SelectTrigger>

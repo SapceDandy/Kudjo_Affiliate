@@ -6,11 +6,24 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Copy, ExternalLink, QrCode, DollarSign, TrendingUp, Users, Clock, MapPin, Share2, Eye, Target, Calendar } from 'lucide-react';
+import { Copy, ExternalLink, QrCode, DollarSign, TrendingUp, Users, Clock, MapPin, Share2, Eye, Target, Calendar, Lightbulb, Loader2 } from 'lucide-react';
 import { useDemoAuth } from '@/lib/demo-auth';
 import { useAnalytics } from '@/components/analytics';
 import { useInfluencerMetrics } from '@/lib/hooks/use-influencer-metrics';
+import { useInfluencerCampaigns } from '@/lib/hooks/use-influencer-campaigns';
 import Image from 'next/image';
+
+interface Recommendation {
+  offerId: string;
+  title: string;
+  businessName: string;
+  businessId: string;
+  splitPct: number;
+  score: number;
+  matchPct: number;
+  reasoning?: string;
+  endAt?: string;
+}
 
 interface Campaign {
   id: string;
@@ -18,7 +31,7 @@ interface Campaign {
   businessName: string;
   offerTitle: string;
   splitPct: number;
-  status: 'active' | 'completed' | 'expired';
+  status: 'active' | 'completed' | 'expired' | 'pending' | 'declined' | 'available';
   affiliateLink?: {
     url: string;
     qrUrl: string;
@@ -31,6 +44,9 @@ interface Campaign {
   earnings: number;
   createdAt: string;
   deadline?: string;
+  campaignId: string;
+  linkId?: string;
+  linkStatus?: string;
 }
 
 interface DashboardStats {
@@ -44,79 +60,23 @@ export default function InfluencerDashboard() {
   const { user } = useDemoAuth();
   const { trackEvent } = useAnalytics();
   const { metrics, loading: metricsLoading, error: metricsError } = useInfluencerMetrics();
+  const { campaigns, loading, error, acceptCampaign, declineCampaign, requestPayout } = useInfluencerCampaigns('invited');
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [recsLoading, setRecsLoading] = useState(false);
 
+  // Fetch AI recommendations
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      if (!user?.uid) return;
-
-      try {
-        // Use real metrics from API hook instead of mock data
-
-        const mockCampaigns: Campaign[] = [
-          {
-            id: '1',
-            offerId: 'offer1',
-            businessName: 'Pasta Palace',
-            offerTitle: 'Free Appetizer + 20% Split',
-            splitPct: 20,
-            status: 'active',
-            affiliateLink: {
-              url: 'https://kudjo.app/u/abc123',
-              qrUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://kudjo.app/u/abc123',
-            },
-            contentCoupon: {
-              code: 'MEAL123',
-              qrUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=MEAL123',
-              used: false,
-            },
-            earnings: 45.60,
-            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-            deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-          },
-          {
-            id: '2',
-            offerId: 'offer2',
-            businessName: 'Burger Barn',
-            offerTitle: 'Free Dessert + 25% Split',
-            splitPct: 25,
-            status: 'active',
-            affiliateLink: {
-              url: 'https://kudjo.app/u/def456',
-              qrUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://kudjo.app/u/def456',
-            },
-            contentCoupon: {
-              code: 'BURGER456',
-              qrUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=BURGER456',
-              used: true,
-            },
-            earnings: 78.20,
-            createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-          },
-          {
-            id: '3',
-            offerId: 'offer3',
-            businessName: 'Taco Town',
-            offerTitle: 'Buy One Get One + 15% Split',
-            splitPct: 15,
-            status: 'completed',
-            earnings: 32.40,
-            createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-          },
-        ];
-
-        setCampaigns(mockCampaigns);
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDashboardData();
-  }, [user]);
+    if (!user?.uid) return;
+    setRecsLoading(true);
+    fetch(`/api/influencer/recommendations?infId=${user.uid}`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.recommendations) setRecommendations(data.recommendations);
+      })
+      .catch(() => {})
+      .finally(() => setRecsLoading(false));
+  }, [user?.uid]);
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -196,13 +156,118 @@ export default function InfluencerDashboard() {
         </Card>
       </div>
 
+      {/* Recommended For You */}
+      <Card className="mb-8 border-l-4 border-l-purple-500">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lightbulb className="w-5 h-5 text-purple-500" />
+            Recommended For You
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {recsLoading ? (
+            <div className="flex items-center gap-2 text-gray-500">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Finding deals that match your vibe...
+            </div>
+          ) : recommendations.length > 0 ? (
+            <div className="space-y-4">
+              {recommendations.map((rec) => (
+                <div key={rec.offerId} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <h4 className="font-medium">{rec.title}</h4>
+                      <p className="text-sm text-gray-500">{rec.businessName}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-purple-100 text-purple-700 border-purple-200">
+                        {rec.matchPct}% match
+                      </Badge>
+                      <Badge variant="outline">{rec.splitPct}% split</Badge>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3">{rec.reasoning}</p>
+                  <div className="flex items-center justify-between">
+                    {rec.endAt && (
+                      <span className="text-xs text-orange-600 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        Ends {new Date(rec.endAt).toLocaleDateString()}
+                      </span>
+                    )}
+                    <Button
+                      size="sm"
+                      className="bg-purple-600 hover:bg-purple-700 ml-auto"
+                      onClick={() => window.location.href = '/influencer'}
+                    >
+                      Join Campaign
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-sm">No recommendations yet. Complete your profile to get personalized campaign suggestions.</p>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Campaigns Tabs */}
       <Tabs defaultValue="active" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="active">Active Campaigns</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="active">Active</TabsTrigger>
+          <TabsTrigger value="pending">Pending</TabsTrigger>
           <TabsTrigger value="completed">Completed</TabsTrigger>
-          <TabsTrigger value="all">All Campaigns</TabsTrigger>
+          <TabsTrigger value="all">All</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="pending" className="space-y-6">
+          <div className="grid gap-6">
+            {campaigns.filter(c => c.status === 'pending').map((campaign) => (
+              <Card key={campaign.id} className="border-l-4 border-l-yellow-500">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle className="text-lg">{campaign.offerTitle}</CardTitle>
+                      <p className="text-gray-600">{campaign.businessName}</p>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant="outline">Pending</Badge>
+                      <p className="text-sm text-gray-500 mt-1">{campaign.splitPct}% split</p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-2 mt-4">
+                    <Button 
+                      onClick={async () => {
+                        try {
+                          await acceptCampaign(campaign.campaignId);
+                        } catch (err) {
+                          console.error('Failed to accept campaign:', err);
+                        }
+                      }}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      Accept
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={async () => {
+                        try {
+                          await declineCampaign(campaign.campaignId);
+                        } catch (err) {
+                          console.error('Failed to decline campaign:', err);
+                        }
+                      }}
+                    >
+                      Decline
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
 
         <TabsContent value="active" className="space-y-6">
           <div className="grid gap-6">
@@ -364,7 +429,24 @@ export default function InfluencerDashboard() {
           <Target className="w-4 h-4 mr-2" />
           Browse Campaigns
         </Button>
-        <Button variant="outline">
+        <Button 
+          variant="outline"
+          onClick={async () => {
+            try {
+              const activeCampaigns = campaigns.filter(c => c.status === 'active' && c.linkId);
+              if (activeCampaigns.length === 0) {
+                alert('No active campaigns available for payout');
+                return;
+              }
+              const linkIds = activeCampaigns.map(c => c.linkId!);
+              await requestPayout(linkIds, 'bank_transfer');
+              alert('Payout request submitted successfully');
+            } catch (err) {
+              console.error('Failed to request payout:', err);
+              alert('Failed to request payout. Please try again.');
+            }
+          }}
+        >
           <DollarSign className="w-4 h-4 mr-2" />
           Request Payout
         </Button>

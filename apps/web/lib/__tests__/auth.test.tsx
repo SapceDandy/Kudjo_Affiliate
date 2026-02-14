@@ -1,5 +1,5 @@
 import { render, screen, act } from '@testing-library/react';
-import { useAuth, AuthProvider, type AuthState } from '../auth';
+import { useAuth, AuthProvider } from '../auth';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 
 // Mock Firebase Auth
@@ -21,7 +21,7 @@ describe('AuthProvider', () => {
   });
 
   it('provides auth state to children', () => {
-    let authState: AuthState | undefined;
+    let authState: ReturnType<typeof useAuth> | undefined;
     (onAuthStateChanged as jest.Mock).mockImplementation((auth, callback) => {
       callback(mockUser);
       return () => {};
@@ -44,7 +44,7 @@ describe('AuthProvider', () => {
 
   it('handles sign in', async () => {
     (signInWithEmailAndPassword as jest.Mock).mockResolvedValue({ user: mockUser });
-    let authState: AuthState | undefined;
+    let authState: ReturnType<typeof useAuth> | undefined;
 
     function TestComponent() {
       authState = useAuth();
@@ -70,7 +70,7 @@ describe('AuthProvider', () => {
 
   it('handles sign out', async () => {
     (signOut as jest.Mock).mockResolvedValue(undefined);
-    let authState: AuthState | undefined;
+    let authState: ReturnType<typeof useAuth> | undefined;
 
     function TestComponent() {
       authState = useAuth();
@@ -98,7 +98,7 @@ describe('AuthProvider', () => {
       return unsubscribe;
     });
 
-    let authState: AuthState | undefined;
+    let authState: ReturnType<typeof useAuth> | undefined;
     function TestComponent() {
       authState = useAuth();
       return null;
@@ -134,7 +134,7 @@ describe('AuthProvider', () => {
   it('handles sign in errors', async () => {
     const error = new Error('Invalid credentials');
     (signInWithEmailAndPassword as jest.Mock).mockRejectedValue(error);
-    let authState: AuthState | undefined;
+    let authState: ReturnType<typeof useAuth> | undefined;
 
     function TestComponent() {
       authState = useAuth();
@@ -153,7 +153,7 @@ describe('AuthProvider', () => {
   it('handles sign out errors', async () => {
     const error = new Error('Network error');
     (signOut as jest.Mock).mockRejectedValue(error);
-    let authState: AuthState | undefined;
+    let authState: ReturnType<typeof useAuth> | undefined;
 
     function TestComponent() {
       authState = useAuth();

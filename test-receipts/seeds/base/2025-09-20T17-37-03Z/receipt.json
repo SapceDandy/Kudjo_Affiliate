@@ -1,0 +1,16 @@
+{
+  "suite": "seed",
+  "id": "base",
+  "timestamp": "2025-09-20T17:37:03.987Z",
+  "ok": true,
+  "inputs": {
+    "profile": "base"
+  },
+  "outputs": {
+    "merchants": 3,
+    "affiliates": 4,
+    "users": 10
+  },
+  "logs": [],
+  "durationMs": 2270
+}

@@ -5,7 +5,7 @@ export async function POST() {
   try {
     // Clear the admin session cookie
     const cookieStore = cookies();
-    cookieStore.set('admin_session', '', {
+    cookieStore.set('admin_token', '', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
